@@ -1,0 +1,209 @@
+import React, { useState } from 'react';
+import { useData } from '../context/DataContext';
+import DataTable from '../components/DataTable';
+import Modal from '../components/Modal';
+import { Plus, AlertTriangle, CheckCircle, Camera, Trash2 } from 'lucide-react';
+
+export const InventoryPage = () => {
+    const { data, addItem, deleteItem } = useData();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [photoFile, setPhotoFile] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [formData, setFormData] = useState({
+        name: '',
+        category: 'Materia Prima',
+        stock: 0,
+        unit: 'Litros',
+        status: 'ok'
+    });
+
+    const handleDelete = (id) => {
+        if (window.confirm('¿Estás seguro de eliminar este ítem?')) {
+            deleteItem('inventory', id);
+        }
+    };
+
+    const handleSave = async () => {
+        if (!formData.name) return alert('El nombre es obligatorio');
+
+        let photoLink = 'N/A';
+        if (photoFile) {
+            setIsUploading(true);
+            const result = await data.uploadToDrive(photoFile, 'Fotos Inventario');
+            setIsUploading(false);
+
+            if (result && result.webViewLink) {
+                photoLink = result.webViewLink;
+            } else {
+                if (!window.confirm('No se pudo subir la foto. ¿Deseas registrar sin foto?')) {
+                    return;
+                }
+            }
+        }
+
+        // Determine status based on stock (simple logic for now)
+        const status = formData.stock < 10 ? 'low' : 'ok';
+
+        addItem('inventory', { ...formData, status, photo: photoLink });
+        setIsModalOpen(false);
+        setFormData({
+            name: '',
+            category: 'Materia Prima',
+            stock: 0,
+            unit: 'Litros',
+            status: 'ok'
+        });
+        setPhotoFile(null);
+    };
+
+    const columns = [
+        { header: 'Nombre', accessor: 'name' },
+        { header: 'Categoría', accessor: 'category' },
+        {
+            header: 'Stock',
+            accessor: 'stock',
+            render: (row) => (
+                <span style={{ fontWeight: 'bold', color: row.status === 'low' ? 'var(--accent-red)' : 'var(--text-primary)' }}>
+                    {row.stock} {row.unit}
+                </span>
+            )
+        },
+        {
+            header: 'Estado',
+            accessor: 'status',
+            render: (row) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {row.status === 'ok' ? (
+                        <CheckCircle size={16} color="var(--accent-green)" />
+                    ) : (
+                        <AlertTriangle size={16} color="var(--accent-red)" />
+                    )}
+                    <span style={{ color: row.status === 'ok' ? 'var(--accent-green)' : 'var(--accent-red)' }}>
+                        {row.status === 'ok' ? 'Normal' : 'Bajo'}
+                    </span>
+                </div>
+            )
+        }
+    ];
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', height: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h1 style={{ fontSize: '2rem' }}>Inventario</h1>
+                <button
+                    className="glass-button primary"
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                    onClick={() => setIsModalOpen(true)}
+                >
+                    <Plus size={20} />
+                    Registrar Entrada
+                </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+                <div className="glass-panel" style={{ padding: '0.75rem' }}>
+                    <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '0.25rem' }}>Total Leche</h3>
+                    <p style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
+                        {data.inventory.find(i => i.name.includes('Leche'))?.stock || 0} L
+                    </p>
+                </div>
+                <div className="glass-panel" style={{ padding: '0.75rem' }}>
+                    <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '0.25rem' }}>Bajos de Stock</h3>
+                    <p style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--accent-red)' }}>
+                        {data.inventory.filter(i => i.status === 'low').length}
+                    </p>
+                </div>
+            </div>
+
+            <DataTable
+                columns={columns}
+                data={data.inventory}
+                actions={(row) => (
+                    <button
+                        className="glass-button"
+                        style={{ padding: '0.5rem', color: 'var(--accent-red)' }}
+                        onClick={() => handleDelete(row.id)}
+                        title="Eliminar"
+                    >
+                        <Trash2 size={18} />
+                    </button>
+                )}
+            />
+
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title="Registrar Entrada de Inventario"
+            >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Producto / Insumo</label>
+                        <input
+                            type="text"
+                            list="products-list"
+                            className="glass-input"
+                            placeholder="Escribe o selecciona..."
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        />
+                        <datalist id="products-list">
+                            <option value="Leche Cruda" />
+                            <option value="Cuajo" />
+                            <option value="Sal Industrial" />
+                            <option value="Bolsas Plásticas" />
+                            <option value="Etiquetas" />
+                        </datalist>
+                    </div>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Cantidad</label>
+                        <input
+                            type="number"
+                            className="glass-input"
+                            placeholder="0.00"
+                            value={formData.stock}
+                            onChange={(e) => setFormData({ ...formData, stock: parseFloat(e.target.value) || 0 })}
+                        />
+                    </div>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Foto (Opcional)</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <label className="glass-button" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Camera size={16} />
+                                {photoFile ? 'Cambiar Foto' : 'Tomar Foto / Subir'}
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    style={{ display: 'none' }}
+                                    onChange={(e) => setPhotoFile(e.target.files[0])}
+                                />
+                            </label>
+                            {photoFile && <span style={{ fontSize: '0.8rem', color: 'var(--accent-green)' }}>Foto seleccionada</span>}
+                        </div>
+                    </div>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Unidad</label>
+                        <select
+                            className="glass-input"
+                            value={formData.unit}
+                            onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                        >
+                            <option>Litros</option>
+                            <option>Kilos</option>
+                            <option>Galones</option>
+                            <option>Unidades</option>
+                        </select>
+                    </div>
+                    <button
+                        className="glass-button primary"
+                        style={{ marginTop: '1rem', width: '100%' }}
+                        onClick={handleSave}
+                        disabled={isUploading}
+                    >
+                        {isUploading ? 'Subiendo Foto...' : 'Guardar Entrada'}
+                    </button>
+                </div>
+            </Modal>
+        </div>
+    );
+};

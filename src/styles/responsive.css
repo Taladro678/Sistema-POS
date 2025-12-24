@@ -1,0 +1,137 @@
+/* Responsive Layout */
+
+/* Base Layout (Desktop) */
+.app-container {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 220px;
+    height: 100vh;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    transition: width 0.3s ease;
+    border-radius: 0;
+    /* Remove rounded corners for flush look */
+}
+
+.sidebar-label {
+    display: block;
+    opacity: 1;
+    transition: opacity 0.2s ease;
+    white-space: nowrap;
+    font-size: 0.9rem;
+}
+
+.main-content {
+    flex: 1;
+    padding: 0.5rem;
+    overflow-y: auto;
+    min-width: 0;
+}
+
+/* POS Layout */
+.pos-container {
+    display: flex;
+    height: 100%;
+    gap: 1rem;
+}
+
+.pos-grid-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-width: 0;
+}
+
+.pos-cart-area {
+    width: 300px;
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+}
+
+/* Tablet / Medium Laptop (max-width: 1200px) */
+@media (max-width: 1200px) {
+    .sidebar {
+        width: 80px;
+        padding: 1rem;
+        align-items: center;
+    }
+
+    .sidebar-header {
+        display: none;
+    }
+
+    .sidebar-label {
+        display: none;
+    }
+
+    .sidebar nav a {
+        justify-content: center !important;
+        padding: 0.75rem !important;
+    }
+
+    .pos-cart-area {
+        width: 280px;
+    }
+}
+
+/* Mobile / Narrow Window (max-width: 768px) */
+@media (max-width: 768px) {
+    .app-container {
+        flex-direction: column-reverse;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+        margin: 0;
+        flex-direction: row;
+        justify-content: space-around;
+        padding: 0.5rem;
+        border-radius: 0;
+        border-top: var(--glass-border);
+        background: var(--bg-dark);
+        z-index: 100;
+    }
+
+    .sidebar nav {
+        flex-direction: row !important;
+        width: 100%;
+        justify-content: space-around;
+    }
+
+    .sidebar-user {
+        display: none;
+    }
+
+    .main-content {
+        padding-bottom: 0;
+    }
+
+    .pos-container {
+        position: relative;
+    }
+
+    .pos-cart-area {
+        position: fixed;
+        top: 0;
+        right: 0;
+        height: calc(100dvh - 55px) !important;
+        width: 100% !important;
+        max-width: none !important;
+        z-index: 2147483647 !important;
+        transform: translateX(110%);
+        background: #000000 !important;
+        border-left: none;
+    }
+
+    .pos-cart-area.open {
+        transform: translateX(0);
+    }
+}
