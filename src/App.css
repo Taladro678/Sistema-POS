@@ -455,6 +455,7 @@
 
   .sidebar-header,
   .sidebar-user,
+  .sidebar-toggle-container,
   .sidebar button.glass-button:last-child {
     display: none !important;
   }

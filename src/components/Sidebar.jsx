@@ -34,7 +34,7 @@ const Sidebar = () => {
 
 
             {/* Toggle Button at the top */}
-            <div style={{ display: 'flex', justifyContent: isCollapsed ? 'center' : 'flex-end', marginBottom: '1rem' }}>
+            <div className="sidebar-toggle-container" style={{ display: 'flex', justifyContent: isCollapsed ? 'center' : 'flex-end', marginBottom: '1rem' }}>
                 <button
                     className="glass-button"
                     onClick={toggleSidebar}
