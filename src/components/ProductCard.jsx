@@ -28,6 +28,27 @@ const ProductCard = ({ product, onAdd }) => {
                     alt={product.name}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
+                {product.quantity > 0 && (
+                    <div style={{
+                        position: 'absolute',
+                        top: '4px',
+                        right: '4px',
+                        background: 'var(--accent-red)',
+                        color: 'white',
+                        borderRadius: '50%',
+                        width: '24px',
+                        height: '24px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.8rem',
+                        fontWeight: 'bold',
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
+                        border: '1px solid rgba(255,255,255,0.2)'
+                    }}>
+                        {product.quantity}
+                    </div>
+                )}
             </div>
             <div>
                 <h3 style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{product.name}</h3>

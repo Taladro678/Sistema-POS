@@ -336,7 +336,7 @@ export const POSPage = () => {
                                 </button>
 
                                 {/* Dynamic Category List (Scrollable) */}
-                                <div className="no-scrollbar" style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', flex: 1, alignItems: 'center' }}>
+                                <div className="no-scrollbar" style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', flex: 1, alignItems: 'center', paddingRight: '1rem', minWidth: 0 }}>
                                     {categories.map(cat => (
                                         <button
                                             key={cat.id}
@@ -500,9 +500,17 @@ export const POSPage = () => {
                     overflowY: 'auto',
                     paddingRight: '0.25rem'
                 }}>
-                    {filteredProducts.map(product => (
-                        <ProductCard key={product.id} product={product} onAdd={addToCart} />
-                    ))}
+                    {filteredProducts.map(product => {
+                        const cartItem = cart.find(c => c.id === product.id);
+                        const quantity = cartItem ? cartItem.quantity : 0;
+                        return (
+                            <ProductCard
+                                key={product.id}
+                                product={{ ...product, quantity }}
+                                onAdd={addToCart}
+                            />
+                        );
+                    })}
                 </div>
             </div>
 
