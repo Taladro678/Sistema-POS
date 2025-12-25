@@ -448,7 +448,7 @@
     /* Even smaller nav */
     flex-direction: row;
     z-index: 100;
-    padding: 0.2rem !important;
+    padding: 0 !important;
     border-top: 1px solid var(--glass-border);
     justify-content: space-around;
   }
@@ -492,8 +492,15 @@
     /* Remove individual borders */
     border-right: 1px solid var(--glass-border) !important;
     /* Add separator */
-    background: transparent !important;
-    /* Remove individual button bg */
+    background: transparent;
+    /* Allow active state to show */
+  }
+
+  /* Active State for seamless bar */
+  .sidebar nav a.primary {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-bottom: 3px solid var(--accent-blue) !important;
+    color: var(--accent-blue) !important;
   }
 
   /* Remove right border from last item */
