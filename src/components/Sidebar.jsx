@@ -6,6 +6,13 @@ import { useSettings } from '../context/SettingsContext';
 const Sidebar = () => {
     const { settings, toggleSidebar } = useSettings();
     const isCollapsed = settings.isSidebarCollapsed;
+    const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
+
+    React.useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const navItems = [
         { path: '/tables', icon: Coffee, label: 'Mesas' },
@@ -33,23 +40,25 @@ const Sidebar = () => {
         >
 
 
-            {/* Toggle Button at the top */}
-            <div className="sidebar-toggle-container" style={{ display: 'flex', justifyContent: isCollapsed ? 'center' : 'flex-end', marginBottom: '1rem' }}>
-                <button
-                    className="glass-button"
-                    onClick={toggleSidebar}
-                    style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        padding: '0.5rem',
-                        color: 'var(--text-secondary)'
-                    }}
-                    title={isCollapsed ? "Expandir" : "Contraer"}
-                >
-                    {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-                </button>
-            </div>
+            {/* Toggle Button at the top - HIDDEN ON MOBILE */}
+            {!isMobile && (
+                <div className="sidebar-toggle-container" style={{ display: 'flex', justifyContent: isCollapsed ? 'center' : 'flex-end', marginBottom: '1rem' }}>
+                    <button
+                        className="glass-button"
+                        onClick={toggleSidebar}
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            padding: '0.5rem',
+                            color: 'var(--text-secondary)'
+                        }}
+                        title={isCollapsed ? "Expandir" : "Contraer"}
+                    >
+                        {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+                    </button>
+                </div>
+            )}
 
             <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1, overflowY: 'auto' }}>
                 {navItems.map((item) => (
