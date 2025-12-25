@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { ShoppingCart, Package, Users, Truck, Settings, ChevronLeft, ChevronRight, Tag, Coffee, Calculator, BarChart } from 'lucide-react';
+import { ShoppingCart, Package, Users, Truck, Settings, ChevronLeft, ChevronRight, Tag, Coffee, Calculator, BarChart, ChevronUp } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 
 const Sidebar = () => {
@@ -132,11 +132,7 @@ const Sidebar = () => {
                             minWidth: '32px' // Ultra slim
                         }}
                     >
-                        <div style={{ display: 'flex', gap: '3px', flexDirection: 'column', alignItems: 'center' }}>
-                            <div style={{ width: '3px', height: '3px', background: 'white', borderRadius: '50%' }}></div>
-                            <div style={{ width: '3px', height: '3px', background: 'white', borderRadius: '50%' }}></div>
-                            <div style={{ width: '3px', height: '3px', background: 'white', borderRadius: '50%' }}></div>
-                        </div>
+                        <ChevronUp size={20} />
                     </button>
                 )}
             </nav>
