@@ -12,11 +12,11 @@ export const InventoryPage = () => {
     const [formData, setFormData] = useState({
         name: '',
         category: 'Materia Prima',
-        stock: 0,
+        stock: '',
         unit: 'Litros',
         status: 'ok',
         supplierId: '',
-        cost: 0,
+        cost: '',
         paymentCondition: 'Contado' // 'Contado' or 'Credito'
     });
 
@@ -45,28 +45,30 @@ export const InventoryPage = () => {
         }
 
         // Determine status based on stock
-        const status = formData.stock < 10 ? 'low' : 'ok';
+        const stockNum = parseFloat(formData.stock) || 0;
+        const status = stockNum < 10 ? 'low' : 'ok';
 
         // Debt Logic
         if (formData.paymentCondition === 'Credito' && formData.supplierId) {
             const supplier = data.suppliers.find(s => s.id === parseInt(formData.supplierId));
             if (supplier) {
-                const newDebt = (supplier.debt || 0) + parseFloat(formData.cost);
+                const costNum = parseFloat(formData.cost) || 0;
+                const newDebt = (supplier.debt || 0) + costNum;
                 updateItem('suppliers', supplier.id, { debt: newDebt });
                 // Optional: Log transaction on supplier? For now just update debt.
             }
         }
 
-        addItem('inventory', { ...formData, status, photo: photoLink });
+        addItem('inventory', { ...formData, stock: stockNum, cost: parseFloat(formData.cost) || 0, status, photo: photoLink });
         setIsModalOpen(false);
         setFormData({
             name: '',
             category: 'Materia Prima',
-            stock: 0,
+            stock: '',
             unit: 'Litros',
             status: 'ok',
             supplierId: '',
-            cost: 0,
+            cost: '',
             paymentCondition: 'Contado'
         });
         setPhotoFile(null);
@@ -177,7 +179,7 @@ export const InventoryPage = () => {
                             className="glass-input"
                             placeholder="0.00"
                             value={formData.stock}
-                            onChange={(e) => setFormData({ ...formData, stock: parseFloat(e.target.value) || 0 })}
+                            onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
                         />
                     </div>
 
@@ -203,7 +205,7 @@ export const InventoryPage = () => {
                                 className="glass-input"
                                 placeholder="0.00"
                                 value={formData.cost}
-                                onChange={(e) => setFormData({ ...formData, cost: parseFloat(e.target.value) || 0 })}
+                                onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
                             />
                         </div>
                     </div>

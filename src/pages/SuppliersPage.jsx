@@ -28,7 +28,7 @@ export const SuppliersPage = () => {
 
     const [paymentData, setPaymentData] = useState({
         supplierId: null,
-        amount: 0,
+        amount: '',
         source: 'Caja Chica',
         reference: '',
         proof: null
@@ -66,7 +66,7 @@ export const SuppliersPage = () => {
     const openPaymentModal = (row) => {
         setPaymentData({
             supplierId: row.id,
-            amount: 0,
+            amount: '',
             source: 'Caja Chica',
             reference: '',
             proof: null
