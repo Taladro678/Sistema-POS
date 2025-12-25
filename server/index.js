@@ -79,7 +79,7 @@ app.get('/api/health', (req, res) => {
 
 // Sync Endpoint: Client pushes its data, Server merges and returns latest
 app.post('/api/sync', (req, res) => {
-    const { clientData, lastSyncTime } = req.body;
+    const { clientData } = req.body;
 
     // TODO: Implement smart merging logic
     // For now, simpler "Server Authority" for shared lists, but "Append" for transactions (Sales)

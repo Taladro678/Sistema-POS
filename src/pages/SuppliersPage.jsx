@@ -5,7 +5,7 @@ import Modal from '../components/Modal';
 import { Plus, Phone, DollarSign, Edit, Trash2 } from 'lucide-react';
 
 export const SuppliersPage = () => {
-    const { data, addItem, deleteItem, updateItem } = useData();
+    const { data, addItem, deleteItem } = useData();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
@@ -74,46 +74,7 @@ export const SuppliersPage = () => {
         }
     ];
 
-    // Payment Logic
-    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-    const [selectedSupplier, setSelectedSupplier] = useState(null);
-    const [paymentFile, setPaymentFile] = useState(null);
-    const [isUploading, setIsUploading] = useState(false);
 
-    const handleOpenPayment = (supplier) => {
-        setSelectedSupplier(supplier);
-        setPaymentFile(null);
-        setIsPaymentModalOpen(true);
-    };
-
-    const handleProcessPayment = async () => {
-        if (!selectedSupplier) return;
-
-        let receiptLink = 'N/A';
-
-        if (paymentFile) {
-            setIsUploading(true);
-            const result = await data.uploadToDrive(paymentFile, 'Comprobantes Proveedores');
-            setIsUploading(false);
-
-            if (result && result.webViewLink) {
-                receiptLink = result.webViewLink;
-            } else {
-                if (!window.confirm('No se pudo subir el comprobante. ¿Deseas registrar el pago sin comprobante?')) {
-                    return;
-                }
-            }
-        }
-
-        // Update supplier debt (assuming full payment for simplicity or just recording transaction)
-        // In a real app we'd ask for amount. For now, let's just update lastDelivery date as a proxy for interaction
-        // or maybe reduce debt to 0? Let's just update lastDelivery for now to avoid complex debt logic without UI
-        const today = new Date().toLocaleDateString();
-        updateItem('suppliers', selectedSupplier.id, { lastDelivery: today });
-
-        alert(`Pago registrado para ${selectedSupplier.name}. Comprobante: ${receiptLink !== 'N/A' ? 'Subido a Drive' : 'No adjuntado'}`);
-        setIsPaymentModalOpen(false);
-    };
 
     const actions = (row) => (
         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
@@ -124,7 +85,7 @@ export const SuppliersPage = () => {
                 className="glass-button accent"
                 style={{ padding: '0.5rem' }}
                 title="Registrar Pago"
-                onClick={() => handleOpenPayment(row)}
+                onClick={() => alert(`Registrar pago para: ${row.name} (Próximamente)`)}
             >
                 <DollarSign size={16} />
             </button>

@@ -11,6 +11,20 @@ import {
     Download
 } from 'lucide-react';
 
+const mapMethodLabel = (method) => {
+    const labels = {
+        'bancaribe': 'Bancaribe',
+        'banplus': 'Banplus',
+        'banesco': 'Banesco',
+        'pago_movil': 'Pago Móvil',
+        'zelle': 'Zelle',
+        'efectivo_bs': 'Efectivo Bs',
+        'usd': 'USD ($)',
+        'punto': 'Punto de Venta'
+    };
+    return labels[method] || method || 'Otro';
+};
+
 const ReportsPage = () => {
     const { data } = useData();
     const sales = useMemo(() => data.sales || [], [data.sales]);
@@ -108,19 +122,7 @@ const ReportsPage = () => {
         return { totalUSD, totalBs, totalConverted, methodBreakdown };
     }, [filteredSales, exchangeRate]);
 
-    function mapMethodLabel(method) {
-        const labels = {
-            'bancaribe': 'Bancaribe',
-            'banplus': 'Banplus',
-            'banesco': 'Banesco',
-            'pago_movil': 'Pago Móvil',
-            'zelle': 'Zelle',
-            'efectivo_bs': 'Efectivo Bs',
-            'usd': 'USD ($)',
-            'punto': 'Punto de Venta'
-        };
-        return labels[method] || method || 'Otro';
-    }
+
 
     return (
         <div style={{ padding: '1rem', height: '100%', overflowY: 'auto' }}>

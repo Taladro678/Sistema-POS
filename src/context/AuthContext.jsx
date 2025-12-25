@@ -1,23 +1,21 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext } from 'react';
 import { useData } from './DataContext';
 
 const AuthContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
     const { data } = useData();
-    const [currentUser, setCurrentUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [currentUser, setCurrentUser] = useState(() => {
+        const savedUser = localStorage.getItem('currentUser');
+        return savedUser ? JSON.parse(savedUser) : null;
+    });
+    const [loading] = useState(false);
 
     // Check for saved session on load (optional, for now we require login on refresh for security)
-    useEffect(() => {
-        const savedUser = localStorage.getItem('currentUser');
-        if (savedUser) {
-            setCurrentUser(JSON.parse(savedUser));
-        }
-        setLoading(false);
-    }, []);
+
 
     const login = (pin) => {
         // 1. Find user by PIN in the personnel list

@@ -1,10 +1,12 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { inventoryItems, suppliers, personnel, products } from '../data/mockData';
 import { googleDriveService } from '../services/googleDrive';
 import { localSyncService } from '../services/localSync';
+import { firebaseSyncService } from '../services/firebase';
 
 const DataContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useData = () => useContext(DataContext);
 
 export const DataProvider = ({ children }) => {
@@ -71,7 +73,7 @@ export const DataProvider = ({ children }) => {
                 isInitialized: true
             }));
         }
-    }, []);
+    }, [data.isInitialized]);
 
     const [isDriveConnected, setIsDriveConnected] = useState(false);
     const [syncStatus, setSyncStatus] = useState('idle'); // idle, syncing, success, error
@@ -126,6 +128,18 @@ export const DataProvider = ({ children }) => {
 
             return () => clearTimeout(timeoutId);
         }
+
+        // --- HYBRID CLOUD SYNC ---
+        // Sync sales to Firebase in background (Fire-and-forget style)
+        if (data.sales && data.sales.length > 0) {
+            // Basic strategy: Sync recently modified sales or just batch all (Firestore handles idempotency)
+            // For efficiency, we could track 'unsynced' items, but for now we'll rely on the service to handle it.
+            // We use a small debounce to avoid spamming Firestore on every keystroke
+            const cloudTimeoutId = setTimeout(() => {
+                firebaseSyncService.uploadSalesBatch(data.sales);
+            }, 5000); // 5 seconds debounce for cloud
+            return () => clearTimeout(cloudTimeoutId);
+        }
     }, [data, isDriveConnected]);
 
     // --- LOCAL SYNC INTEGRATION ---
@@ -176,7 +190,7 @@ export const DataProvider = ({ children }) => {
         });
 
         return () => unsubscribe();
-    }, []); // Run once on mount
+    }, [data.heldOrders, data.kitchenOrders, data.sales]); // Run once on mount
 
     // Trigger sync when critical data changes
     useEffect(() => {
@@ -414,7 +428,7 @@ export const DataProvider = ({ children }) => {
                 } else {
                     alert('Archivo de respaldo inválido.');
                 }
-            } catch (error) {
+            } catch {
                 alert('Error al leer el archivo.');
             }
         };
@@ -454,7 +468,7 @@ export const DataProvider = ({ children }) => {
         }
     };
 
-    const syncFromDrive = async (silent = false) => {
+    const syncFromDrive = useCallback(async (silent = false) => {
         if (!isDriveConnected) {
             if (!silent) alert('Conecta Google Drive primero.');
             return;
@@ -473,6 +487,7 @@ export const DataProvider = ({ children }) => {
                     if (remoteTime > localTime + 1000) {
                         console.log('Remote data is newer. Syncing...');
                         // Set flag to prevent immediate re-upload
+                        // eslint-disable-next-line react-hooks/immutability
                         isRemoteUpdate.current = true;
                         setData(backup.data);
                         if (backup.settings) {
@@ -487,15 +502,21 @@ export const DataProvider = ({ children }) => {
                     if (!silent) setTimeout(() => setSyncStatus('idle'), 3000);
                 }
             } else {
-                if (!silent) alert('No se encontró copia de seguridad en Drive.');
-                if (!silent) setSyncStatus('idle');
+                // No file found
+                if (!silent) {
+                    setSyncStatus('idle');
+                    alert('No se encontró respaldo en Drive.');
+                }
             }
         } catch (error) {
-            console.error('Sync download failed:', error);
-            if (!silent) setSyncStatus('error');
-            // if (!silent) alert('Error al descargar datos de Drive.'); // Don't annoy user on auto-poll
+            console.error('Sync failed:', error);
+            if (!silent) {
+                setSyncStatus('error');
+                alert('Error al sincronizar desde Drive.');
+            }
         }
-    };
+    }, [isDriveConnected, data.lastModified]);
+
 
     // Auto-Polling Effect
     useEffect(() => {
@@ -512,7 +533,7 @@ export const DataProvider = ({ children }) => {
         return () => {
             if (intervalId) clearInterval(intervalId);
         };
-    }, [isDriveConnected]);
+    }, [isDriveConnected, syncFromDrive]);
 
     return (
         <DataContext.Provider value={{
@@ -531,6 +552,7 @@ export const DataProvider = ({ children }) => {
             syncStatus,
             holdOrder,
             deleteHeldOrder,
+            addTip,
             distributeTips,
             sendToKitchen,
             updateExchangeRate,

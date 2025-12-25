@@ -200,7 +200,7 @@ export const POSPage = () => {
             result = result.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
         }
         return result;
-    }, [selectedCategory, searchQuery]);
+    }, [selectedCategory, searchQuery, data.products]);
 
     const addToCart = (product) => {
         setCart(prevCart => {
@@ -239,7 +239,7 @@ export const POSPage = () => {
     const total = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
     const discountNum = parseFloat(discountValue) || 0;
     const discountAmount = discountType === 'percent' ? (total * (discountNum / 100)) : discountNum;
-    const finalTotal = Math.max(0, total - discountAmount);
+
 
     const handlePayClick = () => {
         setIsPaymentModalOpen(true);

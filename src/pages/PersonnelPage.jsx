@@ -5,7 +5,7 @@ import Modal from '../components/Modal';
 import { UserPlus, FileText, DollarSign, Trash2, Gift } from 'lucide-react';
 
 export const PersonnelPage = () => {
-    const { data, addItem, deleteItem, distributeTips } = useData();
+    const { data, addItem, deleteItem, distributeTips, updateItem } = useData();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isTipsModalOpen, setIsTipsModalOpen] = useState(false);
     const [paymentFrequency, setPaymentFrequency] = useState('Quincenal');
