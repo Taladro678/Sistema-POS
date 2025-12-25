@@ -5,15 +5,33 @@ import Modal from '../components/Modal';
 import { Plus, Phone, DollarSign, Edit, Trash2 } from 'lucide-react';
 
 export const SuppliersPage = () => {
-    const { data, addItem, deleteItem } = useData();
+    const { data, addItem, deleteItem, updateItem } = useData();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const [photoFile, setPhotoFile] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
+
+    // Sort State
+    const [sortBy, setSortBy] = useState('recent'); // recent, old, debtHigh, debtLow
+
     const [formData, setFormData] = useState({
         name: '',
         contact: '',
         phone: '',
         product: 'Leche',
         debt: 0,
-        lastDelivery: new Date().toLocaleDateString()
+        lastDelivery: new Date().toLocaleDateString(),
+        paymentMethod: 'Efectivo', // Default
+        bankName: '',
+        reference: ''
+    });
+
+    const [paymentData, setPaymentData] = useState({
+        supplierId: null,
+        amount: 0,
+        source: 'Caja Chica',
+        reference: '',
+        proof: null
     });
 
     const handleDelete = (id) => {
@@ -38,9 +56,76 @@ export const SuppliersPage = () => {
             phone: '',
             product: 'Leche',
             debt: 0,
-            lastDelivery: new Date().toLocaleDateString()
+            lastDelivery: new Date().toLocaleDateString(),
+            paymentMethod: 'Efectivo',
+            bankName: '',
+            reference: ''
         });
     };
+
+    const openPaymentModal = (row) => {
+        setPaymentData({
+            supplierId: row.id,
+            amount: 0,
+            source: 'Caja Chica',
+            reference: '',
+            proof: null
+        });
+        setIsPaymentModalOpen(true);
+    };
+
+    const handleRegisterPayment = async () => {
+        if (paymentData.amount <= 0) return alert('El monto debe ser mayor a 0');
+
+        const supplier = data.suppliers.find(s => s.id === paymentData.supplierId);
+        if (!supplier) return;
+
+        if (paymentData.amount > supplier.debt) return alert('El monto no puede ser mayor a la deuda actual');
+
+        let proofLink = 'N/A';
+        if (photoFile) {
+            setIsUploading(true);
+            const result = await data.uploadToDrive(photoFile, 'Comprobantes Pago');
+            setIsUploading(false);
+            if (result && result.webViewLink) {
+                proofLink = result.webViewLink;
+            }
+        }
+
+        const newDebt = supplier.debt - parseFloat(paymentData.amount);
+
+        // Update Supplier
+        updateItem('suppliers', supplier.id, {
+            debt: newDebt,
+            // Optionally store transaction history in the supplier object or a separate 'transactions' collection
+            transactions: [
+                ...(supplier.transactions || []),
+                {
+                    id: Date.now(),
+                    date: new Date().toISOString(),
+                    amount: parseFloat(paymentData.amount),
+                    source: paymentData.source,
+                    reference: paymentData.reference,
+                    proof: proofLink
+                }
+            ]
+        });
+
+        setIsPaymentModalOpen(false);
+        setPhotoFile(null);
+    };
+
+    // Sorting Logic
+    const sortedSuppliers = [...data.suppliers].sort((a, b) => {
+        if (sortBy === 'debtHigh') return b.debt - a.debt;
+        if (sortBy === 'debtLow') return a.debt - b.debt;
+        // Mock dates for this example if needed, but assuming lastDelivery is string. 
+        // For distinct "Recent/Old" logic, we rely on ID (creation time) effectively as proxy if dates are equal 
+        // or parse the date string. Let's start with ID reverse for "recent".
+        if (sortBy === 'recent') return b.id - a.id;
+        if (sortBy === 'old') return a.id - b.id;
+        return 0;
+    });
 
     const columns = [
         { header: 'Finca / Empresa', accessor: 'name' },
@@ -85,7 +170,7 @@ export const SuppliersPage = () => {
                 className="glass-button accent"
                 style={{ padding: '0.5rem' }}
                 title="Registrar Pago"
-                onClick={() => alert(`Registrar pago para: ${row.name} (Próximamente)`)}
+                onClick={() => openPaymentModal(row)}
             >
                 <DollarSign size={16} />
             </button>
@@ -135,7 +220,92 @@ export const SuppliersPage = () => {
                 </div>
             </div>
 
-            <DataTable columns={columns} data={data.suppliers} actions={actions} />
+            {/* Sort Controls */}
+            <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
+                {[
+                    { id: 'recent', label: 'Más Reciente' },
+                    { id: 'old', label: 'Más Antiguo' },
+                    { id: 'debtHigh', label: 'Mayor Deuda' },
+                    { id: 'debtLow', label: 'Menor Deuda' }
+                ].map(opt => (
+                    <button
+                        key={opt.id}
+                        className={`glass-button ${sortBy === opt.id ? 'active' : ''}`}
+                        onClick={() => setSortBy(opt.id)}
+                        style={{
+                            fontSize: '0.85rem',
+                            background: sortBy === opt.id ? 'rgba(255,255,255,0.15)' : 'transparent',
+                            borderColor: sortBy === opt.id ? 'var(--accent-blue)' : 'rgba(255,255,255,0.1)'
+                        }}
+                    >
+                        {opt.label}
+                    </button>
+                ))}
+            </div>
+
+            <DataTable columns={columns} data={sortedSuppliers} actions={actions} />
+
+            <Modal
+                isOpen={isPaymentModalOpen}
+                onClose={() => setIsPaymentModalOpen(false)}
+                title="Registrar Pago a Proveedor"
+            >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Monto a Pagar ($)</label>
+                        <input
+                            type="number"
+                            className="glass-input"
+                            value={paymentData.amount}
+                            onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
+                        />
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                            Deuda Actual: <span style={{ color: 'var(--accent-red)' }}>${data.suppliers.find(s => s.id === paymentData.supplierId)?.debt.toFixed(2)}</span>
+                        </p>
+                    </div>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Fuente de Pago</label>
+                        <select
+                            className="glass-input"
+                            value={paymentData.source}
+                            onChange={(e) => setPaymentData({ ...paymentData, source: e.target.value })}
+                        >
+                            <option>Caja Chica</option>
+                            <option>Banco (Transferencia)</option>
+                            <option>Efectivo (Externo)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Referencia / Notas</label>
+                        <input
+                            type="text"
+                            className="glass-input"
+                            placeholder="Nro. Referencia..."
+                            value={paymentData.reference}
+                            onChange={(e) => setPaymentData({ ...paymentData, reference: e.target.value })}
+                        />
+                    </div>
+                    {/* Proof Upload (Reusing Camera/File Input logic logic) */}
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Comprobante (Opcional)</label>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setPhotoFile(e.target.files[0])}
+                            style={{ color: 'var(--text-secondary)' }}
+                        />
+                    </div>
+
+                    <button
+                        className="glass-button primary"
+                        style={{ marginTop: '1rem', width: '100%' }}
+                        onClick={handleRegisterPayment}
+                        disabled={isUploading}
+                    >
+                        {isUploading ? 'Subiendo...' : 'Confirmar Pago'}
+                    </button>
+                </div>
+            </Modal>
 
             <Modal
                 isOpen={isModalOpen}

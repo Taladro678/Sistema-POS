@@ -40,6 +40,7 @@ export const POSPage = () => {
     const [payments, setPayments] = useState([]);
     const [currentPaymentAmount, setCurrentPaymentAmount] = useState('');
     const [currentPaymentMethod, setCurrentPaymentMethod] = useState('');
+    const [selectedCustomerId, setSelectedCustomerId] = useState(''); // For Credit Payments
 
     // Discount & Notes State
     const [discountValue, setDiscountValue] = useState('');
@@ -48,7 +49,7 @@ export const POSPage = () => {
 
     // Hold Order State
     const [isHeldOrdersModalOpen, setIsHeldOrdersModalOpen] = useState(false);
-    const { holdOrder, data, deleteHeldOrder, addTip, addItem } = useData();
+    const { holdOrder, data, deleteHeldOrder, addTip, addItem, updateItem } = useData();
     const heldOrders = data.heldOrders || [];
 
     // Sales Report State
@@ -145,6 +146,29 @@ export const POSPage = () => {
         const discountAmount = discountType === 'percent' ? (total * (discountNum / 100)) : discountNum;
         const finalTotal = Math.max(0, total - discountAmount);
 
+        // Accounts Receivable Logic
+        const creditPayments = (Array.isArray(overridePayments) ? overridePayments : payments).filter(p => p.method === 'Crédito (Fiado)');
+        if (creditPayments.length > 0) {
+            // Validate Customer Selection
+            // If we have a single 'Credit' payment covering everything or mixed. 
+            // We need to associate the debt to a customer.
+            // Ideally we should have selected a customer before adding the payment, but for now we enforce it at finalize if not flexible.
+            // Actually, let's look for `selectedCustomerId` state.
+
+            if (!selectedCustomerId) {
+                alert('Para ventas a crédito debe seleccionar un Cliente.');
+                return;
+            }
+
+            // Update Customer Balance
+            const customer = data.customers.find(c => c.id === parseInt(selectedCustomerId));
+            if (customer) {
+                const totalCreditAmount = creditPayments.reduce((sum, p) => sum + p.amount, 0); // Amount is already in USD base
+                const newBalance = (customer.balance || 0) + totalCreditAmount;
+                updateItem('customers', customer.id, { balance: newBalance });
+            }
+        }
+
         const newSale = {
             id: window.crypto.randomUUID(),
             items: cart,
@@ -187,6 +211,7 @@ export const POSPage = () => {
         setIsCartOpen(false);
         setIsPaymentModalOpen(false);
         setSelectedPaymentMethod('');
+        setSelectedCustomerId('');
     };
 
     // ...
@@ -260,6 +285,7 @@ export const POSPage = () => {
         { id: 'zelle', label: 'Zelle', color: '#582c83' },
         { id: 'efectivo_bs', label: 'Efectivo Bs', color: '#7f8c8d' },
         { id: 'usd', label: 'USD ($)', color: '#27ae60' },
+        { id: 'credito', label: 'Crédito (Fiado)', color: '#e74c3c' },
     ];
 
     // Sales Report Calculations
@@ -683,6 +709,28 @@ export const POSPage = () => {
                                     <option key={m.id} value={m.label} style={{ color: '#ffffff', backgroundColor: '#000000' }}>{m.label}</option>
                                 ))}
                             </select>
+                            {/* Customer Select for Credit (Conditional) */}
+                            {currentPaymentMethod === 'Crédito (Fiado)' && (
+                                <select
+                                    value={selectedCustomerId}
+                                    onChange={(e) => setSelectedCustomerId(e.target.value)}
+                                    style={{
+                                        flex: 1.5,
+                                        height: '32px',
+                                        fontSize: '0.9rem',
+                                        color: '#ffffff',
+                                        backgroundColor: '#000000',
+                                        border: '1px solid var(--accent-red)',
+                                        borderRadius: '4px',
+                                        padding: '0 0.5rem'
+                                    }}
+                                >
+                                    <option value="" style={{ color: '#ffffff', backgroundColor: '#000000' }}>Seleccionar Cliente...</option>
+                                    {data.customers.map(c => (
+                                        <option key={c.id} value={c.id} style={{ color: '#ffffff', backgroundColor: '#000000' }}>{c.name}</option>
+                                    ))}
+                                </select>
+                            )}
                             <button
                                 className="glass-button accent"
                                 onClick={() => {

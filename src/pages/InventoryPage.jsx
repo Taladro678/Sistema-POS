@@ -5,7 +5,7 @@ import Modal from '../components/Modal';
 import { Plus, AlertTriangle, CheckCircle, Camera, Trash2 } from 'lucide-react';
 
 export const InventoryPage = () => {
-    const { data, addItem, deleteItem } = useData();
+    const { data, addItem, deleteItem, updateItem } = useData();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [photoFile, setPhotoFile] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -14,7 +14,10 @@ export const InventoryPage = () => {
         category: 'Materia Prima',
         stock: 0,
         unit: 'Litros',
-        status: 'ok'
+        status: 'ok',
+        supplierId: '',
+        cost: 0,
+        paymentCondition: 'Contado' // 'Contado' or 'Credito'
     });
 
     const handleDelete = (id) => {
@@ -41,8 +44,18 @@ export const InventoryPage = () => {
             }
         }
 
-        // Determine status based on stock (simple logic for now)
+        // Determine status based on stock
         const status = formData.stock < 10 ? 'low' : 'ok';
+
+        // Debt Logic
+        if (formData.paymentCondition === 'Credito' && formData.supplierId) {
+            const supplier = data.suppliers.find(s => s.id === parseInt(formData.supplierId));
+            if (supplier) {
+                const newDebt = (supplier.debt || 0) + parseFloat(formData.cost);
+                updateItem('suppliers', supplier.id, { debt: newDebt });
+                // Optional: Log transaction on supplier? For now just update debt.
+            }
+        }
 
         addItem('inventory', { ...formData, status, photo: photoLink });
         setIsModalOpen(false);
@@ -51,7 +64,10 @@ export const InventoryPage = () => {
             category: 'Materia Prima',
             stock: 0,
             unit: 'Litros',
-            status: 'ok'
+            status: 'ok',
+            supplierId: '',
+            cost: 0,
+            paymentCondition: 'Contado'
         });
         setPhotoFile(null);
     };
@@ -163,6 +179,56 @@ export const InventoryPage = () => {
                             value={formData.stock}
                             onChange={(e) => setFormData({ ...formData, stock: parseFloat(e.target.value) || 0 })}
                         />
+                    </div>
+
+                    {/* New Fields: Supplier, Cost, Payment Condition */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Proveedor</label>
+                            <select
+                                className="glass-input"
+                                value={formData.supplierId}
+                                onChange={(e) => setFormData({ ...formData, supplierId: e.target.value })}
+                            >
+                                <option value="">Seleccionar...</option>
+                                {data.suppliers.map(s => (
+                                    <option key={s.id} value={s.id}>{s.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Costo Total ($)</label>
+                            <input
+                                type="number"
+                                className="glass-input"
+                                placeholder="0.00"
+                                value={formData.cost}
+                                onChange={(e) => setFormData({ ...formData, cost: parseFloat(e.target.value) || 0 })}
+                            />
+                        </div>
+                    </div>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Condición de Pago</label>
+                        <div style={{ display: 'flex', gap: '1rem' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                <input
+                                    type="radio"
+                                    name="paymentCondition"
+                                    checked={formData.paymentCondition === 'Contado'}
+                                    onChange={() => setFormData({ ...formData, paymentCondition: 'Contado' })}
+                                />
+                                Contado
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                <input
+                                    type="radio"
+                                    name="paymentCondition"
+                                    checked={formData.paymentCondition === 'Credito'}
+                                    onChange={() => setFormData({ ...formData, paymentCondition: 'Credito' })}
+                                />
+                                Crédito (Genera Deuda)
+                            </label>
+                        </div>
                     </div>
                     <div>
                         <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Foto (Opcional)</label>
