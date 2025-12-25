@@ -127,9 +127,9 @@ const Sidebar = () => {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            padding: '0.5rem',
-                            flex: '0 0 auto', // Prevent stretching
-                            minWidth: '40px' // Slimmer touch target
+                            padding: '0.25rem', // Minimal padding
+                            flex: '0 0 auto',
+                            minWidth: '32px' // Ultra slim
                         }}
                     >
                         <div style={{ display: 'flex', gap: '3px', flexDirection: 'column', alignItems: 'center' }}>
