@@ -463,8 +463,8 @@
   .sidebar nav {
     flex-direction: row !important;
     width: 100%;
-    justify-content: stretch !important;
-    /* Fill space */
+    justify-content: normal !important;
+    /* Let flex items grow */
     /* Distribute items */
     overflow-x: auto;
     padding-right: 0;
@@ -479,8 +479,8 @@
 
   .sidebar nav a,
   .sidebar nav button {
-    flex: 1 1 auto;
-    /* Grow to fill */
+    flex: 1 !important;
+    /* Force equal width and full growth */
     display: flex;
     justify-content: center;
     align-items: center;

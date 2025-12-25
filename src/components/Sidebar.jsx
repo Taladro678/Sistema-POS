@@ -43,12 +43,12 @@ const Sidebar = () => {
               ${isActive ? 'primary' : ''}
               ${isOverflow ? 'mobile-overflow-item' : ''}
             `}
-            style={{
+            style={isMobile ? {} : {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.75rem',
-                padding: isCollapsed && !isMobile && !isOverflow ? '0.5rem 0' : '0.5rem 0.75rem',
-                justifyContent: (isCollapsed && !isMobile && !isOverflow) ? 'center' : 'flex-start',
+                padding: isCollapsed && !isOverflow ? '0.5rem 0' : '0.5rem 0.75rem',
+                justifyContent: (isCollapsed && !isOverflow) ? 'center' : 'flex-start',
                 width: isOverflow ? '100%' : 'auto',
                 marginBottom: isOverflow ? '0.25rem' : '0'
             }}
@@ -115,7 +115,7 @@ const Sidebar = () => {
                 </div>
             )}
 
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1, overflowY: 'auto' }}>
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 0 : '0.25rem', flex: 1, overflowY: 'auto' }}>
                 {mainItems.map(item => renderNavLink(item))}
 
                 {/* Mobile "More" Button */}
@@ -123,7 +123,7 @@ const Sidebar = () => {
                     <button
                         className={`glass-button ${isMobileMenuOpen ? 'active' : ''}`}
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        style={{
+                        style={isMobile ? { flex: 1 } : {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
