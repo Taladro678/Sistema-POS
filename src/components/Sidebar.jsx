@@ -63,7 +63,7 @@ const Sidebar = () => {
         <aside
             className={`glass-panel sidebar ${isCollapsed ? 'collapsed' : ''}`}
             style={{
-                width: isCollapsed ? '50px' : settings.sidebarWidth,
+                width: isMobile ? '100%' : (isCollapsed ? '50px' : settings.sidebarWidth),
                 padding: isCollapsed ? '0' : '1rem',
                 borderRadius: 0, // Flush look
                 borderLeft: 'none',
