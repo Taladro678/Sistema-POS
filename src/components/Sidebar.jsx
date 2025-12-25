@@ -7,6 +7,7 @@ const Sidebar = () => {
     const { settings, toggleSidebar } = useSettings();
     const isCollapsed = settings.isSidebarCollapsed;
     const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false); // New state for mobile popup menu
 
     React.useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -25,6 +26,38 @@ const Sidebar = () => {
         { path: '/reports', icon: BarChart, label: 'Reportes' },
         { path: '/settings', icon: Settings, label: 'Configuración' },
     ];
+
+    // Mobile Logic: Split items
+    const mobileVisibleCount = 4; // Show first 4 items directly
+    const mainItems = isMobile ? navItems.slice(0, mobileVisibleCount) : navItems;
+    const overflowItems = isMobile ? navItems.slice(mobileVisibleCount) : [];
+
+    // Helper to render a nav link
+    const renderNavLink = (item, isOverflow = false) => (
+        <NavLink
+            key={item.path}
+            to={item.path}
+            onClick={() => isOverflow && setIsMobileMenuOpen(false)} // Close menu on click
+            className={({ isActive }) => `
+              glass-button
+              ${isActive ? 'primary' : ''}
+              ${isOverflow ? 'mobile-overflow-item' : ''}
+            `}
+            style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: isCollapsed && !isMobile && !isOverflow ? '0.5rem 0' : '0.5rem 0.75rem',
+                justifyContent: (isCollapsed && !isMobile && !isOverflow) ? 'center' : 'flex-start',
+                width: isOverflow ? '100%' : 'auto',
+                marginBottom: isOverflow ? '0.25rem' : '0'
+            }}
+            title={isCollapsed ? item.label : ''}
+        >
+            <item.icon size={20} />
+            {(!isCollapsed || isMobile) && <span className="sidebar-label" style={{ fontSize: '0.85rem', display: isMobile && !isOverflow ? 'none' : 'block' }}>{item.label}</span>}
+        </NavLink>
+    );
 
     return (
         <aside
@@ -60,28 +93,51 @@ const Sidebar = () => {
                 </div>
             )}
 
+            {/* Mobile Overflow Menu (Popup) */}
+            {isMobile && isMobileMenuOpen && (
+                <div
+                    className="glass-panel"
+                    style={{
+                        position: 'absolute',
+                        bottom: '55px', // Above the bar
+                        right: '0.5rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.25rem',
+                        padding: '0.5rem',
+                        zIndex: 200,
+                        background: '#000', // Ensure visibility
+                        border: '1px solid var(--glass-border)',
+                        minWidth: '180px'
+                    }}
+                >
+                    {overflowItems.map(item => renderNavLink(item, true))}
+                </div>
+            )}
+
             <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1, overflowY: 'auto' }}>
-                {navItems.map((item) => (
-                    <NavLink
-                        key={item.path}
-                        to={item.path}
-                        className={({ isActive }) => `
-              glass-button
-              ${isActive ? 'primary' : ''}
-            `}
+                {mainItems.map(item => renderNavLink(item))}
+
+                {/* Mobile "More" Button */}
+                {isMobile && overflowItems.length > 0 && (
+                    <button
+                        className={`glass-button ${isMobileMenuOpen ? 'active' : ''}`}
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                         style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '0.75rem',
-                            padding: isCollapsed ? '0.5rem 0' : '0.5rem 0.75rem',
-                            justifyContent: isCollapsed ? 'center' : 'flex-start',
+                            justifyContent: 'center',
+                            padding: '0.5rem',
+                            flex: '1 0 auto'
                         }}
-                        title={isCollapsed ? item.label : ''}
                     >
-                        <item.icon size={20} />
-                        {!isCollapsed && <span className="sidebar-label" style={{ fontSize: '0.85rem' }}>{item.label}</span>}
-                    </NavLink>
-                ))}
+                        <div style={{ display: 'flex', gap: '2px', flexDirection: 'column', alignItems: 'center' }}>
+                            <div style={{ width: '4px', height: '4px', background: 'white', borderRadius: '50%' }}></div>
+                            <div style={{ width: '4px', height: '4px', background: 'white', borderRadius: '50%' }}></div>
+                            <div style={{ width: '4px', height: '4px', background: 'white', borderRadius: '50%' }}></div>
+                        </div>
+                    </button>
+                )}
             </nav>
 
             <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
