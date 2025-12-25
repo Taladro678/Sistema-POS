@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { inventoryItems, suppliers, personnel, products } from '../data/mockData';
 import { googleDriveService } from '../services/googleDrive';
+import { localSyncService } from '../services/localSync';
 
 const DataContext = createContext();
 
@@ -127,6 +128,72 @@ export const DataProvider = ({ children }) => {
         }
     }, [data, isDriveConnected]);
 
+    // --- LOCAL SYNC INTEGRATION ---
+    const [isLocalServerConnected, setIsLocalServerConnected] = useState(false);
+
+    useEffect(() => {
+        // Connect to Local Server on startup
+        localSyncService.connect();
+
+        // Subscribe to updates
+        const unsubscribe = localSyncService.subscribe((type, payload) => {
+            if (type === 'connection_status') {
+                setIsLocalServerConnected(payload);
+            }
+            if (type === 'kitchen_order') {
+                console.log('🔔 New Kitchen Order received:', payload);
+                // Add to local state if not exists
+                setData(prev => {
+                    if (prev.kitchenOrders.find(o => o.id === payload.id)) return prev;
+                    return {
+                        ...prev,
+                        kitchenOrders: [...prev.kitchenOrders, payload],
+                        lastModified: new Date().toISOString()
+                    };
+                });
+            }
+            if (type === 'sync_update' || type === 'sync_needed') {
+                console.log('🔄 Sync requested by server');
+                // Trigger full sync
+                localSyncService.syncData({
+                    sales: data.sales,
+                    heldOrders: data.heldOrders,
+                    kitchenOrders: data.kitchenOrders
+                }).then(serverData => {
+                    if (serverData) {
+                        setData(prev => ({
+                            ...prev,
+                            // Merge logic could be more complex, for now we trust server lists for heldOrders/kitchenOrders
+                            kitchenOrders: serverData.kitchenOrders || prev.kitchenOrders,
+                            heldOrders: serverData.heldOrders || prev.heldOrders,
+                            // For sales, we might need to be careful not to lose local ones not yet synced
+                            // Simplified: Just trust server for now or keep local if server is empty
+                            lastModified: new Date().toISOString()
+                        }));
+                    }
+                });
+            }
+        });
+
+        return () => unsubscribe();
+    }, []); // Run once on mount
+
+    // Trigger sync when critical data changes
+    useEffect(() => {
+        if (isLocalServerConnected) {
+            const timeoutId = setTimeout(() => {
+                localSyncService.syncData({
+                    sales: data.sales,
+                    heldOrders: data.heldOrders,
+                    kitchenOrders: data.kitchenOrders,
+                    tables: data.tables
+                });
+            }, 2000); // 2s debounce for local sync
+            return () => clearTimeout(timeoutId);
+        }
+    }, [data.sales, data.heldOrders, data.kitchenOrders, data.tables, isLocalServerConnected]);
+
+
     // Generic Actions
     // Track if the update comes from remote to avoid re-uploading immediately
     const isRemoteUpdate = React.useRef(false);
@@ -226,7 +293,14 @@ export const DataProvider = ({ children }) => {
             timestamp: new Date().toISOString(),
             status: 'pending' // pending, ready, delivered
         };
+
+        // 1. Add locally
         addItem('kitchenOrders', order);
+
+        // 2. Try to send to Server (Real-time)
+        if (isLocalServerConnected) {
+            localSyncService.sendKitchenOrder(order);
+        }
     };
 
     // Exchange Rate Functions
@@ -457,10 +531,10 @@ export const DataProvider = ({ children }) => {
             syncStatus,
             holdOrder,
             deleteHeldOrder,
-            addTip,
             distributeTips,
             sendToKitchen,
-            updateExchangeRate
+            updateExchangeRate,
+            isLocalServerConnected
         }}>
             {children}
         </DataContext.Provider>
