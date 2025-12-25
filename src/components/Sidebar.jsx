@@ -28,7 +28,7 @@ const Sidebar = () => {
     ];
 
     // Mobile Logic: Split items
-    const mobileVisibleCount = 4; // Show first 4 items directly
+    const mobileVisibleCount = 5; // Show first 5 items directly to reduce dead space
     const mainItems = isMobile ? navItems.slice(0, mobileVisibleCount) : navItems;
     const overflowItems = isMobile ? navItems.slice(mobileVisibleCount) : [];
 
@@ -129,13 +129,13 @@ const Sidebar = () => {
                             justifyContent: 'center',
                             padding: '0.5rem',
                             flex: '0 0 auto', // Prevent stretching
-                            minWidth: '44px' // Standard touch target
+                            minWidth: '40px' // Slimmer touch target
                         }}
                     >
-                        <div style={{ display: 'flex', gap: '2px', flexDirection: 'column', alignItems: 'center' }}>
-                            <div style={{ width: '4px', height: '4px', background: 'white', borderRadius: '50%' }}></div>
-                            <div style={{ width: '4px', height: '4px', background: 'white', borderRadius: '50%' }}></div>
-                            <div style={{ width: '4px', height: '4px', background: 'white', borderRadius: '50%' }}></div>
+                        <div style={{ display: 'flex', gap: '3px', flexDirection: 'column', alignItems: 'center' }}>
+                            <div style={{ width: '3px', height: '3px', background: 'white', borderRadius: '50%' }}></div>
+                            <div style={{ width: '3px', height: '3px', background: 'white', borderRadius: '50%' }}></div>
+                            <div style={{ width: '3px', height: '3px', background: 'white', borderRadius: '50%' }}></div>
                         </div>
                     </button>
                 )}

@@ -463,7 +463,8 @@
   .sidebar nav {
     flex-direction: row !important;
     width: 100%;
-    justify-content: space-between !important;
+    justify-content: space-evenly !important;
+    /* Balanced gap distribution */
     /* Distribute items */
     overflow-x: auto;
     padding-right: 0.5rem;
