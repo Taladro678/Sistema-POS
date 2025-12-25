@@ -463,7 +463,23 @@
   .sidebar nav {
     flex-direction: row !important;
     width: 100%;
-    justify-content: space-around;
+    justify-content: flex-start !important;
+    /* Start from left for scrolling */
+    overflow-x: auto;
+    /* Enable horizontal scroll */
+    padding-right: 1rem;
+    gap: 0.5rem !important;
+    /* Enforce gap */
+  }
+
+  /* Hide scrollbar for clean look */
+  .sidebar nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sidebar-label {
+    display: none !important;
+    /* Icons only on mobile */
   }
 
   .app-container {
