@@ -33,7 +33,25 @@ const Sidebar = () => {
         >
 
 
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            {/* Toggle Button at the top */}
+            <div style={{ display: 'flex', justifyContent: isCollapsed ? 'center' : 'flex-end', marginBottom: '1rem' }}>
+                <button
+                    className="glass-button"
+                    onClick={toggleSidebar}
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        padding: '0.5rem',
+                        color: 'var(--text-secondary)'
+                    }}
+                    title={isCollapsed ? "Expandir" : "Contraer"}
+                >
+                    {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+                </button>
+            </div>
+
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1, overflowY: 'auto' }}>
                 {navItems.map((item) => (
                     <NavLink
                         key={item.path}
@@ -59,20 +77,7 @@ const Sidebar = () => {
 
             <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {/* Toggle Button */}
-                <button
-                    className="glass-button"
-                    onClick={toggleSidebar}
-                    style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        padding: '0.5rem',
-                        alignSelf: isCollapsed ? 'center' : 'flex-end'
-                    }}
-                    title={isCollapsed ? "Expandir" : "Contraer"}
-                >
-                    {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-                </button>
+
 
                 {!isCollapsed && (
                     <div className="sidebar-user">
