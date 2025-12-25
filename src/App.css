@@ -463,13 +463,24 @@
   .sidebar nav {
     flex-direction: row !important;
     width: 100%;
-    justify-content: flex-start !important;
-    /* Start from left for scrolling */
+    justify-content: space-between !important;
+    /* Distribute items */
     overflow-x: auto;
-    /* Enable horizontal scroll */
-    padding-right: 1rem;
-    gap: 0.5rem !important;
-    /* Enforce gap */
+    padding-right: 0.5rem;
+    gap: 0 !important;
+    /* Let space-between handle it, or minimal gap */
+    align-items: center;
+    /* Center vertically */
+    flex-wrap: nowrap !important;
+    /* PREVENT wrapping which hides items */
+  }
+
+  .sidebar nav a {
+    flex: 1 0 auto;
+    /* Allow grow/shrink but respect content */
+    display: flex;
+    justify-content: center;
+    padding: 0.5rem !important;
   }
 
   /* Hide scrollbar for clean look */
