@@ -236,6 +236,13 @@ export const POSPage = () => {
         });
     };
 
+    const clearCart = () => {
+        if (cart.length === 0) return;
+        if (window.confirm('¿Estás seguro de que deseas vaciar el carrito?')) {
+            setCart([]);
+        }
+    };
+
     const total = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
     const discountNum = parseFloat(discountValue) || 0;
     const discountAmount = discountType === 'percent' ? (total * (discountNum / 100)) : discountNum;
@@ -537,6 +544,7 @@ export const POSPage = () => {
                         cart={cart}
                         onRemove={removeFromCart}
                         onAdd={addToCart}
+                        onClear={clearCart}
                         onPay={handlePayClick}
                         total={total}
                         onHold={handleHoldOrder}

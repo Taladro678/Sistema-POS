@@ -1,7 +1,7 @@
 import React from 'react';
 import { Trash2, CreditCard, Clock, Maximize2, Minimize2 } from 'lucide-react';
 
-const CartSidebar = ({ cart, onRemove, onAdd, onPay, total, onHold, onToggleExpand, isExpanded }) => {
+const CartSidebar = ({ cart, onRemove, onAdd, onClear, onPay, total, onHold, onToggleExpand, isExpanded }) => {
     return (
         <div className="glass-panel" style={{
             width: '100%',
@@ -13,6 +13,15 @@ const CartSidebar = ({ cart, onRemove, onAdd, onPay, total, onHold, onToggleExpa
         }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <button
+                        onClick={onClear}
+                        className="glass-button"
+                        style={{ padding: '0.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-red)', borderColor: 'var(--accent-red)', marginRight: '0.5rem' }}
+                        title="Vaciar Carrito"
+                        disabled={cart.length === 0}
+                    >
+                        <Trash2 size={18} />
+                    </button>
                     <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Orden Actual</h2>
                     {cart.length > 0 && (
                         <span style={{
@@ -28,6 +37,7 @@ const CartSidebar = ({ cart, onRemove, onAdd, onPay, total, onHold, onToggleExpa
                     )}
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
+
                     <button
                         onClick={onHold}
                         className="glass-button"
