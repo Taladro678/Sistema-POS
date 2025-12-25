@@ -132,7 +132,7 @@ const Sidebar = () => {
                             minWidth: '32px' // Ultra slim
                         }}
                     >
-                        <ChevronUp size={20} />
+                        <ChevronUp size={24} strokeWidth={2.5} />
                     </button>
                 )}
             </nav>
