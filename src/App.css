@@ -477,12 +477,28 @@
     /* PREVENT wrapping which hides items */
   }
 
-  .sidebar nav a {
-    flex: 1 0 auto;
-    /* Allow grow/shrink but respect content */
+  .sidebar nav a,
+  .sidebar nav button {
+    flex: 1 1 auto;
+    /* Grow to fill */
     display: flex;
     justify-content: center;
+    align-items: center;
     padding: 0.5rem !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    /* Square edges for seamless look */
+    border: none !important;
+    /* Remove individual borders */
+    border-right: 1px solid var(--glass-border) !important;
+    /* Add separator */
+    background: transparent !important;
+    /* Remove individual button bg */
+  }
+
+  /* Remove right border from last item */
+  .sidebar nav>*:last-child {
+    border-right: none !important;
   }
 
   /* Hide scrollbar for clean look */
