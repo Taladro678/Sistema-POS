@@ -128,7 +128,8 @@ const Sidebar = () => {
                             alignItems: 'center',
                             justifyContent: 'center',
                             padding: '0.5rem',
-                            flex: '1 0 auto'
+                            flex: '0 0 auto', // Prevent stretching
+                            minWidth: '44px' // Standard touch target
                         }}
                     >
                         <div style={{ display: 'flex', gap: '2px', flexDirection: 'column', alignItems: 'center' }}>
