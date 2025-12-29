@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './styles/index.css'
+import './index.css'
 import './styles/glassmorphism.css'
 import './styles/responsive.css'
 import App from './App.jsx'

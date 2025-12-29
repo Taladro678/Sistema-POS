@@ -11,6 +11,10 @@ export const SuppliersPage = () => {
     const [photoFile, setPhotoFile] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
 
+    // Estado para edición
+    const [isEditing, setIsEditing] = useState(false);
+    const [editingId, setEditingId] = useState(null);
+
     // Sort State
     const [sortBy, setSortBy] = useState('recent'); // recent, old, debtHigh, debtLow
 
@@ -18,12 +22,19 @@ export const SuppliersPage = () => {
         name: '',
         contact: '',
         phone: '',
-        product: 'Leche',
+        products: [], // Array de productos: [{name, costPrice, salePrice}]
         debt: 0,
         lastDelivery: new Date().toLocaleDateString(),
         paymentMethod: 'Efectivo', // Default
         bankName: '',
         reference: ''
+    });
+
+    // Estado temporal para agregar productos
+    const [newProduct, setNewProduct] = useState({
+        name: '',
+        costPrice: '',
+        salePrice: ''
     });
 
     const [paymentData, setPaymentData] = useState({
@@ -41,26 +52,80 @@ export const SuppliersPage = () => {
     };
 
     const handleEdit = (row) => {
-        // For simplicity in this prototype, we'll just alert. 
-        // In a full app, we'd populate the modal.
-        alert(`Editando proveedor: ${row.name}`);
+        // Cargar datos del proveedor en el formulario
+        setFormData({
+            name: row.name || '',
+            contact: row.contact || '',
+            phone: row.phone || '',
+            products: row.products || [],
+            debt: row.debt || 0,
+            lastDelivery: row.lastDelivery || new Date().toLocaleDateString(),
+            paymentMethod: row.paymentMethod || 'Efectivo',
+            bankName: row.bankName || '',
+            reference: row.reference || ''
+        });
+        setEditingId(row.id);
+        setIsEditing(true);
+        setIsModalOpen(true);
+    };
+
+    // Función para agregar producto al proveedor
+    const handleAddProduct = () => {
+        if (!newProduct.name || !newProduct.costPrice || !newProduct.salePrice) {
+            return alert('Completa todos los campos del producto');
+        }
+
+        const product = {
+            id: Date.now(),
+            name: newProduct.name,
+            costPrice: parseFloat(newProduct.costPrice),
+            salePrice: parseFloat(newProduct.salePrice)
+        };
+
+        setFormData({
+            ...formData,
+            products: [...formData.products, product]
+        });
+
+        // Resetear formulario de producto
+        setNewProduct({ name: '', costPrice: '', salePrice: '' });
+    };
+
+    // Función para eliminar producto del proveedor
+    const handleRemoveProduct = (productId) => {
+        setFormData({
+            ...formData,
+            products: formData.products.filter(p => p.id !== productId)
+        });
     };
 
     const handleSave = () => {
         if (!formData.name) return alert('El nombre es obligatorio');
-        addItem('suppliers', formData);
+
+        if (isEditing && editingId) {
+            // Actualizar proveedor existente
+            updateItem('suppliers', editingId, formData);
+        } else {
+            // Crear nuevo proveedor
+            addItem('suppliers', formData);
+        }
+
+        // Resetear formulario y estados
         setIsModalOpen(false);
+        setIsEditing(false);
+        setEditingId(null);
         setFormData({
             name: '',
             contact: '',
             phone: '',
-            product: 'Leche',
+            products: [],
             debt: 0,
             lastDelivery: new Date().toLocaleDateString(),
             paymentMethod: 'Efectivo',
             bankName: '',
             reference: ''
         });
+        setNewProduct({ name: '', costPrice: '', salePrice: '' });
     };
 
     const openPaymentModal = (row) => {
@@ -131,17 +196,32 @@ export const SuppliersPage = () => {
         { header: 'Finca / Empresa', accessor: 'name' },
         { header: 'Contacto', accessor: 'contact' },
         {
-            header: 'Producto',
-            accessor: 'product',
+            header: 'Productos',
+            accessor: 'products',
             render: (row) => (
-                <span style={{
-                    background: 'rgba(255,255,255,0.1)',
-                    padding: '0.25rem 0.5rem',
-                    borderRadius: '4px',
-                    fontSize: '0.85rem'
-                }}>
-                    {row.product}
-                </span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                    {(row.products || []).length > 0 ? (
+                        row.products.slice(0, 2).map((product, idx) => (
+                            <span key={idx} style={{
+                                background: 'rgba(0, 242, 255, 0.1)',
+                                padding: '0.25rem 0.5rem',
+                                borderRadius: '4px',
+                                fontSize: '0.75rem',
+                                border: '1px solid rgba(0, 242, 255, 0.3)',
+                                color: 'var(--accent-blue)'
+                            }}>
+                                {product.name}
+                            </span>
+                        ))
+                    ) : (
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Sin productos</span>
+                    )}
+                    {(row.products || []).length > 2 && (
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                            +{row.products.length - 2} más
+                        </span>
+                    )}
+                </div>
             )
         },
         { header: 'Última Entrega', accessor: 'lastDelivery' },
@@ -309,8 +389,24 @@ export const SuppliersPage = () => {
 
             <Modal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                title="Registrar Nuevo Proveedor"
+                onClose={() => {
+                    setIsModalOpen(false);
+                    setIsEditing(false);
+                    setEditingId(null);
+                    setFormData({
+                        name: '',
+                        contact: '',
+                        phone: '',
+                        products: [],
+                        debt: 0,
+                        lastDelivery: new Date().toLocaleDateString(),
+                        paymentMethod: 'Efectivo',
+                        bankName: '',
+                        reference: ''
+                    });
+                    setNewProduct({ name: '', costPrice: '', salePrice: '' });
+                }}
+                title={isEditing ? "Editar Proveedor" : "Registrar Nuevo Proveedor"}
             >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div>
@@ -343,26 +439,84 @@ export const SuppliersPage = () => {
                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         />
                     </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Producto Principal</label>
-                        <select
-                            className="glass-input"
-                            value={formData.product}
-                            onChange={(e) => setFormData({ ...formData, product: e.target.value })}
-                        >
-                            <option>Leche</option>
-                            <option>Cuajo</option>
-                            <option>Sal</option>
-                            <option>Otros</option>
-                        </select>
+                    {/* Sección de Productos */}
+                    <div style={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '1rem', background: 'rgba(0,0,0,0.2)' }}>
+                        <h3 style={{ fontSize: '0.9rem', marginBottom: '0.75rem', color: 'var(--accent-blue)' }}>Productos que Suministra</h3>
+
+                        {/* Lista de productos agregados */}
+                        {formData.products.length > 0 && (
+                            <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                {formData.products.map((product) => (
+                                    <div key={product.id} className="glass-panel" style={{ padding: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)' }}>
+                                        <div style={{ flex: 1 }}>
+                                            <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 'bold' }}>{product.name}</p>
+                                            <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                                Costo: <span style={{ color: 'var(--accent-orange)' }}>${product.costPrice.toFixed(2)}</span> |
+                                                Venta: <span style={{ color: 'var(--accent-green)' }}>${product.salePrice.toFixed(2)}</span>
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => handleRemoveProduct(product.id)}
+                                            className="glass-button"
+                                            style={{ padding: '0.25rem 0.5rem', color: 'var(--accent-red)' }}
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Formulario para agregar nuevo producto */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            <input
+                                type="text"
+                                className="glass-input"
+                                placeholder="Nombre del producto (ej: Leche)"
+                                value={newProduct.name}
+                                onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                                style={{ fontSize: '0.9rem' }}
+                            />
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                                <input
+                                    type="number"
+                                    className="glass-input"
+                                    placeholder="Precio Costo ($)"
+                                    value={newProduct.costPrice}
+                                    onChange={(e) => setNewProduct({ ...newProduct, costPrice: e.target.value })}
+                                    style={{ fontSize: '0.9rem' }}
+                                />
+                                <input
+                                    type="number"
+                                    className="glass-input"
+                                    placeholder="Precio Venta ($)"
+                                    value={newProduct.salePrice}
+                                    onChange={(e) => setNewProduct({ ...newProduct, salePrice: e.target.value })}
+                                    style={{ fontSize: '0.9rem' }}
+                                />
+                            </div>
+                            <button
+                                onClick={handleAddProduct}
+                                className="glass-button primary"
+                                style={{ fontSize: '0.85rem', padding: '0.5rem' }}
+                            >
+                                + Agregar Producto
+                            </button>
+                        </div>
                     </div>
                     <button
                         className="glass-button primary"
                         style={{ marginTop: '1rem', width: '100%' }}
                         onClick={handleSave}
+                        disabled={formData.products.length === 0}
                     >
-                        Guardar Proveedor
+                        {isEditing ? 'Actualizar Proveedor' : 'Guardar Proveedor'}
                     </button>
+                    {formData.products.length === 0 && (
+                        <p style={{ fontSize: '0.75rem', color: 'var(--accent-orange)', textAlign: 'center', margin: '0.5rem 0 0 0' }}>
+                            ⚠️ Debes agregar al menos un producto
+                        </p>
+                    )}
                 </div>
             </Modal>
         </div>

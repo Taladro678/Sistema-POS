@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSettings } from '../context/SettingsContext';
 import { useData } from '../context/DataContext';
-import { Save, Download, Upload, Trash2 } from 'lucide-react';
+import { Save, Download, Upload, Trash2, Users, Lock } from 'lucide-react';
 
 export const SettingsPage = () => {
     const { settings, updateSettings } = useSettings();
+    const navigate = useNavigate();
     const { exportData, importData, connectDrive, isDriveConnected, syncStatus, clearAllData, data, updateData } = useData();
     const [formData, setFormData] = useState(settings);
 
@@ -164,6 +166,37 @@ export const SettingsPage = () => {
                             </label>
                         </div>
                     </div>
+                </div>
+
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem', marginTop: '0.5rem' }}>
+                    <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Lock size={20} /> Seguridad y Accesos
+                    </h3>
+
+                    <div style={{ marginBottom: '1.5rem' }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>PIN Maestro (Acceso Admin Universal)</label>
+                        <input
+                            type="text"
+                            name="masterPin"
+                            maxLength="6"
+                            value={formData.masterPin || '0000'}
+                            onChange={handleChange}
+                            className="glass-input"
+                            style={{ maxWidth: '150px', letterSpacing: '2px', textAlign: 'center', fontWeight: 'bold' }}
+                        />
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                            Este PIN otorga acceso total si alguien olvida su clave.
+                        </p>
+                    </div>
+
+                    <button
+                        className="glass-button accent"
+                        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '1rem' }}
+                        onClick={() => navigate('/users')}
+                    >
+                        <Users size={20} />
+                        Gestionar Usuarios y Permisos
+                    </button>
                 </div>
 
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem', marginTop: '0.5rem' }}>

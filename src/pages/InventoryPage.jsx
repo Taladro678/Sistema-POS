@@ -2,22 +2,44 @@ import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
-import { Plus, AlertTriangle, CheckCircle, Camera, Trash2 } from 'lucide-react';
+import { Plus, AlertTriangle, CheckCircle, Camera, Trash2, X } from 'lucide-react';
+
+/**
+ * COMPONENTE: InventoryPage - Gestión de Inventario
+ * 
+ * NUEVO SISTEMA DE ENTRADA MASIVA:
+ * - Permite registrar múltiples productos en una sola entrada
+ * - Precio de costo individual por producto
+ * - IVA opcional por producto (16%)
+ * - Cálculo automático de subtotal, IVA total, y total general
+ * - Foto de factura OBLIGATORIA
+ * - Asociación con proveedor
+ */
 
 export const InventoryPage = () => {
-    const { data, addItem, deleteItem, updateItem } = useData();
+    const { data, addItem, deleteItem, updateItem, uploadToDrive } = useData();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [photoFile, setPhotoFile] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
-    const [formData, setFormData] = useState({
-        name: '',
-        category: 'Materia Prima',
-        stock: '',
-        unit: 'Litros',
-        status: 'ok',
+
+    // Datos generales de la entrada
+    const [entryData, setEntryData] = useState({
         supplierId: '',
-        cost: '',
-        paymentCondition: 'Contado' // 'Contado' or 'Credito'
+        paymentCondition: 'Contado', // 'Contado' o 'Credito'
+        invoiceNumber: '', // Número de factura
+        date: new Date().toISOString().split('T')[0]
+    });
+
+    // Lista de productos en esta entrada
+    const [entryItems, setEntryItems] = useState([]);
+
+    // Producto temporal para agregar
+    const [newItem, setNewItem] = useState({
+        name: '',
+        quantity: '',
+        unit: 'Litros',
+        costPrice: '',
+        hasIVA: false
     });
 
     const handleDelete = (id) => {
@@ -26,52 +48,143 @@ export const InventoryPage = () => {
         }
     };
 
-    const handleSave = async () => {
-        if (!formData.name) return alert('El nombre es obligatorio');
-
-        let photoLink = 'N/A';
-        if (photoFile) {
-            setIsUploading(true);
-            const result = await data.uploadToDrive(photoFile, 'Fotos Inventario');
-            setIsUploading(false);
-
-            if (result && result.webViewLink) {
-                photoLink = result.webViewLink;
-            } else {
-                if (!window.confirm('No se pudo subir la foto. ¿Deseas registrar sin foto?')) {
-                    return;
-                }
-            }
+    // Agregar producto a la lista de entrada
+    const handleAddItem = () => {
+        if (!newItem.name || !newItem.quantity || !newItem.costPrice) {
+            return alert('Completa nombre, cantidad y precio');
         }
 
-        // Determine status based on stock
-        const stockNum = parseFloat(formData.stock) || 0;
-        const status = stockNum < 10 ? 'low' : 'ok';
+        const item = {
+            id: Date.now(),
+            name: newItem.name,
+            quantity: parseFloat(newItem.quantity),
+            unit: newItem.unit,
+            costPrice: parseFloat(newItem.costPrice),
+            hasIVA: newItem.hasIVA
+        };
 
-        // Debt Logic
-        if (formData.paymentCondition === 'Credito' && formData.supplierId) {
-            const supplier = data.suppliers.find(s => s.id === parseInt(formData.supplierId));
-            if (supplier) {
-                const costNum = parseFloat(formData.cost) || 0;
-                const newDebt = (supplier.debt || 0) + costNum;
-                updateItem('suppliers', supplier.id, { debt: newDebt });
-                // Optional: Log transaction on supplier? For now just update debt.
-            }
-        }
-
-        addItem('inventory', { ...formData, stock: stockNum, cost: parseFloat(formData.cost) || 0, status, photo: photoLink });
-        setIsModalOpen(false);
-        setFormData({
+        setEntryItems([...entryItems, item]);
+        setNewItem({
             name: '',
-            category: 'Materia Prima',
-            stock: '',
+            quantity: '',
             unit: 'Litros',
-            status: 'ok',
-            supplierId: '',
-            cost: '',
-            paymentCondition: 'Contado'
+            costPrice: '',
+            hasIVA: false
         });
+    };
+
+    // Eliminar producto de la lista
+    const handleRemoveItem = (itemId) => {
+        setEntryItems(entryItems.filter(i => i.id !== itemId));
+    };
+
+    // Cálculos
+    const calculateSubtotal = (item) => {
+        return item.quantity * item.costPrice;
+    };
+
+    const calculateIVA = (item) => {
+        if (!item.hasIVA) return 0;
+        return calculateSubtotal(item) * 0.16; // 16% IVA
+    };
+
+    const calculateItemTotal = (item) => {
+        return calculateSubtotal(item) + calculateIVA(item);
+    };
+
+    const totals = {
+        subtotal: entryItems.reduce((sum, item) => sum + calculateSubtotal(item), 0),
+        iva: entryItems.reduce((sum, item) => sum + calculateIVA(item), 0),
+        total: entryItems.reduce((sum, item) => sum + calculateItemTotal(item), 0)
+    };
+
+    const handleSaveEntry = async () => {
+        // Validaciones
+        if (!entryData.supplierId) {
+            return alert('Debes seleccionar un proveedor');
+        }
+
+        if (entryItems.length === 0) {
+            return alert('Debes agregar al menos un producto');
+        }
+
+        if (!photoFile) {
+            return alert('⚠️ La foto de la factura es OBLIGATORIA');
+        }
+
+        // Subir foto
+        setIsUploading(true);
+        const result = await uploadToDrive(photoFile, 'Facturas Inventario');
+        setIsUploading(false);
+
+        if (!result || !result.webViewLink) {
+            return alert('Error al subir la foto. Intenta de nuevo.');
+        }
+
+        const photoLink = result.webViewLink;
+
+        // Crear registro de entrada
+        const entry = {
+            ...entryData,
+            items: entryItems,
+            totals: totals,
+            photo: photoLink,
+            timestamp: new Date().toISOString()
+        };
+
+        // Guardar entrada (nueva colección)
+        addItem('inventoryEntries', entry);
+
+        // Actualizar stock de cada producto
+        entryItems.forEach(item => {
+            // Buscar si existe el producto en inventario
+            const existingItem = data.inventory.find(inv =>
+                inv.name.toLowerCase() === item.name.toLowerCase()
+            );
+
+            if (existingItem) {
+                // Actualizar stock existente
+                const newStock = existingItem.stock + item.quantity;
+                const status = newStock < 10 ? 'low' : 'ok';
+                updateItem('inventory', existingItem.id, {
+                    stock: newStock,
+                    status: status
+                });
+            } else {
+                // Crear nuevo item en inventario
+                const status = item.quantity < 10 ? 'low' : 'ok';
+                addItem('inventory', {
+                    name: item.name,
+                    category: 'Materia Prima',
+                    stock: item.quantity,
+                    unit: item.unit,
+                    status: status,
+                    cost: item.costPrice
+                });
+            }
+        });
+
+        // Si es a crédito, actualizar deuda del proveedor
+        if (entryData.paymentCondition === 'Credito') {
+            const supplier = data.suppliers.find(s => s.id === parseInt(entryData.supplierId));
+            if (supplier) {
+                const newDebt = (supplier.debt || 0) + totals.total;
+                updateItem('suppliers', supplier.id, { debt: newDebt });
+            }
+        }
+
+        // Limpiar formulario
+        setIsModalOpen(false);
+        setEntryData({
+            supplierId: '',
+            paymentCondition: 'Contado',
+            invoiceNumber: '',
+            date: new Date().toISOString().split('T')[0]
+        });
+        setEntryItems([]);
         setPhotoFile(null);
+
+        alert('✅ Entrada registrada exitosamente');
     };
 
     const columns = [
@@ -148,96 +261,81 @@ export const InventoryPage = () => {
                 )}
             />
 
+            {/* MODAL MEJORADO */}
             <Modal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                onClose={() => {
+                    setIsModalOpen(false);
+                    setEntryItems([]);
+                    setPhotoFile(null);
+                }}
                 title="Registrar Entrada de Inventario"
             >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Producto / Insumo</label>
-                        <input
-                            type="text"
-                            list="products-list"
-                            className="glass-input"
-                            placeholder="Escribe o selecciona..."
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        />
-                        <datalist id="products-list">
-                            <option value="Leche Cruda" />
-                            <option value="Cuajo" />
-                            <option value="Sal Industrial" />
-                            <option value="Bolsas Plásticas" />
-                            <option value="Etiquetas" />
-                        </datalist>
-                    </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Cantidad</label>
-                        <input
-                            type="number"
-                            className="glass-input"
-                            placeholder="0.00"
-                            value={formData.stock}
-                            onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                        />
-                    </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '70vh', overflowY: 'auto' }}>
 
-                    {/* New Fields: Supplier, Cost, Payment Condition */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Proveedor</label>
-                            <select
-                                className="glass-input"
-                                value={formData.supplierId}
-                                onChange={(e) => setFormData({ ...formData, supplierId: e.target.value })}
-                            >
-                                <option value="">Seleccionar...</option>
-                                {data.suppliers.map(s => (
-                                    <option key={s.id} value={s.id}>{s.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Costo Total ($)</label>
-                            <input
-                                type="number"
-                                className="glass-input"
-                                placeholder="0.00"
-                                value={formData.cost}
-                                onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-                            />
-                        </div>
-                    </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Condición de Pago</label>
-                        <div style={{ display: 'flex', gap: '1rem' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                    {/* Datos Generales */}
+                    <div className="glass-panel" style={{ padding: '1rem', background: 'rgba(0, 242, 255, 0.05)' }}>
+                        <h3 style={{ fontSize: '0.9rem', marginBottom: '0.75rem', color: 'var(--accent-blue)' }}>Datos de la Factura</h3>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Proveedor *</label>
+                                <select
+                                    className="glass-input"
+                                    value={entryData.supplierId}
+                                    onChange={(e) => setEntryData({ ...entryData, supplierId: e.target.value })}
+                                    style={{ fontSize: '0.9rem', padding: '0.5rem' }}
+                                >
+                                    <option value="">Seleccionar...</option>
+                                    {data.suppliers.map(s => (
+                                        <option key={s.id} value={s.id}>{s.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Nro. Factura</label>
                                 <input
-                                    type="radio"
-                                    name="paymentCondition"
-                                    checked={formData.paymentCondition === 'Contado'}
-                                    onChange={() => setFormData({ ...formData, paymentCondition: 'Contado' })}
+                                    type="text"
+                                    className="glass-input"
+                                    placeholder="opcional"
+                                    value={entryData.invoiceNumber}
+                                    onChange={(e) => setEntryData({ ...entryData, invoiceNumber: e.target.value })}
+                                    style={{ fontSize: '0.9rem', padding: '0.5rem' }}
                                 />
-                                Contado
-                            </label>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                <input
-                                    type="radio"
-                                    name="paymentCondition"
-                                    checked={formData.paymentCondition === 'Credito'}
-                                    onChange={() => setFormData({ ...formData, paymentCondition: 'Credito' })}
-                                />
-                                Crédito (Genera Deuda)
-                            </label>
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Foto (Opcional)</label>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <label className="glass-button" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Camera size={16} />
-                                {photoFile ? 'Cambiar Foto' : 'Tomar Foto / Subir'}
+
+                        <div style={{ marginTop: '0.75rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Condición de Pago</label>
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                    <input
+                                        type="radio"
+                                        checked={entryData.paymentCondition === 'Contado'}
+                                        onChange={() => setEntryData({ ...entryData, paymentCondition: 'Contado' })}
+                                    />
+                                    Contado
+                                </label>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                    <input
+                                        type="radio"
+                                        checked={entryData.paymentCondition === 'Credito'}
+                                        onChange={() => setEntryData({ ...entryData, paymentCondition: 'Credito' })}
+                                    />
+                                    Crédito
+                                </label>
+                            </div>
+                        </div>
+
+                        {/* Foto OBLIGATORIA */}
+                        <div style={{ marginTop: '0.75rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                Foto de Factura <span style={{ color: 'var(--accent-red)' }}>* OBLIGATORIA</span>
+                            </label>
+                            <label className="glass-button" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', width: '100%', padding: '0.75rem' }}>
+                                <Camera size={18} />
+                                {photoFile ? '✅ Foto Cargada - Cambiar' : '📸 Tomar/Subir Foto'}
                                 <input
                                     type="file"
                                     accept="image/*"
@@ -246,30 +344,181 @@ export const InventoryPage = () => {
                                     onChange={(e) => setPhotoFile(e.target.files[0])}
                                 />
                             </label>
-                            {photoFile && <span style={{ fontSize: '0.8rem', color: 'var(--accent-green)' }}>Foto seleccionada</span>}
+                            {photoFile && (
+                                <p style={{ fontSize: '0.75rem', color: 'var(--accent-green)', marginTop: '0.25rem', textAlign: 'center' }}>
+                                    ✓ {photoFile.name}
+                                </p>
+                            )}
                         </div>
                     </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Unidad</label>
-                        <select
-                            className="glass-input"
-                            value={formData.unit}
-                            onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                        >
-                            <option>Litros</option>
-                            <option>Kilos</option>
-                            <option>Galones</option>
-                            <option>Unidades</option>
-                        </select>
+
+                    {/* Lista de Productos */}
+                    <div className="glass-panel" style={{ padding: '1rem', background: 'rgba(0,0,0,0.3)' }}>
+                        <h3 style={{ fontSize: '0.9rem', marginBottom: '0.75rem', color: 'var(--accent-orange)' }}>Productos de la Entrada</h3>
+
+                        {/* Items agregados */}
+                        {entryItems.length > 0 && (
+                            <div style={{ marginBottom: '1rem', maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                {entryItems.map((item) => (
+                                    <div key={item.id} className="glass-panel" style={{ padding: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)' }}>
+                                        <div style={{ flex: 1 }}>
+                                            <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 'bold' }}>
+                                                {item.name} {item.hasIVA && <span style={{ fontSize: '0.7rem', color: 'var(--accent-orange)' }}>(+IVA)</span>}
+                                            </p>
+                                            <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                                {item.quantity} {item.unit} × ${item.costPrice.toFixed(2)} =
+                                                <span style={{ color: 'var(--accent-green)', fontWeight: 'bold' }}> ${calculateItemTotal(item).toFixed(2)}</span>
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => handleRemoveItem(item.id)}
+                                            className="glass-button"
+                                            style={{ padding: '0.25rem', color: 'var(--accent-red)' }}
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Formulario agregar producto */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            <div>
+                                <input
+                                    type="text"
+                                    list="existing-products"
+                                    className="glass-input"
+                                    placeholder="Nombre del producto (escribe o selecciona) *"
+                                    value={newItem.name}
+                                    onChange={(e) => {
+                                        const selectedValue = e.target.value;
+                                        setNewItem({ ...newItem, name: selectedValue });
+
+                                        // Auto-completar unidad si se selecciona un producto existente
+                                        const existingProduct = data.products.find(p =>
+                                            p.name.toLowerCase() === selectedValue.toLowerCase()
+                                        );
+                                        if (existingProduct && existingProduct.unit) {
+                                            setNewItem({
+                                                ...newItem,
+                                                name: selectedValue,
+                                                unit: existingProduct.unit
+                                            });
+                                        }
+                                    }}
+                                    style={{ fontSize: '0.9rem', padding: '0.5rem' }}
+                                />
+                                {/* Datalist con productos existentes */}
+                                <datalist id="existing-products">
+                                    {data.products.map((product, idx) => (
+                                        <option key={idx} value={product.name}>
+                                            {product.category}
+                                        </option>
+                                    ))}
+                                    {/* También productos del inventario */}
+                                    {data.inventory.map((item, idx) => (
+                                        <option key={`inv-${idx}`} value={item.name}>
+                                            Inventario
+                                        </option>
+                                    ))}
+                                </datalist>
+                                <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
+                                    💡 Empieza a escribir para ver sugerencias
+                                </p>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
+                                <input
+                                    type="number"
+                                    className="glass-input"
+                                    placeholder="Cantidad *"
+                                    value={newItem.quantity}
+                                    onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
+                                    style={{ fontSize: '0.9rem', padding: '0.5rem' }}
+                                />
+
+                                <select
+                                    className="glass-input"
+                                    value={newItem.unit}
+                                    onChange={(e) => setNewItem({ ...newItem, unit: e.target.value })}
+                                    style={{ fontSize: '0.9rem', padding: '0.5rem' }}
+                                >
+                                    <option>Litros</option>
+                                    <option>Kilos</option>
+                                    <option>Unidades</option>
+                                    <option>Galones</option>
+                                </select>
+
+                                <input
+                                    type="number"
+                                    className="glass-input"
+                                    placeholder="Costo ($) *"
+                                    value={newItem.costPrice}
+                                    onChange={(e) => setNewItem({ ...newItem, costPrice: e.target.value })}
+                                    style={{ fontSize: '0.9rem', padding: '0.5rem' }}
+                                />
+                            </div>
+
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={newItem.hasIVA}
+                                    onChange={(e) => setNewItem({ ...newItem, hasIVA: e.target.checked })}
+                                />
+                                Este producto tiene IVA (16%)
+                            </label>
+
+                            <button
+                                onClick={handleAddItem}
+                                className="glass-button accent"
+                                style={{ fontSize: '0.85rem', padding: '0.5rem', width: '100%' }}
+                            >
+                                + Agregar a la Lista
+                            </button>
+                        </div>
                     </div>
+
+                    {/* Resumen de costos */}
+                    {entryItems.length > 0 && (
+                        <div className="glass-panel" style={{ padding: '1rem', background: 'rgba(0, 255, 0, 0.05)', border: '1px solid rgba(0, 255, 0, 0.2)' }}>
+                            <h3 style={{ fontSize: '0.9rem', marginBottom: '0.5rem', color: 'var(--accent-green)' }}>Resumen de Costos</h3>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
+                                <span>Subtotal:</span>
+                                <span>${totals.subtotal.toFixed(2)}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.25rem', color: 'var(--accent-orange)' }}>
+                                <span>IVA (16%):</span>
+                                <span>${totals.iva.toFixed(2)}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1rem', fontWeight: 'bold', paddingTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                                <span>TOTAL:</span>
+                                <span style={{ color: 'var(--accent-green)' }}>${totals.total.toFixed(2)}</span>
+                            </div>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem', marginBottom: 0 }}>
+                                {entryItems.length} producto(s) en esta entrada
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Botón Guardar */}
                     <button
                         className="glass-button primary"
-                        style={{ marginTop: '1rem', width: '100%' }}
-                        onClick={handleSave}
-                        disabled={isUploading}
+                        style={{ width: '100%', padding: '0.75rem', fontSize: '1rem', fontWeight: 'bold' }}
+                        onClick={handleSaveEntry}
+                        disabled={isUploading || entryItems.length === 0 || !photoFile || !entryData.supplierId}
                     >
-                        {isUploading ? 'Subiendo Foto...' : 'Guardar Entrada'}
+                        {isUploading ? 'Subiendo Foto...' : '✓ Guardar Entrada Completa'}
                     </button>
+
+                    {/* Advertencias */}
+                    {(!photoFile || entryItems.length === 0 || !entryData.supplierId) && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--accent-orange)', textAlign: 'center' }}>
+                            {!entryData.supplierId && <p style={{ margin: '0.25rem 0' }}>⚠️ Selecciona un proveedor</p>}
+                            {entryItems.length === 0 && <p style={{ margin: '0.25rem 0' }}>⚠️ Agrega al menos un producto</p>}
+                            {!photoFile && <p style={{ margin: '0.25rem 0' }}>⚠️ La foto es obligatoria</p>}
+                        </div>
+                    )}
                 </div>
             </Modal>
         </div>

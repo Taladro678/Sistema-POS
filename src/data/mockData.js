@@ -80,8 +80,8 @@ export const suppliers = [
 ];
 
 export const personnel = [
-    { id: 1, name: 'Ana Madrid', role: 'Cajera', status: 'Activo', salary: 120.00, lastPayment: '15/12/2025', pin: '1111' },
-    { id: 2, name: 'Eduardo Hernández', role: 'Quesero', status: 'Activo', salary: 150.00, lastPayment: '15/12/2025', pin: '2222' },
-    { id: 3, name: 'Gabriela Hernández', role: 'Ayudante', status: 'Vacaciones', salary: 100.00, lastPayment: '30/11/2025', pin: '3333' },
-    { id: 4, name: 'José Luis Avilez', role: 'Despachador', status: 'Activo', salary: 110.00, lastPayment: '15/12/2025', pin: '4444' },
+    { id: 1, name: 'Ana Madrid', role: 'cashier', status: 'Activo', salary: 120.00, lastPayment: '15/12/2025', username: 'cajero', password: '123' },
+    { id: 2, name: 'Eduardo Hernández', role: 'kitchen', status: 'Activo', salary: 150.00, lastPayment: '15/12/2025', username: 'cocina', password: '123' },
+    { id: 3, name: 'Gabriela Hernández', role: 'waiter', status: 'Vacaciones', salary: 100.00, lastPayment: '30/11/2025', username: 'barra', password: '123' },
+    { id: 4, name: 'José Luis Avilez', role: 'manager', status: 'Activo', salary: 110.00, lastPayment: '15/12/2025', username: 'admin', password: '123' },
 ];

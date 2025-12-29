@@ -1,8 +1,36 @@
 import React from 'react';
-import { Trash2, CreditCard, Clock, Maximize2, Minimize2 } from 'lucide-react';
+import { Trash2, CreditCard, Clock, Maximize2, Minimize2, ChefHat, AlertCircle, ShoppingBag } from 'lucide-react';
 
-const CartSidebar = ({ cart, onRemove, onAdd, onClear, onPay, total, onHold, onToggleExpand, isExpanded }) => {
+const CartSidebar = ({
+    cart,
+    onRemove,
+    onAdd,
+    onClear,
+    onPay,
+    total,
+    onHold,
+    onSendToKitchen,
+    onToggleExpand,
+    isExpanded,
+    currentTable,
+    orderPriority,
+    setOrderPriority,
+    onUpdateItemPriority,
+    isTakeaway,
+    setIsTakeaway,
+    onToggleItemTakeaway
+}) => {
+
+    const priorities = [
+        { id: 'normal', label: 'Normal', color: '#94a3b8' },
+        { id: 'priority', label: 'Prioridad', color: '#f59e0b' },
+        { id: 'high', label: 'Alta', color: '#ef4444' }
+    ];
+
+    const getPriorityColor = (pId) => priorities.find(p => p.id === pId)?.color || '#94a3b8';
+
     return (
+        /* ... existing structure ... */
         <div className="glass-panel" style={{
             width: '100%',
             height: '100%',
@@ -11,6 +39,7 @@ const CartSidebar = ({ cart, onRemove, onAdd, onClear, onPay, total, onHold, onT
             padding: '1rem',
             boxSizing: 'border-box'
         }}>
+            {/* Header ... */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <button
@@ -23,29 +52,40 @@ const CartSidebar = ({ cart, onRemove, onAdd, onClear, onPay, total, onHold, onT
                         <Trash2 size={18} />
                     </button>
                     <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Orden Actual</h2>
-                    {cart.length > 0 && (
-                        <span style={{
-                            background: 'var(--accent-green)',
-                            color: 'white',
-                            padding: '0.2rem 0.6rem',
-                            borderRadius: '12px',
-                            fontSize: '0.8rem',
-                            fontWeight: 'bold'
-                        }}>
-                            {cart.length} items
-                        </span>
-                    )}
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-
+                    {/* Hold Button - ALWAYS SHOW */}
                     <button
                         onClick={onHold}
                         className="glass-button"
-                        style={{ padding: '0.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        title="Poner en Espera"
+                        style={{
+                            padding: '0.4rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                        title="Poner en Espera / Guardar Borrador"
                         disabled={cart.length === 0}
                     >
                         <Clock size={18} />
+                    </button>
+
+                    {/* Send to Kitchen Button */}
+                    <button
+                        onClick={onSendToKitchen}
+                        className={`glass-button ${currentTable ? 'active-table-btn' : ''}`}
+                        style={{
+                            padding: '0.4rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderColor: currentTable ? 'var(--accent-orange)' : undefined,
+                            color: currentTable ? 'var(--accent-orange)' : 'inherit'
+                        }}
+                        title={currentTable ? `Enviar a Cocina` : "Enviar a Cocina / Barra"}
+                        disabled={cart.length === 0}
+                    >
+                        <ChefHat size={18} color={currentTable && cart.length > 0 ? "var(--accent-orange)" : "currentColor"} />
                     </button>
                     <button
                         onClick={onToggleExpand}
@@ -58,7 +98,65 @@ const CartSidebar = ({ cart, onRemove, onAdd, onClear, onPay, total, onHold, onT
                 </div>
             </div>
 
-            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            {/* Order Priority & Options Selector */}
+            {cart.length > 0 && (
+                <div className="glass-panel" style={{ padding: '0.5rem', marginBottom: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'rgba(0,0,0,0.2)' }}>
+                    {/* Priority Row */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <AlertCircle size={14} className="text-gray-400" />
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Prioridad:</span>
+                        <div style={{ display: 'flex', gap: '0.25rem', flex: 1 }}>
+                            {priorities.map(p => (
+                                <button
+                                    key={p.id}
+                                    onClick={() => setOrderPriority(p.id)}
+                                    style={{
+                                        flex: 1,
+                                        fontSize: '0.65rem',
+                                        padding: '0.2rem',
+                                        borderRadius: '4px',
+                                        border: `1px solid ${orderPriority === p.id ? p.color : 'rgba(255,255,255,0.1)'}`,
+                                        background: orderPriority === p.id ? `${p.color}22` : 'transparent',
+                                        color: orderPriority === p.id ? p.color : 'var(--text-secondary)',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >
+                                    {p.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Takeaway Row (Global) */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <ShoppingBag size={14} className="text-gray-400" />
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Opción:</span>
+                        <button
+                            onClick={() => setIsTakeaway(!isTakeaway)}
+                            style={{
+                                flex: 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.5rem',
+                                fontSize: '0.75rem',
+                                padding: '0.3rem',
+                                borderRadius: '4px',
+                                border: `1px solid ${isTakeaway ? '#818cf8' : 'rgba(255,255,255,0.1)'}`, // Indigo color
+                                background: isTakeaway ? '#818cf822' : 'transparent',
+                                color: isTakeaway ? '#818cf8' : 'var(--text-secondary)',
+                                transition: 'all 0.2s',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <ShoppingBag size={14} />
+                            {isTakeaway ? 'PARA LLEVAR (Toda la Orden)' : 'Comer Aquí'}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {cart.length === 0 ? (
                     <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginTop: '2rem' }}>
                         Carrito vacío
@@ -66,33 +164,85 @@ const CartSidebar = ({ cart, onRemove, onAdd, onClear, onPay, total, onHold, onT
                 ) : (
                     cart.map((item, index) => (
                         <div key={`${item.id}-${index}`} className="glass-panel" style={{
-                            padding: '0.25rem 0.5rem',
+                            padding: '0.5rem',
                             display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            background: 'rgba(255,255,255,0.03)'
+                            flexDirection: 'column',
+                            gap: '0.4rem',
+                            background: 'rgba(255,255,255,0.03)',
+                            borderLeftWidth: '3px',
+                            borderLeftColor: getPriorityColor(item.priority || 'normal')
                         }}>
-                            <div style={{ flex: 1 }}>
-                                <h4 style={{ fontSize: '0.8rem', marginBottom: '0', lineHeight: '1' }}>{item.name}</h4>
-                                <p style={{ fontSize: '0.7rem', color: 'var(--accent-orange)', marginTop: '2px' }}>${item.price.toFixed(2)}</p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <div style={{ flex: 1 }}>
+                                    <h4 style={{ fontSize: '0.85rem', margin: 0, fontWeight: '600' }}>
+                                        {item.name}
+                                        {item.isTakeaway && (
+                                            <span style={{ fontSize: '0.6rem', marginLeft: '0.5rem', background: '#818cf8', color: 'white', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>
+                                                LLEVAR
+                                            </span>
+                                        )}
+                                    </h4>
+                                    <p style={{ fontSize: '0.7rem', color: 'var(--accent-orange)', margin: 0 }}>${item.price.toFixed(2)}</p>
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    {/* Item Takeaway Toggle */}
+                                    <button
+                                        onClick={() => onToggleItemTakeaway(index)}
+                                        className="glass-button"
+                                        style={{
+                                            padding: '0',
+                                            width: '26px',
+                                            height: '26px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            color: item.isTakeaway ? '#818cf8' : 'var(--text-secondary)',
+                                            borderColor: item.isTakeaway ? '#818cf8' : 'rgba(255,255,255,0.1)'
+                                        }}
+                                        title="Marcar este item para llevar"
+                                    >
+                                        <ShoppingBag size={14} />
+                                    </button>
+
+                                    <button
+                                        onClick={() => onRemove(item.id)}
+                                        className="glass-button"
+                                        style={{ padding: '0', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    >
+                                        -
+                                    </button>
+                                    <span style={{ fontWeight: 'bold', fontSize: '0.9rem', minWidth: '1.2rem', textAlign: 'center' }}>{item.quantity || 1}</span>
+                                    <button
+                                        onClick={() => onAdd(item)}
+                                        className="glass-button primary"
+                                        style={{ padding: '0', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    >
+                                        +
+                                    </button>
+                                </div>
                             </div>
 
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                                <button
-                                    onClick={() => onRemove(item.id)}
-                                    className="glass-button"
-                                    style={{ padding: '0', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}
-                                >
-                                    -
-                                </button>
-                                <span style={{ fontWeight: 'bold', fontSize: '0.9rem', minWidth: '1.2rem', textAlign: 'center' }}>{item.quantity || 1}</span>
-                                <button
-                                    onClick={() => onAdd(item)}
-                                    className="glass-button primary"
-                                    style={{ padding: '0', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}
-                                >
-                                    +
-                                </button>
+                            {/* Item Priority */}
+                            <div style={{ display: 'flex', gap: '0.2rem' }}>
+                                {priorities.map(p => (
+                                    <button
+                                        key={p.id}
+                                        onClick={() => onUpdateItemPriority(index, p.id)}
+                                        style={{
+                                            fontSize: '0.6rem',
+                                            padding: '0.15rem 0.4rem',
+                                            borderRadius: '3px',
+                                            border: 'none',
+                                            background: (item.priority || 'normal') === p.id ? p.color : 'rgba(255,255,255,0.05)',
+                                            color: (item.priority || 'normal') === p.id ? '#000' : 'var(--text-secondary)',
+                                            fontWeight: (item.priority || 'normal') === p.id ? 'bold' : 'normal',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        {p.label}
+                                    </button>
+                                ))}
                             </div>
                         </div>
                     ))
@@ -128,3 +278,4 @@ const CartSidebar = ({ cart, onRemove, onAdd, onClear, onPay, total, onHold, onT
 };
 
 export default CartSidebar;
+

@@ -8,15 +8,14 @@ export const PersonnelPage = () => {
     const { data, addItem, deleteItem, distributeTips, updateItem } = useData();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isTipsModalOpen, setIsTipsModalOpen] = useState(false);
-    const [paymentFrequency, setPaymentFrequency] = useState('Quincenal');
+    const [editingId, setEditingId] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
-        role: '',
         status: 'Activo',
         lastPayment: 'N/A',
         salary: 0,
-        pin: '',
-        permissions: []
+        phone: '',
+        paymentFrequency: 'Mensual'
     });
 
     const handleDelete = (id) => {
@@ -25,48 +24,70 @@ export const PersonnelPage = () => {
         }
     };
 
+    const handleEdit = (employee) => {
+        setFormData({
+            ...employee,
+            salary: employee.salary, // Asegurar número
+        });
+        setEditingId(employee.id);
+        setIsModalOpen(true);
+    };
+
     const handleSave = () => {
         if (!formData.name) return alert('El nombre es obligatorio');
-        addItem('personnel', { ...formData, salary: parseFloat(formData.salary) || 0 });
+
+        const employeeData = { ...formData, salary: parseFloat(formData.salary) || 0 };
+
+        if (editingId) {
+            updateItem('personnel', editingId, employeeData);
+        } else {
+            addItem('personnel', employeeData);
+        }
+
         setIsModalOpen(false);
+        setEditingId(null);
         setFormData({
             name: '',
-            role: '',
             status: 'Activo',
             lastPayment: 'N/A',
             salary: 0,
-            pin: '',
-            permissions: []
+            phone: '',
+            paymentFrequency: 'Mensual'
         });
     };
 
     const columns = [
-        { header: 'Nombre', accessor: 'name' },
-        { header: 'Cargo', accessor: 'role' },
+        { header: 'Empleado', accessor: 'name' },
         {
             header: 'Estado',
             accessor: 'status',
             render: (row) => (
-                <span style={{
-                    color: row.status === 'Activo' ? 'var(--accent-green)' : 'var(--accent-orange)',
-                    fontWeight: 'bold'
-                }}>
+                <span style={{ color: row.status === 'Activo' ? 'var(--accent-green)' : 'red' }}>
                     {row.status}
                 </span>
             )
         },
-        { header: 'Último Pago', accessor: 'lastPayment' },
         {
-            header: 'Salario ($)',
+            header: 'Salario',
             accessor: 'salary',
-            render: (row) => `$${row.salary.toFixed(2)}`
-        }
+            render: (row) => `${row.salary} Bs`
+        },
+        { header: 'Frecuencia', accessor: 'paymentFrequency' },
+        { header: 'Último Pago', accessor: 'lastPayment' },
     ];
 
     const actions = (row) => (
         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
             <button className="glass-button" style={{ padding: '0.5rem' }} title="Ver Expediente">
                 <FileText size={16} />
+            </button>
+            <button
+                className="glass-button"
+                style={{ padding: '0.5rem' }}
+                title="Editar Empleado"
+                onClick={() => handleEdit(row)}
+            >
+                <div style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✏️</div>
             </button>
             <button
                 className="glass-button accent"
@@ -169,11 +190,21 @@ export const PersonnelPage = () => {
 
             <DataTable columns={columns} data={data.personnel} actions={actions} />
 
-            {/* Employee Modal */}
             <Modal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                title="Registrar Nuevo Empleado"
+                onClose={() => {
+                    setIsModalOpen(false);
+                    setEditingId(null);
+                    setFormData({
+                        name: '',
+                        status: 'Activo',
+                        lastPayment: 'N/A',
+                        salary: 0,
+                        phone: '',
+                        paymentFrequency: 'Mensual'
+                    });
+                }}
+                title={editingId ? "Editar Empleado" : "Registrar Nuevo Empleado"}
             >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div>
@@ -187,107 +218,58 @@ export const PersonnelPage = () => {
                         />
                     </div>
 
-                    {/* Flexible Role Input */}
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Cargo</label>
-                        <input
-                            type="text"
-                            list="roles-list"
-                            className="glass-input"
-                            placeholder="Escribe o selecciona un cargo..."
-                            value={formData.role}
-                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                        />
-                        <datalist id="roles-list">
-                            <option value="admin">Administrador (Acceso Total)</option>
-                            <option value="manager">Gerente (Inventario/Proveedores)</option>
-                            <option value="cashier">Cajero (Solo Ventas)</option>
-                            <option value="waiter">Mesero (Solo Pedidos)</option>
-                            <option value="kitchen">Cocina (Solo Comandas)</option>
-                        </datalist>
-                    </div>
-
-                    {/* PIN Input */}
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>PIN de Acceso (4-6 dígitos)</label>
-                        <input
-                            type="password"
-                            maxLength="6"
-                            className="glass-input"
-                            placeholder="****"
-                            value={formData.pin || ''}
-                            onChange={(e) => setFormData({ ...formData, pin: e.target.value.replace(/\D/g, '') })}
-                        />
-                    </div>
-
-                    {/* Granular Permissions */}
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Permisos Adicionales</label>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                            {['Ver Reportes', 'Modificar Inventario', 'Gestionar Personal', 'Anular Ventas', 'Configuración'].map(perm => (
-                                <label key={perm} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', cursor: 'pointer' }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.permissions?.includes(perm) || false}
-                                        onChange={(e) => {
-                                            const currentPerms = formData.permissions || [];
-                                            if (e.target.checked) {
-                                                setFormData({ ...formData, permissions: [...currentPerms, perm] });
-                                            } else {
-                                                setFormData({ ...formData, permissions: currentPerms.filter(p => p !== perm) });
-                                            }
-                                        }}
-                                        style={{ accentColor: 'var(--accent-blue)' }}
-                                    />
-                                    {perm}
-                                </label>
-                            ))}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Frecuencia de Pago</label>
+                            <select
+                                className="glass-input w-full"
+                                value={formData.paymentFrequency || 'Mensual'}
+                                onChange={(e) => setFormData({ ...formData, paymentFrequency: e.target.value })}
+                            >
+                                <option value="Semanal">Semanal</option>
+                                <option value="Quincenal">Quincenal</option>
+                                <option value="Mensual">Mensual</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Salario Base (Bs)</label>
+                            <div className="input-group">
+                                <DollarSign size={20} className="input-icon" />
+                                <input
+                                    type="number"
+                                    className="glass-input"
+                                    placeholder="0.00"
+                                    value={formData.salary}
+                                    onChange={(e) => setFormData({ ...formData, salary: parseFloat(e.target.value) || 0 })}
+                                />
+                            </div>
                         </div>
                     </div>
 
-                    {/* Frequency Selector */}
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Frecuencia de Pago</label>
-                        <div style={{ display: 'flex', gap: '1rem' }}>
-                            <button
-                                className={`glass-button ${paymentFrequency === 'Semanal' ? 'primary' : ''}`}
-                                style={{ flex: 1 }}
-                                onClick={() => setPaymentFrequency('Semanal')}
-                            >
-                                Semanal
-                            </button>
-                            <button
-                                className={`glass-button ${paymentFrequency === 'Quincenal' ? 'primary' : ''}`}
-                                style={{ flex: 1 }}
-                                onClick={() => setPaymentFrequency('Quincenal')}
-                            >
-                                Quincenal
-                            </button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
-                            Salario {paymentFrequency} ($)
-                        </label>
-                        <input
-                            type="number"
-                            className="glass-input"
-                            placeholder="0.00"
-                            value={formData.salary}
-                            onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
-                        />
-                    </div>
                     <div>
                         <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Fecha de Ingreso</label>
                         <input type="date" className="glass-input" />
+                    </div>
+
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Estado Actual</label>
+                        <select
+                            className="glass-input w-full"
+                            value={formData.status}
+                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                        >
+                            <option value="Activo">🟢 Activo</option>
+                            <option value="Vacaciones">🌴 Vacaciones</option>
+                            <option value="Reposo">uD83CuDFE5 Reposo Médico</option>
+                            <option value="Inactivo">🔴 Inactivo</option>
+                        </select>
                     </div>
                     <button
                         className="glass-button primary"
                         style={{ marginTop: '1rem', width: '100%' }}
                         onClick={handleSave}
                     >
-                        Guardar Empleado
+                        {editingId ? 'Guardar Cambios' : 'Guardar Empleado'}
                     </button>
                 </div>
             </Modal>
@@ -506,4 +488,5 @@ const TipManagementModalContent = ({ data, distributeTips, onClose }) => {
             )}
         </div>
     );
+
 };

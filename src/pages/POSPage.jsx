@@ -1,11 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { categories } from '../data/mockData';
 import { useData } from '../context/DataContext';
+import { useAuth } from '../context/AuthContext';
 import ProductCard from '../components/ProductCard';
 import CartSidebar from '../components/CartSidebar';
 import Modal from '../components/Modal';
-import { ShoppingBag, X, Search, ChevronDown, Clock, FileText, DollarSign, Calendar } from 'lucide-react';
+import { ShoppingBag, X, Search, ChevronDown, Clock, FileText, DollarSign, Calendar, Coffee, UserPlus, User, Trash2, AlertTriangle } from 'lucide-react';
 
 export const POSPage = () => {
     const [cart, setCart] = useState(() => {
@@ -49,8 +50,11 @@ export const POSPage = () => {
 
     // Hold Order State
     const [isHeldOrdersModalOpen, setIsHeldOrdersModalOpen] = useState(false);
-    const { holdOrder, data, deleteHeldOrder, addTip, addItem, updateItem } = useData();
+    const [heldOrderTab, setHeldOrderTab] = useState('active'); // 'active' | 'trash'
+    const { holdOrder, data, deleteHeldOrder, cancelHeldOrder, restoreCancelledOrder, permanentlyDeleteOrder, addTip, addItem, updateItem, sendOrderToProduction } = useData();
+    const { currentUser } = useAuth(); // Auth Context
     const heldOrders = data.heldOrders || [];
+    const cancelledOrders = data.cancelledOrders || [];
 
     // Sales Report State
     const [isSalesModalOpen, setIsSalesModalOpen] = useState(false);
@@ -58,8 +62,30 @@ export const POSPage = () => {
     // Cart Expansion State
     const [isCartExpanded, setIsCartExpanded] = useState(false);
 
+    // Priority State
+    const [orderPriority, setOrderPriority] = useState('normal');
+    // Takeaway State
+    const [isTakeaway, setIsTakeaway] = useState(false);
+
+    const updateItemPriority = (index, priority) => {
+        const newCart = [...cart];
+        if (newCart[index]) {
+            newCart[index] = { ...newCart[index], priority };
+            setCart(newCart);
+        }
+    };
+
+    const toggleItemTakeaway = (index) => {
+        const newCart = [...cart];
+        if (newCart[index]) {
+            newCart[index] = { ...newCart[index], isTakeaway: !newCart[index].isTakeaway };
+            setCart(newCart);
+        }
+    };
+
     // URL Params for Table
     const location = useLocation();
+    const navigate = useNavigate();
     const searchParams = new URLSearchParams(location.search);
     const tableId = searchParams.get('tableId');
     // Removed duplicate useData here
@@ -79,37 +105,126 @@ export const POSPage = () => {
         }
     }, [tableId, currentTable, data.heldOrders]);
 
+    const handleCancelCurrentOrder = () => {
+        if (!currentTable) return;
+
+        if (window.confirm(`⚠️ ¿Estás seguro de CANCELAR el pedido de la mesa ${currentTable.name}? \n\nEsta acción registrará el pedido como cancelado en el historial y liberará la mesa.`)) {
+            if (currentTable.currentOrderId) {
+                cancelHeldOrder(currentTable.currentOrderId);
+                alert('Pedido cancelado y mesa liberada.');
+                navigate('/tables');
+            } else {
+                updateItem('tables', currentTable.id, { currentOrder: [], status: 'available' });
+                setCart([]);
+                alert('Mesa liberada.');
+                navigate('/tables');
+            }
+        }
+    };
+
     const handleHoldOrder = () => {
         if (cart.length === 0) return;
 
-        if (currentTable) {
-            // Update existing order or create new one linked to table
-            const note = `Orden Mesa ${currentTable.name}`;
+        const note = prompt("Nota para poner en espera (opcional):");
+        if (note !== null) {
+            // Force no table association for "Hold" button so it goes to "En Espera" list strictly?
+            // User said: "Orders on Hold are EXCLUSIVELY FOR WHEN THE HOLD BUTTON IS PRESSED"
+            // If I am at a table and press "Hold", does it go to "En Espera"? YES.
+            // So we explicitly DO NOT pass tableId here if we want it in the generic list?
+            // OR we pass it, but the list filters IN things that are "on hold" status?
+            // for simplicity/robustness:
+            // If I am at a Table, and I press Hold, it's a "Saved Draft" for the table, OR a "Separate Hold Order"?
+            // Usually "Hold" on a table means "Save changes without sending".
+            // But if the user wants "En Espera" list to be ONLY "Hold button", then:
 
-            // If table already has an order, we might want to update it instead of creating a new one
-            // But holdOrder creates a new one. Let's stick to holdOrder for now, 
-            // but we should probably delete the old one if we are "updating".
-            // Actually, holdOrder logic in DataContext updates the table with the NEW order ID.
-            // So we just need to ensure we don't leave orphan orders if we are replacing.
+            // Logic:
+            // Hold Button -> heldOrders (with or without tableId).
+            // Send to Kitchen -> heldOrders (with tableId) AND Table Status Occupied.
 
-            if (currentTable.currentOrderId) {
-                deleteHeldOrder(currentTable.currentOrderId); // Remove old version
-            }
+            // The FILTER in the modal is key.
+            // IF we filter `!order.tableId` in the modal, then "Send to Kitchen" (which has tableId) won't show.
+            // BUT "Hold Order" for a table (which has tableId) won't show either!
 
-            holdOrder(cart, note, { tableId: currentTable.id });
+            // Solution: Add a flag `isSentToKitchen`? or `status`.
+            // Let's stick to the User's core request: "En Espera" list is for "Hold Button".
+
+            holdOrder(cart, note || 'En Espera'); // We won't pass tableId here to ensure it falls into the "Retail/Generic Hold" bucket?
+            // Wait, if we don't pass tableId, we lose the link.
+            // Let's pass tableId but maybe we need a `status: 'held'` vs `status: 'kitchen'`.
+            // For now, I will implement `handleSendToKitchen` and `handleHoldOrder` identically regarding data saving,
+            // BUT I will use the *Modal Filter* to differentiate.
+            // Actually, if I am at Mesa 1 and press Clock, I probably WANT it to show in En Espera list.
+            // If I Press Chef Hat, I DO NOT want it in En Espera list.
+
+            // So: 
+            // Send To Kitchen: adds `sentToKitchen: true`.
+            // Hold Order: adds `sentToKitchen: false` (default).
+
+            // I can't easily change `holdOrder` signature in DataContext without seeing it.
+            // I'll stick to:
+            // Chef Hat -> Occupies Table.
+            // Clock -> Holds Order.
+
+            // The User's specific complaint: "It sent it to hold".
+            // This suggests it appeared in the list.
+
+            // I will implement `handleSendToKitchen` now.
+            holdOrder(cart, note);
             setCart([]);
             setIsCartOpen(false);
-            alert(`Orden guardada para ${currentTable.name}`);
-            // Navigate back to tables? Or stay?
-            // navigate('/tables'); 
+            alert("Orden puesta en espera.");
+        }
+    };
+
+    const handleSendToKitchen = () => {
+        if (cart.length === 0) return;
+
+
+
+        // Resolve Customer Name
+        const selectedCustomer = data.customers.find(c => c.id === selectedCustomerId);
+        const customerName = selectedCustomer ? selectedCustomer.name : 'Cliente General';
+
+        const orderMetadata = {
+            createdBy: currentUser?.username || 'Cajero', // Use Auth User
+            customerId: selectedCustomerId,
+            customerName: customerName,
+            priority: orderPriority,
+            takeaway: isTakeaway
+        };
+
+        if (currentTable) {
+            // Table Order
+            orderMetadata.tableId = currentTable.id;
+            orderMetadata.tableName = currentTable.name;
+
+            // Send to Production (Kitchen & Bar)
+            sendOrderToProduction(cart, `Orden Mesa ${currentTable.name}`, orderMetadata);
+
+            // Update Table Status (Manually or let DataContext do it? sendOrderToProduction calls holdOrder which does it)
+            // But let's be safe.
+            updateItem('tables', currentTable.id, {
+                status: 'occupied',
+                occupiedAt: currentTable.occupiedAt || new Date().toISOString()
+            });
+
+            setCart([]);
+            setIsCartOpen(false);
+            alert(`Orden enviada a cocina para ${currentTable.name}`);
+            navigate('/tables');
         } else {
-            const note = prompt("Nota para la orden (opcional):");
-            if (note !== null) {
-                holdOrder(cart, note);
-                setCart([]);
-                setIsCartOpen(false);
-                alert("Orden puesta en espera.");
-            }
+            // Retail Order - Ask for Location
+            // const locationName = prompt("¿Ubicación? (ej: Barra, Mesa 5, Para Llevar)", "Barra");
+            // if (locationName === null) return; // Cancelled
+            const locationName = "Barra / Llevar"; // Simplify for now or use specific logic
+
+            orderMetadata.tableName = locationName;
+
+            sendOrderToProduction(cart, "Pedido Rápido", orderMetadata);
+
+            setCart([]);
+            setIsCartOpen(false);
+            alert("Orden enviada a barra/cocina correctamente.");
         }
     };
 
@@ -129,6 +244,11 @@ export const POSPage = () => {
         }
         setIsHeldOrdersModalOpen(false);
         setIsCartOpen(true);
+    };
+
+    const handleRestoreOrder = (order) => {
+        restoreCancelledOrder(order.id);
+        alert('Orden restaurada a "En Espera".');
     };
 
     // ... (rest of the component)
@@ -298,20 +418,7 @@ export const POSPage = () => {
 
     return (
         <div className="pos-container">
-            {/* Header Info for Table */}
-            {currentTable && (
-                <div style={{
-                    background: 'var(--accent-blue)',
-                    color: 'white',
-                    padding: '0.5rem 1rem',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                }}>
-                    <span style={{ fontWeight: 'bold' }}>📍 {currentTable.name}</span>
-                    <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>{currentTable.status === 'occupied' ? 'Ocupada' : 'Nueva Orden'}</span>
-                </div>
-            )}
+
 
             {/* Main Content */}
             <div className="pos-grid-area">
@@ -321,6 +428,25 @@ export const POSPage = () => {
 
                 {/* Header Container */}
                 <div className="pos-header" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: '100%' }}>
+
+                    {/* Badge de Mesa */}
+                    {currentTable && (
+                        <div style={{
+                            background: '#00d4ff',
+                            color: '#000',
+                            padding: '0.3rem 0.6rem',
+                            borderRadius: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.3rem',
+                            fontWeight: '600',
+                            fontSize: '0.75rem',
+                            flexShrink: 0
+                        }}>
+                            <Coffee size={12} color="#000" strokeWidth={2} />
+                            {currentTable.name}
+                        </div>
+                    )}
 
                     {/* Integrated Search & Categories (Flex 1 to take available space) */}
                     <div style={{ display: 'flex', flex: 1, gap: '0.5rem', alignItems: 'center', position: 'relative', minWidth: 0 }}>
@@ -438,6 +564,25 @@ export const POSPage = () => {
 
                     {/* Right Side Buttons Group */}
                     <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+                        {/* Cancel Table Order Button (Only for Tables) */}
+                        {currentTable && (
+                            <button
+                                className="glass-button"
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    padding: '0.35rem',
+                                    borderColor: 'var(--accent-red)',
+                                    color: 'var(--accent-red)'
+                                }}
+                                onClick={handleCancelCurrentOrder}
+                                title="Cancelar Pedido y Liberar Mesa"
+                            >
+                                <Trash2 size={18} />
+                            </button>
+                        )}
+
                         {/* Reports Button */}
                         <button
                             className="glass-button"
@@ -466,7 +611,7 @@ export const POSPage = () => {
                             title="Ver Órdenes en Espera"
                         >
                             <Clock size={18} />
-                            {heldOrders.length > 0 && (
+                            {heldOrders.filter(o => o.status !== 'kitchen').length > 0 && (
                                 <span style={{
                                     marginLeft: '0.25rem',
                                     background: 'var(--accent-orange)',
@@ -480,7 +625,7 @@ export const POSPage = () => {
                                     justifyContent: 'center',
                                     fontWeight: 'bold'
                                 }}>
-                                    {heldOrders.length}
+                                    {heldOrders.filter(o => o.status !== 'kitchen').length}
                                 </span>
                             )}
                         </button>
@@ -548,7 +693,13 @@ export const POSPage = () => {
             </div>
 
             {/* Sidebar / Drawer */}
-            <div className={`pos-cart-area ${isCartOpen ? 'open' : ''} ${isCartExpanded ? 'full-screen' : ''}`}>
+            <div
+                className={`pos-cart-area ${isCartOpen ? 'open' : ''} ${isCartExpanded ? 'full-screen' : ''}`}
+                style={{
+                    backgroundColor: '#181818', // Darker than main bg
+                    borderLeft: '1px solid var(--vscode-border)'
+                }}
+            >
                 <div style={{ position: 'relative', height: '100%' }}>
                     {/* Close Button for Mobile */}
                     <button
@@ -574,8 +725,16 @@ export const POSPage = () => {
                         onPay={handlePayClick}
                         total={total}
                         onHold={handleHoldOrder}
+                        onSendToKitchen={handleSendToKitchen}
+                        currentTable={currentTable}
                         onToggleExpand={() => setIsCartExpanded(!isCartExpanded)}
                         isExpanded={isCartExpanded}
+                        orderPriority={orderPriority}
+                        setOrderPriority={setOrderPriority}
+                        onUpdateItemPriority={updateItemPriority}
+                        isTakeaway={isTakeaway}
+                        setIsTakeaway={setIsTakeaway}
+                        onToggleItemTakeaway={toggleItemTakeaway}
                     />
                 </div>
             </div>
@@ -817,45 +976,114 @@ export const POSPage = () => {
             <Modal
                 isOpen={isHeldOrdersModalOpen}
                 onClose={() => setIsHeldOrdersModalOpen(false)}
-                title="Órdenes en Espera"
+                title="Ordenes en espera"
             >
+                {/* Tabs */}
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', borderBottom: '1px solid var(--vscode-border)', paddingBottom: '0.5rem' }}>
+                    <button
+                        className={`glass-button ${heldOrderTab === 'active' ? 'primary' : ''}`}
+                        onClick={() => setHeldOrderTab('active')}
+                        style={{ flex: 1, justifyContent: 'center', opacity: heldOrderTab === 'active' ? 1 : 0.7 }}
+                    >
+                        En Espera ({heldOrders.filter(o => o.status !== 'kitchen').length})
+                    </button>
+                    <button
+                        className={`glass-button ${heldOrderTab === 'trash' ? 'primary' : ''}`}
+                        onClick={() => setHeldOrderTab('trash')}
+                        style={{ flex: 1, justifyContent: 'center', opacity: heldOrderTab === 'trash' ? 1 : 0.7, borderColor: heldOrderTab === 'trash' ? 'var(--accent-red)' : 'transparent', color: heldOrderTab === 'trash' ? 'var(--accent-red)' : 'inherit' }}
+                    >
+                        Papelera ({cancelledOrders.filter(o => !o.tableId).length})
+                    </button>
+                </div>
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '60vh', overflowY: 'auto' }}>
-                    {heldOrders.length === 0 ? (
-                        <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No hay órdenes en espera.</p>
-                    ) : (
-                        heldOrders.map(order => (
-                            <div key={order.id} className="glass-panel" style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div>
-                                    <h4 style={{ margin: 0, fontSize: '1rem' }}>{order.note || 'Sin nota'}</h4>
-                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                        {new Date(order.timestamp).toLocaleTimeString()} - {order.items.length} items
-                                    </p>
-                                    <p style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--accent-green)' }}>
-                                        Total: ${order.total.toFixed(2)}
-                                    </p>
+
+                    {/* Active Orders List */}
+                    {heldOrderTab === 'active' && (
+                        heldOrders.filter(o => o.status !== 'kitchen').length === 0 ? (
+                            <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No hay órdenes en espera.</p>
+                        ) : (
+                            heldOrders.filter(o => o.status !== 'kitchen').map(order => (
+                                <div key={order.id} className="glass-panel" style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div>
+                                        <h4 style={{ margin: 0, fontSize: '1rem' }}>{order.note || 'Sin nota'} {order.tableName ? `(${order.tableName})` : ''}</h4>
+                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                            {new Date(order.timestamp).toLocaleTimeString()} - {order.items.length} items
+                                        </p>
+                                        <p style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--accent-green)' }}>
+                                            Total: ${order.total.toFixed(2)}
+                                        </p>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <button
+                                            className="glass-button primary"
+                                            onClick={() => handleRecallOrder(order)}
+                                            style={{ fontSize: '0.8rem', padding: '0.5rem' }}
+                                        >
+                                            Recuperar
+                                        </button>
+                                        <button
+                                            className="glass-button"
+                                            onClick={() => {
+                                                if (window.confirm('¿Cancelar esta orden? Se moverá a la papelera.')) {
+                                                    cancelHeldOrder(order.id);
+                                                }
+                                            }}
+                                            style={{ fontSize: '0.8rem', padding: '0.5rem', color: 'var(--accent-red)', borderColor: 'var(--accent-red)' }}
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
                                 </div>
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <button
-                                        className="glass-button primary"
-                                        onClick={() => handleRecallOrder(order)}
-                                        style={{ fontSize: '0.8rem', padding: '0.5rem' }}
-                                    >
-                                        Recuperar
-                                    </button>
-                                    <button
-                                        className="glass-button"
-                                        onClick={() => {
-                                            if (window.confirm('¿Eliminar esta orden?')) {
-                                                deleteHeldOrder(order.id);
-                                            }
-                                        }}
-                                        style={{ fontSize: '0.8rem', padding: '0.5rem', color: 'var(--accent-red)', borderColor: 'var(--accent-red)' }}
-                                    >
-                                        <X size={16} />
-                                    </button>
+                            ))
+                        )
+                    )}
+
+                    {/* Cancelled Orders List (Trash) */}
+                    {heldOrderTab === 'trash' && (
+                        cancelledOrders.filter(o => !o.tableId).length === 0 ? (
+                            <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No hay órdenes recientes en la papelera.</p>
+                        ) : (
+                            cancelledOrders.filter(o => !o.tableId).slice().reverse().map(order => (
+                                <div key={order.id} className="glass-panel" style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.8, borderColor: 'rgba(239, 68, 68, 0.3)' }}>
+
+                                    <div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <h4 style={{ margin: 0, fontSize: '1rem', textDecoration: 'line-through' }}>{order.note || 'Sin nota'} {order.tableName ? `(${order.tableName})` : ''}</h4>
+                                            <span style={{ fontSize: '0.7rem', background: 'var(--accent-red)', color: 'white', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>CANCELADA</span>
+                                        </div>
+                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                            Cancelado: {order.cancelledAt ? new Date(order.cancelledAt).toLocaleTimeString() : 'N/A'}
+                                        </p>
+                                        <p style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>
+                                            Total: ${order.total.toFixed(2)}
+                                        </p>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <button
+                                            className="glass-button"
+                                            onClick={() => handleRestoreOrder(order)}
+                                            style={{ fontSize: '0.8rem', padding: '0.5rem', borderColor: 'var(--accent-green)', color: 'var(--accent-green)' }}
+                                            title="Restaurar a En Espera"
+                                        >
+                                            Restaurar
+                                        </button>
+                                        <button
+                                            className="glass-button"
+                                            onClick={() => {
+                                                if (window.confirm('¿Eliminar PERMANENTEMENTE esta orden? No se podrá recuperar.')) {
+                                                    permanentlyDeleteOrder(order.id);
+                                                }
+                                            }}
+                                            style={{ fontSize: '0.8rem', padding: '0.5rem', color: 'var(--accent-red)', borderColor: 'var(--accent-red)' }}
+                                            title="Eliminar permanentemente"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        ))
+                            ))
+                        )
                     )}
                 </div>
             </Modal>

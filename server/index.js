@@ -1,173 +1,124 @@
 import express from 'express';
 import { createServer } from 'http';
-import { Server } from 'socket.io';
+import { Server } from "socket.io";
 import cors from 'cors';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import fs from 'fs';
-import path from 'path';
+import os from 'os';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Configuration
-const PORT = 3001;
 const app = express();
-const httpServer = createServer(app);
-
-// Enable CORS for all local requests
-app.use(cors({
-    origin: "*", // Allow all origins for local network ease
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true
-}));
-
+app.use(cors());
 app.use(express.json());
 
-// Serve Static Frontend (Production/Android Mode)
-const distPath = join(__dirname, '../dist');
-if (fs.existsSync(distPath)) {
-    console.log('📂 Serving static files from:', distPath);
-    app.use(express.static(distPath));
-} else {
-    console.log('⚠️ Static files not found. Run "npm run build" in root folder first.');
-}
+const server = createServer(app);
 
-// Socket.io Setup
-const io = new Server(httpServer, {
+// Get Local IP
+const getLocalIp = () => {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return 'localhost';
+};
+
+const io = new Server(server, {
     cors: {
-        origin: "*", // Allow all origins
+        origin: "*", // Allow all origins for local network access
         methods: ["GET", "POST"]
     }
 });
 
-// Simple In-Memory "Database" (Persisted to JSON for recovery)
-const DB_FILE = 'local_db.json';
-let db = {
+const PORT = 3001;
+
+// In-Memory State (Simple storage)
+let appState = {
     sales: [],
     heldOrders: [],
-    inventory: [],
     kitchenOrders: [],
-    lastUpdated: new Date().toISOString()
+    barOrders: [],
+    tables: []
 };
 
-// Load DB
-if (fs.existsSync(DB_FILE)) {
-    try {
-        const data = fs.readFileSync(DB_FILE, 'utf8');
-        db = JSON.parse(data);
-        console.log('📦 Database loaded from file');
-    } catch (e) {
-        console.error('Error loading DB, starting fresh', e);
-    }
-}
-
-const saveDB = () => {
-    try {
-        fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
-    } catch (e) {
-        console.error('Error saving DB', e);
-    }
-};
-
-// --- API ROUTES ---
-
-// Health Check
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date() });
-});
-
-// Sync Endpoint: Client pushes its data, Server merges and returns latest
-app.post('/api/sync', (req, res) => {
-    const { clientData } = req.body;
-
-    // TODO: Implement smart merging logic
-    // For now, simpler "Server Authority" for shared lists, but "Append" for transactions (Sales)
-
-    // 1. New Transactional Data (Append Only)
-    if (clientData?.sales?.length > 0) {
-        const newSales = clientData.sales.filter(s => !db.sales.find(ds => ds.id === s.id));
-        if (newSales.length > 0) {
-            db.sales = [...db.sales, ...newSales];
-            console.log(`💰 Received ${newSales.length} new sales`);
-        }
-    }
-
-    // 2. State Data (Replace/Update)
-    // Kitchen Orders
-    if (clientData?.kitchenOrders) {
-        db.kitchenOrders = clientData.kitchenOrders; // Simplified: Last writer wins for now
-    }
-    // Held Orders
-    if (clientData?.heldOrders) {
-        db.heldOrders = clientData.heldOrders;
-    }
-    if (clientData?.tables) {
-        db.tables = clientData.tables;
-    }
-
-    saveDB();
-
-    // Notify everyone else that data changed
-    io.emit('sync_update', {
-        type: 'general',
-        timestamp: new Date().toISOString()
-    });
-
-    res.json({
-        success: true,
-        serverData: db
-    });
-});
-
-// --- SOCKET EVENTS ---
 io.on('connection', (socket) => {
-    console.log('⚡ Client connected:', socket.id);
+    console.log('Cliente conectado:', socket.id);
 
-    socket.on('join_room', (room) => {
-        socket.join(room);
-        console.log(`Client joined room: ${room}`);
-    });
+    // Send current state on connection
+    socket.emit('sync_update', appState);
 
-    // Real-time Kitchen Order
+    // --- KITCHEN & BAR ---
     socket.on('new_kitchen_order', (order) => {
-        console.log('👨‍🍳 New Kitchen Order:', order.id);
-
-        // Add to DB
-        db.kitchenOrders.push(order);
-        saveDB();
-
-        // Broadcast to Kitchen
-        io.to('kitchen').emit('kitchen_order_received', order);
-        // Broadcast to everyone to update pending lists
-        io.emit('sync_updated_needed');
+        console.log('👨‍🍳 Nueva Orden Cocina:', order.id);
+        // Add to state if not exists
+        if (!appState.kitchenOrders.find(o => o.id === order.id)) {
+            appState.kitchenOrders.push(order);
+        }
+        // Broadcast to ALL clients (Kitchen screens)
+        io.emit('kitchen_order_received', order);
+        io.emit('sync_update', appState); // Sync full state
     });
 
-    // Real-time Table Update
-    socket.on('update_table', (tableData) => {
-        io.emit('table_updated', tableData);
+    socket.on('new_bar_order', (order) => {
+        console.log('🍹 Nueva Orden Barra:', order.id);
+        if (!appState.barOrders.find(o => o.id === order.id)) {
+            appState.barOrders.push(order);
+        }
+        io.emit('bar_order_received', order); // (If we add specific event later)
+        io.emit('sync_update', appState);
+    });
+
+    // --- HELD ORDERS ---
+    socket.on('add_held_order', (order) => {
+        console.log('📝 Orden en Espera:', order.id);
+        const exists = appState.heldOrders.find(o => o.id === order.id);
+        if (exists) {
+            appState.heldOrders = appState.heldOrders.map(o => o.id === order.id ? order : o);
+        } else {
+            appState.heldOrders.push(order);
+        }
+        io.emit('sync_update', appState);
+    });
+
+    socket.on('delete_held_order', (orderId) => {
+        console.log('🗑️ Eliminar Orden:', orderId);
+        appState.heldOrders = appState.heldOrders.filter(o => o.id !== orderId);
+        io.emit('held_order_deleted', orderId);
+        io.emit('sync_update', appState);
+    });
+
+    // --- FULL SYNC ---
+    socket.on('full_state_update', (newState) => {
+        // Merge strategy: simpler to just trust the latest sender in a small local setup
+        // But let's be careful not to wipe data if newState is empty
+        if (newState.heldOrders) appState.heldOrders = newState.heldOrders;
+        if (newState.kitchenOrders) appState.kitchenOrders = newState.kitchenOrders;
+        if (newState.barOrders) appState.barOrders = newState.barOrders;
+        if (newState.tables) appState.tables = newState.tables;
+
+        // Broadcast Update
+        socket.broadcast.emit('sync_update', appState);
     });
 
     socket.on('disconnect', () => {
-        console.log('Client disconnected:', socket.id);
+        console.log('Cliente desconectado:', socket.id);
     });
 });
 
-// Catch-All Route for SPA (Must be last)
-app.get('*', (req, res) => {
-    if (fs.existsSync(path.join(distPath, 'index.html'))) {
-        res.sendFile(path.join(distPath, 'index.html'));
-    } else {
-        res.status(404).send('Frontend not built. Please run npm run build.');
-    }
+// API Routes (Optional fallback)
+app.post('/api/sync', (req, res) => {
+    const { clientData } = req.body;
+    // Logic to merge...
+    res.json({ success: true, serverData: appState });
 });
 
-// Start Server
-httpServer.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, '0.0.0.0', () => {
+    const ip = getLocalIp();
     console.log(`
-    🚀 POS Local Server running!
-    --------------------------
-    - Local:   http://localhost:${PORT}
-    - Network: http://<YOUR_PC_IP>:${PORT}
+    🚀 SERVIDOR POS LISTO
+    -----------------------------------------
+    Local:   http://localhost:${PORT}
+    Network: http://${ip}:${PORT}
+    -----------------------------------------
     `);
 });

@@ -80,6 +80,22 @@ class LocalSyncService {
         return false;
     }
 
+    sendHeldOrder(order) {
+        if (this.socket && this.isConnected) {
+            this.socket.emit("add_held_order", order);
+            return true;
+        }
+        return false;
+    }
+
+    deleteHeldOrder(orderId) {
+        if (this.socket && this.isConnected) {
+            this.socket.emit("delete_held_order", orderId);
+            return true;
+        }
+        return false;
+    }
+
     async syncData(localData) {
         if (!this.isConnected) return null;
 

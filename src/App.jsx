@@ -5,11 +5,16 @@ import { POSPage } from './pages/POSPage'
 import { InventoryPage } from './pages/InventoryPage'
 import { SuppliersPage } from './pages/SuppliersPage'
 import { ProductsPage } from './pages/ProductsPage'
+import { CategoriesPage } from './pages/CategoriesPage'
 import { PersonnelPage } from './pages/PersonnelPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { LoginPage } from './pages/LoginPage'
-import { TablesPage } from './pages/TablesPage'
+import { OrdersPage } from './pages/OrdersPage'
+import { KitchenPage } from './pages/KitchenPage'
+import { BarPage } from './pages/BarPage'
+import { CustomersPage } from './pages/CustomersPage'
 import { CashRegisterPage } from './pages/CashRegisterPage'
+import { UsersPage } from './pages/UsersPage'
 import ReportsPage from './pages/ReportsPage'
 import { SettingsProvider } from './context/SettingsContext'
 import { DataProvider } from './context/DataContext'
@@ -31,6 +36,11 @@ const ProtectedRoute = ({ children, requiredRole }) => {
       <h2>Acceso Denegado</h2>
       <p>No tienes permisos para ver esta página.</p>
     </div>;
+  }
+
+  // Regla estricta para Cocina: Redirigir siempre a /kitchen si intentan ir a otro lado
+  if (currentUser.role === 'kitchen' && !location.pathname.startsWith('/kitchen')) {
+    return <Navigate to="/kitchen" replace />;
   }
 
   return children;
@@ -67,9 +77,19 @@ function App() {
                       <ProductsPage />
                     </ProtectedRoute>
                   } />
+                  <Route path="categories" element={
+                    <ProtectedRoute requiredRole="manager">
+                      <CategoriesPage />
+                    </ProtectedRoute>
+                  } />
                   <Route path="personnel" element={
                     <ProtectedRoute requiredRole="admin">
                       <PersonnelPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="users" element={
+                    <ProtectedRoute requiredRole="admin">
+                      <UsersPage />
                     </ProtectedRoute>
                   } />
                   <Route path="reports" element={
@@ -77,7 +97,10 @@ function App() {
                       <ReportsPage />
                     </ProtectedRoute>
                   } />
-                  <Route path="tables" element={<TablesPage />} />
+                  <Route path="tables" element={<OrdersPage />} />
+                  <Route path="kitchen" element={<KitchenPage />} />
+                  <Route path="bar" element={<BarPage />} />
+                  <Route path="customers" element={<CustomersPage />} />
                   <Route path="cash-register" element={
                     <ProtectedRoute requiredRole="manager">
                       <CashRegisterPage />

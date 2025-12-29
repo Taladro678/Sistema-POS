@@ -10,22 +10,24 @@ export const SettingsProvider = ({ children }) => {
         try {
             const savedSettings = localStorage.getItem('appSettings');
             return savedSettings ? JSON.parse(savedSettings) : {
-                appName: 'Luna & Curd',
+                appName: 'La Autentica',
                 appSubtitle: 'ERP System',
                 logoColor1: '#00f2ff',
                 logoColor2: '#ff9d00',
                 sidebarWidth: '200px',
                 isSidebarCollapsed: false, // Default state
+                masterPin: '0000' // Default Master PIN
             };
         } catch (e) {
             console.error('Error loading settings:', e);
             return {
-                appName: 'Luna & Curd',
+                appName: 'La Autentica',
                 appSubtitle: 'ERP System',
                 logoColor1: '#00f2ff',
                 logoColor2: '#ff9d00',
                 sidebarWidth: '200px',
-                isSidebarCollapsed: false
+                isSidebarCollapsed: false,
+                masterPin: '0000'
             };
         }
     });

@@ -1,0 +1,539 @@
+#root {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+
+:root {
+  --glass-bg: rgba(30, 30, 30, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+  --accent-blue: #8ab4f8;
+  --accent-green: #81c995;
+  --accent-red: #f28b82;
+  --accent-yellow: #fdd663;
+  --accent-orange: #fb8c00;
+  --text-primary: #e8eaed;
+  --text-secondary: #9aa0a6;
+  --bg-dark: #000000;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  /* Smaller radius */
+  box-shadow: var(--glass-shadow);
+  padding: 0.5rem;
+  /* Reduced padding from 0.75rem */
+}
+
+.glass-input {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--glass-border);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  /* Very compact padding */
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  /* Smaller font */
+  transition: all 0.3s ease;
+  width: 100%;
+  box-sizing: border-box;
+  height: 28px;
+  /* Fixed small height reduced from 30px */
+}
+
+.glass-input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+}
+
+.glass-button {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  padding: 0.25rem 0.6rem;
+  /* Compact button reduced from 0.35rem 0.75rem */
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  /* Reduced font size */
+}
+
+.glass-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.glass-button.primary {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+}
+
+.glass-button.primary:hover {
+  background: #2563eb;
+}
+
+.glass-button.accent {
+  background: var(--accent-green);
+  border-color: var(--accent-green);
+}
+
+/* Global Utility: Hide Scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* POS Layout Fixes */
+.app-container {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  font-size: 14px;
+  /* Base font size reduction */
+}
+
+.main-content {
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.pos-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-dark);
+}
+
+.pos-grid-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0.5rem;
+  gap: 0.5rem;
+}
+
+/* Cash Register Page Styles - ULTRA Compact Version */
+.cr-container {
+  padding: 0.75rem;
+  height: 100%;
+  overflow-y: auto;
+  color: white;
+}
+
+.cr-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.cr-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cr-title h1 {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.cr-title-icon {
+  padding: 0.35rem;
+  background: rgba(59, 130, 246, 0.2);
+  border-radius: 6px;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: var(--accent-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cr-rate-display {
+  text-align: right;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cr-rate-display:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.cr-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cr-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cr-input-group {
+  margin-bottom: 0.5rem;
+}
+
+.cr-input-group label {
+  display: block;
+  margin-bottom: 0.15rem;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+.cr-input-wrapper {
+  position: relative;
+}
+
+.cr-currency-symbol {
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  font-weight: bold;
+  font-size: 0.8rem;
+}
+
+.cr-input-wrapper input {
+  padding-left: 1.5rem;
+  font-size: 0.9rem;
+  font-weight: bold;
+  height: 28px;
+}
+
+.cr-sales-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  /* Always 2 cols if possible */
+  gap: 0.5rem;
+}
+
+.cr-payment-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.35rem 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  transition: background 0.2s;
+  font-size: 0.8rem;
+}
+
+.cr-payment-row:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.cr-balance-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.cr-balance-card {
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid;
+}
+
+.cr-balance-card.balanced {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.cr-balance-card.unbalanced {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.cr-balance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.cr-balance-amount {
+  font-size: 1.1rem;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.text-green {
+  color: var(--accent-green);
+}
+
+.text-red {
+  color: var(--accent-red);
+}
+
+.text-blue {
+  color: var(--accent-blue);
+}
+
+/* Mobile Cart Drawer */
+.pos-cart-area {
+  position: fixed;
+  top: 0;
+  height: calc(100dvh - 55px) !important;
+  /* Force exact height */
+  bottom: auto !important;
+  right: -100%;
+  z-index: 2147483647 !important;
+  /* Max integer z-index */
+  transition: right 0.3s ease-in-out;
+  background: #000000 !important;
+  backdrop-filter: none;
+  padding: 0.5rem;
+  max-width: none !important;
+  overflow-y: auto;
+}
+
+/* Force opaque children in mobile cart */
+.pos-cart-area .glass-panel {
+  background: #1e1e1e !important;
+  /* Solid dark grey */
+  backdrop-filter: none;
+  box-shadow: none;
+  border-color: #333;
+}
+
+.pos-cart-area.open {
+  right: 0;
+}
+
+/* Full Screen Cart Mode */
+.pos-cart-area.full-screen {
+  max-width: 100%;
+  width: 100%;
+}
+
+/* Desktop Layout */
+@media (min-width: 1024px) {
+  .pos-container {
+    flex-direction: row;
+  }
+
+  .pos-cart-area {
+    position: relative;
+    right: 0;
+    width: 280px;
+    padding: 0;
+    background: transparent;
+    backdrop-filter: none;
+    border-left: 1px solid var(--glass-border);
+    /* Reset mobile fixed props */
+    top: auto;
+    bottom: auto;
+    height: 100%;
+    z-index: 1 !important;
+    max-width: 280px !important;
+  }
+}
+
+/* Global Responsive Adjustments */
+@media (max-width: 768px) {
+  .glass-panel {
+    padding: 0.5rem !important;
+  }
+
+  .cr-header {
+    flex-direction: row;
+    /* Keep row on mobile if possible */
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .cr-rate-display {
+    text-align: right;
+    padding: 0.25rem;
+  }
+
+  .sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100% !important;
+    height: 50px;
+    /* Increased from 45px for better touch targets */
+    flex-direction: row;
+    z-index: 1000;
+    /* Increased to ensure it's always on top */
+    padding: 0 !important;
+    border-top: 1px solid var(--glass-border);
+    justify-content: space-around;
+  }
+
+  .sidebar-header,
+  .sidebar-user,
+  .sidebar-toggle-container,
+  .sidebar button.glass-button:last-child {
+    display: none !important;
+  }
+
+  .sidebar nav {
+    flex-direction: row !important;
+    width: 100%;
+    justify-content: normal !important;
+    /* Let flex items grow */
+    /* Distribute items */
+    overflow-x: auto;
+    padding-right: 0;
+    gap: 0 !important;
+    /* NO GAP */
+    /* Let space-between handle it, or minimal gap */
+    align-items: center;
+    /* Center vertically */
+    flex-wrap: nowrap !important;
+    /* PREVENT wrapping which hides items */
+  }
+
+  .sidebar nav a {
+    flex: 1 !important;
+    /* Force equal width and full growth */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    /* Square edges for seamless look */
+    border: none !important;
+    /* Remove individual borders */
+    border-right: 1px solid var(--glass-border) !important;
+    /* Add separator */
+    background: transparent;
+    /* Allow active state to show */
+  }
+
+  .sidebar nav button {
+    flex: 0 0 24px !important;
+    width: 24px !important;
+    max-width: 24px !important;
+    min-width: 0 !important;
+    /* Force override */
+    box-sizing: border-box !important;
+    /* Absolute minimum width */
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    border-right: 1px solid var(--glass-border) !important;
+    background: transparent;
+  }
+
+
+
+  /* Active State for seamless bar */
+  .sidebar nav a.primary {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-bottom: 3px solid var(--accent-blue) !important;
+    color: var(--accent-blue) !important;
+  }
+
+  /* Remove right border from last item */
+  .sidebar nav>*:last-child {
+    border-right: none !important;
+  }
+
+  /* Hide scrollbar for clean look */
+  .sidebar nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sidebar-label {
+    display: none !important;
+    /* Icons only on mobile */
+  }
+
+  .app-container {
+    flex-direction: column;
+    padding-bottom: 60px;
+    /* Increased to prevent content from being hidden behind sidebar */
+  }
+
+  .main-content {
+    padding: 0;
+  }
+}

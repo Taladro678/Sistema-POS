@@ -1,3 +1,100 @@
+/**
+ * ====================================================================================
+ * DATACONTEXT - GESTOR CENTRAL DE DATOS DEL SISTEMA POS
+ * ====================================================================================
+ * 
+ * PROPÓSITO:
+ * Este Context maneja TODOS los datos del sistema POS, incluyendo:
+ * - Inventario, Productos, Proveedores, Personal
+ * - Ventas, Órdenes en Espera, Mesas
+ * - Propinas, Caja, Clientes
+ * - Tasa de cambio (Bs/USD)
+ * 
+ * ====================================================================================
+ * ARQUITECTURA DE SINCRONIZACIÓN (MULTI-CAPA)
+ * ====================================================================================
+ * 
+ * 1. CAPA LOCAL (localStorage)
+ *    - Persistencia inmediata en el navegador
+ *    - useEffect guarda automáticamente cada cambio
+ *    - Previene pérdida de datos al cerrar la app
+ * 
+ * 2. CAPA LOCAL SYNC (WebSocket)
+ *    - Sincronización en tiempo real entre dispositivos en la misma red local
+ *    - Usa servidor Node.js local (puerto 3001)
+ *    - Ideal para varios POS en un restaurante
+ *    - Servicio: localSyncService
+ * 
+ * 3. CAPA GOOGLE DRIVE (Backup automático)
+ *    - Sincronización en la nube
+ *    - Auto-upload cada 3 segundos (debounced)
+ *    - Auto-download cada 15 segundos (polling)
+ *    - Evita conflictos comparando timestamps
+ *    - Servicio: googleDriveService
+ * 
+ * 4. CAPA FIREBASE (Cloud híbrido)
+ *    - Sincroniza ventas a Firestore
+ *    - Backup adicional en la nube
+ *    - Debounce de 5 segundos
+ *    - Servicio: firebaseSyncService
+ * 
+ * ====================================================================================
+ * FUNCIONES PRINCIPALES
+ * ====================================================================================
+ * 
+ * GENÉRICAS:
+ * - addItem(section, item)       → Agrega un item a una sección (productos, ventas, etc.)
+ * - updateItem(section, id, data)→ Actualiza un item existente
+ * - deleteItem(section, id)      → Elimina un item
+ * - updateData(section, newData) → Reemplaza completamente una sección
+ * - clearAllData()               → Resetea todo el sistema
+ * 
+ * ÓRDENES:
+ * - holdOrder(cart, note, metadata) → Pone una orden en espera (para mesas)
+ * - deleteHeldOrder(orderId)        → Elimina/completa una orden en espera
+ * - sendToKitchen(items, tableId)   → Envía orden a cocina (multi-dispositivo)
+ * 
+ * PROPINAS:
+ * - addTip(amount, source)     → Registra una propina
+ * - distributeTips()           → Distribuye propinas entre personal activo
+ * 
+ * MULTI-MONEDA:
+ * - updateExchangeRate(newRate) → Actualiza tasa Bs/USD y guarda historial
+ * 
+ * BACKUP:
+ * - exportData()               → Descarga backup JSON
+ * - importData(file)           → Restaura desde backup JSON
+ * - connectDrive()             → Conecta con Google Drive
+ * - syncFromDrive()            → Sincroniza desde Drive manualmente
+ * - uploadToDrive(file)        → Sube archivo a Drive
+ * 
+ * ====================================================================================
+ * ESTRUCTURA DE DATOS
+ * ====================================================================================
+ * 
+ * data = {
+ *   inventory: [],         // Items de inventario
+ *   products: [],          // Productos del menú
+ *   suppliers: [],         // Proveedores
+ *   personnel: [],         // Personal
+ *   sales: [],             // Historial de ventas
+ *   heldOrders: [],        // Órdenes en espera (mesas)
+ *   tables: [],            // Mesas del restaurante
+ *   customers: [],         // Clientes (para crédito)
+ *   kitchenOrders: [],     // Órdenes en cocina
+ *   tips: number,          // Total de propinas acumuladas
+ *   tipHistory: [],        // Historial de propinas
+ *   tipDistributions: [],  // Distribuciones de propinas
+ *   exchangeRate: number,  // Tasa Bs/USD actual
+ *   rateHistory: [],       // Historial de tasas
+ *   cashRegister: {},      // Estado de la caja
+ *   defaultForeignCurrencyDiscountPercent: number, // Desc. por pago en divisa
+ *   lastModified: string   // Timestamp de última modificación
+ * }
+ * 
+ * ====================================================================================
+ */
+
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { inventoryItems, suppliers, personnel, products } from '../data/mockData';
 import { googleDriveService } from '../services/googleDrive';
@@ -10,48 +107,81 @@ const DataContext = createContext();
 export const useData = () => useContext(DataContext);
 
 export const DataProvider = ({ children }) => {
-    // Helper to load from localStorage or fallback to mockData
-    // CRITICAL FIX: If isInitialized is true in localStorage, we should NOT fallback to mockData for empty arrays
-    // This prevents deleted items from reappearing
+    /**
+     * Helper to load data from localStorage with fallback to default values
+     * SIMPLIFIED VERSION: Always use localStorage if exists, otherwise use fallback
+     * This prevents data loss bugs caused by complex initialization logic
+     */
     const loadData = (key, fallback) => {
         try {
             const saved = localStorage.getItem(key);
-            const isInit = localStorage.getItem('isInitialized');
 
+            // If data exists in localStorage, use it
             if (saved !== null) {
                 return JSON.parse(saved);
             }
 
-            // If system was already initialized, and we find no data for a key, return empty array/default instead of mock
-            // UNLESS it's the first run ever
-            if (isInit && key !== 'isInitialized') {
-                if (Array.isArray(fallback)) return [];
-                if (typeof fallback === 'number') return 0;
-                return fallback;
-            }
-
+            // First time loading: use fallback (mockData or defaults)
             return fallback;
         } catch (e) {
-            console.error(`Error loading ${key}:`, e);
+            console.error(`❌ Error loading ${key}:`, e);
             return fallback;
         }
     };
+
+    // Default categories with intelligent keywords for auto-categorization
+    const defaultCategories = [
+        {
+            id: 'bebidas',
+            label: 'Bebidas',
+            keywords: ['bebida', 'refresco', 'jugo', 'agua', 'energizante', 'cola', 'pepsi', 'fanta', 'sprite', 'malta', 'te', 'cafe', 'limonada', 'naranja', 'manzana', 'batido', 'smoothie', 'soda', 'coca', 'cerveza', 'licor', 'vino']
+        },
+        {
+            id: 'comida',
+            label: 'Comida',
+            keywords: ['hamburguesa', 'burger', 'carne', 'doble', 'triple', 'bacon', 'queso', 'bbq', 'angus', 'wagyu', 'cheeseburger', 'pizza', 'perro', 'hot dog', 'salchicha', 'pollo', 'frito', 'asado', 'parrilla', 'bistec', 'solomo', 'punta', 'costilla', 'cerdo', 'chuleta', 'pescado', 'sandwich', 'pan', 'pepito', 'enrollado', 'shawarma', 'tostada', 'arepa', 'cachapa', 'taco', 'burrito', 'quesadilla', 'nachos', 'papas', 'fritas', 'yuca', 'aros', 'cebolla', 'pure', 'arroz', 'platano', 'tostones', 'tajadas', 'ensalada', 'cesar']
+        },
+        {
+            id: 'sopas',
+            label: 'Sopas',
+            keywords: ['sopa', 'caldo', 'consomé', 'crema', 'sancocho', 'mondongo', 'hervido', 'fosforera', 'gallina', 'res', 'costilla', 'lagarto', 'pescado', 'mariscos', 'chupe', 'ajiaco', 'potaje', 'lentejas', 'caraotas', 'granos']
+        },
+        {
+            id: 'dulces',
+            label: 'Dulces',
+            keywords: ['postre', 'dulce', 'helado', 'torta', 'pastel', 'cake', 'flan', 'gelatina', 'brownie', 'pie', 'mousse', 'quesillo', 'tres leches', 'marquesa', 'tiramisu', 'galleta', 'cookie', 'chocolate', 'vainilla', 'fresa', 'arequipe', 'nutella', 'donas', 'churros']
+        }
+    ];
 
     const [data, setData] = useState({
         inventory: loadData('inventory', inventoryItems),
         suppliers: loadData('suppliers', suppliers),
         personnel: loadData('personnel', personnel),
+        users: loadData('users', []), // New Users Collection
         products: loadData('products', products),
+        categories: loadData('categories', defaultCategories), // Dynamic categories
         sales: loadData('sales', []),
         heldOrders: loadData('heldOrders', []),
+        cancelledOrders: loadData('cancelledOrders', []), // Trash bin for held orders
         tips: loadData('tips', 0),
         tipHistory: loadData('tipHistory', []),
         tipDistributions: loadData('tipDistributions', []),
-        isInitialized: loadData('isInitialized', false),
         // Restaurant Features
-        tables: loadData('tables', Array.from({ length: 10 }, (_, i) => ({ id: i + 1, name: `Mesa ${i + 1}`, status: 'available' }))),
+        // Default tables with Area
+        tables: loadData('tables', Array.from({ length: 10 }, (_, i) => ({
+            id: i + 1,
+            name: `Mesa ${i + 1}`,
+            status: 'available',
+            area: 'Restaurante' // Default area
+        }))),
         customers: loadData('customers', []),
         kitchenOrders: loadData('kitchenOrders', []),
+        barOrders: loadData('barOrders', []),
+        cancelledKitchenOrders: loadData('cancelledKitchenOrders', []),
+        cancelledBarOrders: loadData('cancelledBarOrders', []),
+        pendingPayment: loadData('pendingPayment', []), // Orders ready but not yet paid
+        // Inventory Entries (Nuevas entradas masivas)
+        inventoryEntries: loadData('inventoryEntries', []),
         // Multi-currency & Cash Control
         exchangeRate: loadData('exchangeRate', 60), // Default rate
         rateHistory: loadData('rateHistory', []),
@@ -60,40 +190,67 @@ export const DataProvider = ({ children }) => {
             openingTime: null,
             openingBalanceBs: 0,
             openingBalanceUsd: 0,
-            withdrawals: []
+            withdrawalsBs: 0,
+            withdrawalsUsd: 0,
+            withdrawalComment: '',
+            closingTime: null,
+            closingBalanceBs: 0,
+            closingBalanceUsd: 0,
+            status: 'closed' // 'open', 'closed'
         }),
         defaultForeignCurrencyDiscountPercent: loadData('defaultForeignCurrencyDiscountPercent', 0)
     });
 
-    // One-time initialization to ensure mock data is loaded only once
+    // Migration: If users is empty but personnel exists, migrate credentials
     useEffect(() => {
-        if (!data.isInitialized) {
-            setData(prev => ({
-                ...prev,
-                isInitialized: true
-            }));
+        if (data.users.length === 0 && data.personnel.length > 0) {
+            console.log('🔄 Migrating Personnel to System Users...');
+            const migratedUsers = data.personnel
+                .filter(p => p.pin) // Only migrate if they have a PIN
+                .map(p => ({
+                    id: `user_${p.id}`,
+                    name: p.name,
+                    pin: p.pin,
+                    role: p.role || 'cashier', // Default role
+                    permissions: p.permissions || [],
+                    personnelId: p.id // Link back to personnel record
+                }));
+
+            if (migratedUsers.length > 0) {
+                setData(prev => ({
+                    ...prev,
+                    users: migratedUsers
+                }));
+            }
         }
-    }, [data.isInitialized]);
+    }, [data.users.length, data.personnel]);
 
     const [isDriveConnected, setIsDriveConnected] = useState(false);
     const [syncStatus, setSyncStatus] = useState('idle'); // idle, syncing, success, error
 
     // Save to localStorage whenever data changes
+    // This ensures all modifications persist immediately
     useEffect(() => {
+        console.log('💾 Saving data to localStorage...');
         localStorage.setItem('inventory', JSON.stringify(data.inventory));
         localStorage.setItem('suppliers', JSON.stringify(data.suppliers));
         localStorage.setItem('personnel', JSON.stringify(data.personnel));
+        localStorage.setItem('users', JSON.stringify(data.users));
         localStorage.setItem('products', JSON.stringify(data.products));
+        localStorage.setItem('categories', JSON.stringify(data.categories));
         localStorage.setItem('sales', JSON.stringify(data.sales));
         localStorage.setItem('heldOrders', JSON.stringify(data.heldOrders));
+        localStorage.setItem('cancelledOrders', JSON.stringify(data.cancelledOrders));
         localStorage.setItem('tips', JSON.stringify(data.tips));
         localStorage.setItem('tipHistory', JSON.stringify(data.tipHistory));
         localStorage.setItem('tipDistributions', JSON.stringify(data.tipDistributions));
-        localStorage.setItem('isInitialized', JSON.stringify(data.isInitialized));
         // Restaurant Features
         localStorage.setItem('tables', JSON.stringify(data.tables));
         localStorage.setItem('customers', JSON.stringify(data.customers));
         localStorage.setItem('kitchenOrders', JSON.stringify(data.kitchenOrders));
+        localStorage.setItem('barOrders', JSON.stringify(data.barOrders));
+        // Inventory Entries
+        localStorage.setItem('inventoryEntries', JSON.stringify(data.inventoryEntries));
         // Multi-currency & Cash Control
         localStorage.setItem('exchangeRate', JSON.stringify(data.exchangeRate));
         localStorage.setItem('rateHistory', JSON.stringify(data.rateHistory));
@@ -172,13 +329,15 @@ export const DataProvider = ({ children }) => {
                 localSyncService.syncData({
                     sales: data.sales,
                     heldOrders: data.heldOrders,
-                    kitchenOrders: data.kitchenOrders
+                    kitchenOrders: data.kitchenOrders,
+                    barOrders: data.barOrders
                 }).then(serverData => {
                     if (serverData) {
                         setData(prev => ({
                             ...prev,
                             // Merge logic could be more complex, for now we trust server lists for heldOrders/kitchenOrders
                             kitchenOrders: serverData.kitchenOrders || prev.kitchenOrders,
+                            barOrders: serverData.barOrders || prev.barOrders,
                             heldOrders: serverData.heldOrders || prev.heldOrders,
                             // For sales, we might need to be careful not to lose local ones not yet synced
                             // Simplified: Just trust server for now or keep local if server is empty
@@ -187,10 +346,30 @@ export const DataProvider = ({ children }) => {
                     }
                 });
             }
+            // Fix: Moved outside the previous if block but inside the callback
+            if (type === 'held_order_added') {
+                console.log('📝 New Held Order received:', payload);
+                setData(prev => {
+                    if (prev.heldOrders.find(o => o.id === payload.id)) return prev;
+                    return {
+                        ...prev,
+                        heldOrders: [...prev.heldOrders, payload],
+                        lastModified: new Date().toISOString()
+                    };
+                });
+            }
+            if (type === 'held_order_deleted') {
+                console.log('🗑️ Held Order deletion received:', payload);
+                setData(prev => ({
+                    ...prev,
+                    heldOrders: prev.heldOrders.filter(o => o.id !== payload),
+                    lastModified: new Date().toISOString()
+                }));
+            }
         });
 
         return () => unsubscribe();
-    }, [data.heldOrders, data.kitchenOrders, data.sales]); // Run once on mount
+    }, [data.heldOrders, data.kitchenOrders, data.sales, data.barOrders]); // Run once on mount
 
     // Trigger sync when critical data changes
     useEffect(() => {
@@ -200,12 +379,13 @@ export const DataProvider = ({ children }) => {
                     sales: data.sales,
                     heldOrders: data.heldOrders,
                     kitchenOrders: data.kitchenOrders,
+                    barOrders: data.barOrders,
                     tables: data.tables
                 });
             }, 2000); // 2s debounce for local sync
             return () => clearTimeout(timeoutId);
         }
-    }, [data.sales, data.heldOrders, data.kitchenOrders, data.tables, isLocalServerConnected]);
+    }, [data.sales, data.heldOrders, data.kitchenOrders, data.tables, data.barOrders, isLocalServerConnected]);
 
 
     // Generic Actions
@@ -219,7 +399,7 @@ export const DataProvider = ({ children }) => {
     const addItem = (section, item) => {
         setData(prev => ({
             ...prev,
-            [section]: [...(prev[section] || []), { ...item, id: Date.now() }],
+            [section]: [...(prev[section] || []), { ...item, id: item.id || Date.now() }],
             lastModified: new Date().toISOString()
         }));
     };
@@ -253,6 +433,7 @@ export const DataProvider = ({ children }) => {
             tables: Array.from({ length: 10 }, (_, i) => ({ id: i + 1, name: `Mesa ${i + 1}`, status: 'available' })),
             customers: [],
             kitchenOrders: [],
+            barOrders: [],
             exchangeRate: 60,
             cashRegister: {
                 isOpen: false,
@@ -275,7 +456,7 @@ export const DataProvider = ({ children }) => {
             note: note,
             timestamp: new Date().toISOString(),
             total: cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0),
-            ...metadata // tableId, customerId, etc.
+            ...metadata // tableId, customerId, createdBy
         };
         // Use generic addItem to ensure lastModified is updated
         addItem('heldOrders', newOrder);
@@ -285,7 +466,73 @@ export const DataProvider = ({ children }) => {
             updateItem('tables', metadata.tableId, { status: 'occupied', currentOrderId: newOrder.id });
         }
 
+        // Sync Real-Time
+        if (isLocalServerConnected) {
+            localSyncService.sendHeldOrder(newOrder);
+        }
+
         return newOrder.id;
+    };
+
+    // New Function to Send to Kitchen/Bar
+    const sendOrderToProduction = (cart, note = '', metadata = {}) => {
+        // 1. Create the Master Record (Held Order) so it exists in the system (and on the Table)
+        const orderId = holdOrder(cart, note, metadata);
+
+        // 2. Split items for Kitchen vs Bar
+        // Simple logic: Categories 'Bebidas', 'Cocteles', 'Vinos' -> Bar. Others -> Kitchen.
+        // We can refine this later or add a 'station' property to products.
+        // IMPORTANT: Add 'drinks' (mockData ID) and other potential IDs/Labels
+        const barCategories = ['drinks', 'Bebidas', 'Cocteles', 'Vinos', 'Cervezas', 'Tragos', 'Licor', 'Refrescos'];
+
+        // Helper to check if item is bar
+        const isBarItem = (item) => {
+            const cat = item.category || '';
+            const label = item.categoryLabel || '';
+            return barCategories.some(c => cat.toLowerCase() === c.toLowerCase()) ||
+                barCategories.some(c => label.toLowerCase() === c.toLowerCase());
+        };
+
+        const barItems = cart.filter(isBarItem);
+        const kitchenItems = cart.filter(item => !isBarItem(item));
+
+        const commonData = {
+            sourceOrderId: orderId,
+            tableName: metadata.tableName || 'N/A', // Holds "Mesa 1", "Barra", or "Sin Lugar"
+            tableId: metadata.tableId,
+            customerId: metadata.customerId,
+            customerName: metadata.customerName,
+            timestamp: new Date().toISOString(),
+            createdBy: metadata.createdBy || 'Unknown',
+            status: 'pending',
+            priority: metadata.priority || 'normal'
+        };
+
+        // Fallback: If kitchenItems calculation misses something, we rely on the logic that !isBarItem covers everything else.
+
+        if (kitchenItems.length > 0) {
+            const kitchenOrder = {
+                id: Date.now() + 1, // unique id
+                items: kitchenItems,
+                type: 'kitchen',
+                ...commonData
+            };
+            addItem('kitchenOrders', kitchenOrder);
+            if (isLocalServerConnected) localSyncService.sendKitchenOrder(kitchenOrder);
+        }
+
+        if (barItems.length > 0) {
+            const barOrder = {
+                id: Date.now() + 2, // unique id
+                items: barItems,
+                type: 'bar',
+                ...commonData
+            };
+            addItem('barOrders', barOrder);
+            // if (isLocalServerConnected) localSyncService.sendBarOrder(barOrder);
+        }
+
+        return orderId;
     };
 
     const deleteHeldOrder = (orderId) => {
@@ -295,6 +542,55 @@ export const DataProvider = ({ children }) => {
             updateItem('tables', order.tableId, { status: 'available', currentOrderId: null });
         }
         deleteItem('heldOrders', orderId);
+
+        // Sync Real-Time deletion
+        if (isLocalServerConnected) {
+            localSyncService.deleteHeldOrder(orderId);
+        }
+    };
+
+    // Trash Bin Functions
+    const cancelHeldOrder = (orderId) => {
+        const order = data.heldOrders.find(o => o.id === orderId);
+        if (!order) return;
+
+        // If associated with a table, free the table
+        if (order.tableId) {
+            updateItem('tables', order.tableId, { status: 'available', currentOrderId: null });
+        }
+
+        const cancelledOrder = {
+            ...order,
+            cancelledAt: new Date().toISOString()
+        };
+
+        // Remove from heldOrders and add to cancelledOrders
+        setData(prev => ({
+            ...prev,
+            heldOrders: prev.heldOrders.filter(o => o.id !== orderId),
+            cancelledOrders: [...(prev.cancelledOrders || []), cancelledOrder],
+            lastModified: new Date().toISOString()
+        }));
+    };
+
+    const restoreCancelledOrder = (orderId) => {
+        const order = data.cancelledOrders.find(o => o.id === orderId);
+        if (!order) return;
+
+        // Remove from cancelledOrders and add to heldOrders
+        // eslint-disable-next-line no-unused-vars
+        const { cancelledAt, ...restoredOrder } = order; // Remove cancelledAt
+
+        setData(prev => ({
+            ...prev,
+            cancelledOrders: prev.cancelledOrders.filter(o => o.id !== orderId),
+            heldOrders: [...prev.heldOrders, restoredOrder],
+            lastModified: new Date().toISOString()
+        }));
+    };
+
+    const permanentlyDeleteOrder = (orderId) => {
+        deleteItem('cancelledOrders', orderId);
     };
 
     // Kitchen/Bar Functions
@@ -535,6 +831,24 @@ export const DataProvider = ({ children }) => {
         };
     }, [isDriveConnected, syncFromDrive]);
 
+    // Fix useEffect dependency
+    useEffect(() => {
+        if (isLocalServerConnected) {
+            const timeoutId = setTimeout(() => {
+                localSyncService.sendFullState({
+                    sales: data.sales,
+                    heldOrders: data.heldOrders,
+                    kitchenOrders: data.kitchenOrders,
+                    tables: data.tables,
+                    barOrders: data.barOrders // Added dependency
+                });
+            }, 2000);
+            return () => clearTimeout(timeoutId);
+        }
+    }, [data.sales, data.heldOrders, data.kitchenOrders, data.tables, data.barOrders, isLocalServerConnected]);
+
+    // ... (rest of the file)
+
     return (
         <DataContext.Provider value={{
             data,
@@ -552,9 +866,13 @@ export const DataProvider = ({ children }) => {
             syncStatus,
             holdOrder,
             deleteHeldOrder,
+            cancelHeldOrder,
+            restoreCancelledOrder,
+            permanentlyDeleteOrder,
             addTip,
             distributeTips,
-            sendToKitchen,
+            sendToKitchen, // Keep for backward compatibility if used elsewhere
+            sendOrderToProduction, // Export NEW function
             updateExchangeRate,
             isLocalServerConnected
         }}>

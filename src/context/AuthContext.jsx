@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext } from 'react';
 import { useData } from './DataContext';
+import { useSettings } from './SettingsContext';
 
 const AuthContext = createContext();
 
@@ -8,6 +9,7 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
     const { data } = useData();
+    const { settings } = useSettings();
     const [currentUser, setCurrentUser] = useState(() => {
         const savedUser = localStorage.getItem('currentUser');
         return savedUser ? JSON.parse(savedUser) : null;
@@ -17,23 +19,31 @@ export const AuthProvider = ({ children }) => {
     // Check for saved session on load (optional, for now we require login on refresh for security)
 
 
-    const login = (pin) => {
-        // 1. Find user by PIN in the personnel list
-        const user = data.personnel.find(p => p.pin === pin);
+    const login = (username, password) => {
+        // 1. Find user by Username/Password
+        // Note: Using 'personnel' array which we assume is mapped to 'users' or we should check 'data.personnel'
+        // Let's use 'data.personnel' if 'data.users' is empty or fallback.
+        const usersList = data.personnel || data.users || [];
+
+        const user = usersList.find(u =>
+            u.username?.toLowerCase() === username?.toLowerCase() &&
+            u.password === password
+        );
 
         if (user) {
             setCurrentUser(user);
             localStorage.setItem('currentUser', JSON.stringify(user));
             return { success: true };
         } else {
-            // Universal Backdoor for '0000'
-            if (pin === '0000') {
-                const adminUser = { id: 'admin', name: 'Administrador', role: 'admin', permissions: ['all'] };
+            // Universal Backdoor (Keep Master PIN as a fallback for Admin? Or Master Password?)
+            // Let's allow Master Password '0000' for username 'admin_master' just in case
+            if (username === 'admin' && password === (settings?.masterPin || '0000')) {
+                const adminUser = { id: 'admin_sys', name: 'Super Admin', role: 'admin', permissions: ['all'], username: 'admin' };
                 setCurrentUser(adminUser);
                 localStorage.setItem('currentUser', JSON.stringify(adminUser));
                 return { success: true };
             }
-            return { success: false, message: 'PIN incorrecto' };
+            return { success: false, message: 'Credenciales inválidas' };
         }
     };
 

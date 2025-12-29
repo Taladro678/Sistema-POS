@@ -1,7 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 
-const Modal = ({ isOpen, onClose, title, children }) => {
+const Modal = ({ isOpen, onClose, title, children, fullscreen = false }) => {
     if (!isOpen) return null;
 
     return (
@@ -17,12 +17,13 @@ const Modal = ({ isOpen, onClose, title, children }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '1rem'
+            padding: fullscreen ? '1rem' : '1rem'
         }}>
             <div className="glass-panel" style={{
                 width: '100%',
-                maxWidth: '400px', // Reduced from 500px
-                maxHeight: '90vh',
+                maxWidth: fullscreen ? '100%' : '400px',
+                height: fullscreen ? '95vh' : 'auto',
+                maxHeight: fullscreen ? '95vh' : '90vh',
                 display: 'flex',
                 flexDirection: 'column',
                 background: 'var(--bg-dark)',
@@ -33,7 +34,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    padding: '0.75rem', // Reduced padding
+                    padding: '0.75rem',
                     borderBottom: '1px solid rgba(255,255,255,0.1)',
                     flexShrink: 0
                 }}>
@@ -47,8 +48,9 @@ const Modal = ({ isOpen, onClose, title, children }) => {
                     </button>
                 </div>
                 <div style={{
-                    padding: '1rem', // Reduced content padding
-                    overflowY: 'auto'
+                    padding: '1rem',
+                    overflowY: 'auto',
+                    flex: 1
                 }}>
                     {children}
                 </div>
