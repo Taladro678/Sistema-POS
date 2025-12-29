@@ -332,12 +332,12 @@ export const KitchenPage = () => {
                                 </div>
 
                                 {/* Botones de acción */}
-                                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column', width: '100%' }}>
                                     {order.status === 'pending' && (
                                         <button
                                             className="glass-button accent"
                                             onClick={() => handleStatusChange(order.id, 'in-progress')}
-                                            style={{ flex: 1, padding: '0.6rem', fontSize: '0.85rem', fontWeight: 'bold', minWidth: '120px' }}
+                                            style={{ width: '100%', padding: '0.6rem', fontSize: '0.85rem', fontWeight: 'bold' }}
                                         >
                                             🔥 Iniciar
                                         </button>
@@ -347,7 +347,7 @@ export const KitchenPage = () => {
                                         <button
                                             className="glass-button primary"
                                             onClick={() => handleStatusChange(order.id, 'completed')}
-                                            style={{ flex: 1, padding: '0.6rem', fontSize: '0.85rem', fontWeight: 'bold', minWidth: '120px' }}
+                                            style={{ width: '100%', padding: '0.6rem', fontSize: '0.85rem', fontWeight: 'bold' }}
                                         >
                                             ✓ Listo
                                         </button>
@@ -359,9 +359,9 @@ export const KitchenPage = () => {
                                             className="glass-button"
                                             onClick={() => handleCancelOrder(order.id)}
                                             style={{
-                                                flex: 1,
-                                                padding: '0.75rem',
-                                                fontSize: '0.9rem',
+                                                width: '100%',
+                                                padding: '0.6rem',
+                                                fontSize: '0.85rem',
                                                 borderColor: 'var(--accent-red)',
                                                 color: 'var(--accent-red)'
                                             }}
@@ -374,38 +374,40 @@ export const KitchenPage = () => {
                                             className="glass-button primary"
                                             onClick={() => handleRestoreOrder(order.id)}
                                             style={{
-                                                flex: 1,
-                                                padding: '0.75rem',
-                                                fontSize: '0.9rem'
+                                                width: '100%',
+                                                padding: '0.6rem',
+                                                fontSize: '0.85rem'
                                             }}
                                         >
                                             <CheckCircle size={16} />
                                             Restaurar
                                         </button>
                                     )}
-
-                                    {/* Botón cancelar siempre disponible */}
-                                    <button
-                                        className="glass-button"
-                                        onClick={() => {
-                                            if (window.confirm('¿Cancelar esta orden?')) {
-                                                deleteItem('kitchenOrders', order.id);
-                                            }
-                                        }}
-                                        style={{ padding: '0.75rem', color: 'var(--accent-red)' }}
-                                        title="Cancelar orden"
-                                    >
-                                        <X size={18} />
-                                    </button>
                                 </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
 
-            {/* CSS para animación */}
-            <style>{`
+                                {/* Botón cancelar siempre disponible */}
+                                <button
+                                    className="glass-button"
+                                    onClick={() => {
+                                        if (window.confirm('¿Cancelar esta orden?')) {
+                                            deleteItem('kitchenOrders', order.id);
+                                        }
+                                    }}
+                                    style={{ padding: '0.75rem', color: 'var(--accent-red)' }}
+                                    title="Cancelar orden"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+                            </div>
+            );
+                    })}
+        </div>
+    )
+}
+
+{/* CSS para animación */ }
+<style>{`
                 @keyframes pulse {
                     0%, 100% {
                         box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
@@ -415,7 +417,7 @@ export const KitchenPage = () => {
                     }
                 }
             `}</style>
-        </div>
+        </div >
     );
 };
 
