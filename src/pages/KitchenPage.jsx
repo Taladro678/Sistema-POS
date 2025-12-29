@@ -346,20 +346,25 @@ export const KitchenPage = () => {
                                 </div>
 
                                 {/* Botones de acción */}
-                                <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column', width: '100%' }}>
+                                <div
+                                    onClick={(e) => e.stopPropagation()}
+                                    style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column', width: '100%' }}
+                                >
                                     {order.status === 'pending' && (
                                         <button
-                                            className="glass-button accent"
-                                            onClick={() => handleStatusChange(order.id, 'in-progress')}
+                                            className="glass-button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleStatusChange(order.id, 'in-progress');
+                                            }}
                                             style={{
                                                 width: '100%',
-                                                padding: '0.6rem',
-                                                fontSize: '0.85rem',
+                                                padding: '0.75rem',
+                                                fontSize: '0.9rem',
                                                 fontWeight: 'bold',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                gap: '0.5rem'
+                                                background: 'var(--accent-orange)',
+                                                borderColor: 'var(--accent-orange)',
+                                                color: 'white'
                                             }}
                                         >
                                             🔥 Iniciar
@@ -368,17 +373,19 @@ export const KitchenPage = () => {
 
                                     {order.status === 'in-progress' && (
                                         <button
-                                            className="glass-button primary"
-                                            onClick={() => handleStatusChange(order.id, 'completed')}
+                                            className="glass-button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleStatusChange(order.id, 'completed');
+                                            }}
                                             style={{
                                                 width: '100%',
-                                                padding: '0.6rem',
-                                                fontSize: '0.85rem',
+                                                padding: '0.75rem',
+                                                fontSize: '0.9rem',
                                                 fontWeight: 'bold',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                gap: '0.5rem'
+                                                background: 'var(--accent-green)',
+                                                borderColor: 'var(--accent-green)',
+                                                color: 'white'
                                             }}
                                         >
                                             ✓ Listo
@@ -389,38 +396,38 @@ export const KitchenPage = () => {
                                     {viewMode === 'active' ? (
                                         <button
                                             className="glass-button"
-                                            onClick={() => handleCancelOrder(order.id)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleCancelOrder(order.id);
+                                            }}
                                             style={{
                                                 width: '100%',
-                                                padding: '0.6rem',
-                                                fontSize: '0.85rem',
+                                                padding: '0.75rem',
+                                                fontSize: '0.9rem',
+                                                background: 'transparent',
                                                 borderColor: 'var(--accent-red)',
-                                                color: 'var(--accent-red)',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                gap: '0.5rem'
+                                                color: 'var(--accent-red)'
                                             }}
                                         >
-                                            <X size={16} />
-                                            <span>Cancelar</span>
+                                            ✕ Cancelar
                                         </button>
                                     ) : (
                                         <button
-                                            className="glass-button primary"
-                                            onClick={() => handleRestoreOrder(order.id)}
+                                            className="glass-button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleRestoreOrder(order.id);
+                                            }}
                                             style={{
                                                 width: '100%',
-                                                padding: '0.6rem',
-                                                fontSize: '0.85rem',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                gap: '0.5rem'
+                                                padding: '0.75rem',
+                                                fontSize: '0.9rem',
+                                                background: 'var(--accent-blue)',
+                                                borderColor: 'var(--accent-blue)',
+                                                color: 'white'
                                             }}
                                         >
-                                            <CheckCircle size={16} />
-                                            <span>Restaurar</span>
+                                            ↺ Restaurar
                                         </button>
                                     )}
                                 </div>
