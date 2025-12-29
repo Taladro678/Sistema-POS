@@ -211,12 +211,13 @@ export const KitchenPage = () => {
             ) : (
                 <div style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                    gridTemplateColumns: window.innerWidth <= 768 ? '1fr' : 'repeat(auto-fit, minmax(320px, 1fr))',
                     gap: '1rem',
                     overflowY: 'auto',
                     overflowX: 'hidden',
                     paddingRight: '0.5rem',
-                    width: '100%'
+                    width: '100%',
+                    paddingBottom: '2rem'
                 }}>
                     {filteredOrders.map(order => {
                         const priorityInfo = getPriorityData(order.priority);
@@ -234,7 +235,9 @@ export const KitchenPage = () => {
                                     animation: order.priority === 'high' || order.status === 'pending' ? 'pulse 2s infinite' : 'none',
                                     boxShadow: order.priority === 'high' ? '0 0 20px rgba(239, 68, 68, 0.2)' : 'none',
                                     overflow: 'hidden',
-                                    wordWrap: 'break-word'
+                                    wordWrap: 'break-word',
+                                    maxWidth: '100%',
+                                    boxSizing: 'border-box'
                                 }}
                             >
                                 {/* Priority Badge Layer */}
