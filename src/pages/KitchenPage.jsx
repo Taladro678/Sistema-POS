@@ -384,30 +384,14 @@ export const KitchenPage = () => {
                                         </button>
                                     )}
                                 </div>
-
-                                {/* Botón cancelar siempre disponible */}
-                                <button
-                                    className="glass-button"
-                                    onClick={() => {
-                                        if (window.confirm('¿Cancelar esta orden?')) {
-                                            deleteItem('kitchenOrders', order.id);
-                                        }
-                                    }}
-                                    style={{ padding: '0.75rem', color: 'var(--accent-red)' }}
-                                    title="Cancelar orden"
-                                >
-                                    <X size={18} />
-                                </button>
                             </div>
-                            </div>
-            );
+                        );
                     })}
-        </div>
-    )
-}
+                </div>
+            )}
 
-{/* CSS para animación */ }
-<style>{`
+            {/* CSS para animación */}
+            <style>{`
                 @keyframes pulse {
                     0%, 100% {
                         box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
@@ -417,7 +401,8 @@ export const KitchenPage = () => {
                     }
                 }
             `}</style>
-        </div >
+        </div>
     );
 };
+
 
