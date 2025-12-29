@@ -337,7 +337,16 @@ export const KitchenPage = () => {
                                         <button
                                             className="glass-button accent"
                                             onClick={() => handleStatusChange(order.id, 'in-progress')}
-                                            style={{ width: '100%', padding: '0.6rem', fontSize: '0.85rem', fontWeight: 'bold' }}
+                                            style={{
+                                                width: '100%',
+                                                padding: '0.6rem',
+                                                fontSize: '0.85rem',
+                                                fontWeight: 'bold',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '0.5rem'
+                                            }}
                                         >
                                             🔥 Iniciar
                                         </button>
@@ -347,7 +356,16 @@ export const KitchenPage = () => {
                                         <button
                                             className="glass-button primary"
                                             onClick={() => handleStatusChange(order.id, 'completed')}
-                                            style={{ width: '100%', padding: '0.6rem', fontSize: '0.85rem', fontWeight: 'bold' }}
+                                            style={{
+                                                width: '100%',
+                                                padding: '0.6rem',
+                                                fontSize: '0.85rem',
+                                                fontWeight: 'bold',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '0.5rem'
+                                            }}
                                         >
                                             ✓ Listo
                                         </button>
@@ -363,11 +381,15 @@ export const KitchenPage = () => {
                                                 padding: '0.6rem',
                                                 fontSize: '0.85rem',
                                                 borderColor: 'var(--accent-red)',
-                                                color: 'var(--accent-red)'
+                                                color: 'var(--accent-red)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '0.5rem'
                                             }}
                                         >
                                             <X size={16} />
-                                            Cancelar
+                                            <span>Cancelar</span>
                                         </button>
                                     ) : (
                                         <button
@@ -376,11 +398,15 @@ export const KitchenPage = () => {
                                             style={{
                                                 width: '100%',
                                                 padding: '0.6rem',
-                                                fontSize: '0.85rem'
+                                                fontSize: '0.85rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '0.5rem'
                                             }}
                                         >
                                             <CheckCircle size={16} />
-                                            Restaurar
+                                            <span>Restaurar</span>
                                         </button>
                                     )}
                                 </div>
