@@ -57,7 +57,6 @@ const Sidebar = () => {
     const allNavItems = [
         { path: '/tables', icon: Coffee, label: 'Pedidos/Mesas', roles: ['admin', 'manager', 'waiter', 'cashier'] },
         { path: '/kitchen', icon: ChefHat, label: 'Cocina', roles: ['admin', 'manager', 'kitchen'] },
-        { path: '/bar', icon: Coffee, label: 'Barra', roles: ['admin', 'manager', 'waiter', 'cashier'] },
         { path: '/', icon: ShoppingCart, label: 'Ventas (POS)', roles: ['admin', 'manager', 'waiter', 'cashier'] },
         { path: '/cash-register', icon: Calculator, label: 'Caja', roles: ['admin', 'manager', 'cashier'] },
         { path: '/customers', icon: UserCircle, label: 'Clientes', roles: ['admin', 'manager', 'waiter', 'cashier'] },
@@ -152,7 +151,9 @@ const Sidebar = () => {
                 borderTop: 'none',
                 borderBottom: 'none',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                background: isMobile ? '#0f0f0f' : undefined, // Solid background for mobile bottom bar
+                zIndex: 100 // Ensure it's on top
             }}
         >
 

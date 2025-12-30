@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local Data Files
+*.xls
+*.xlsx
+local_db.json

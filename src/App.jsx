@@ -11,7 +11,7 @@ import { SettingsPage } from './pages/SettingsPage'
 import { LoginPage } from './pages/LoginPage'
 import { OrdersPage } from './pages/OrdersPage'
 import { KitchenPage } from './pages/KitchenPage'
-import { BarPage } from './pages/BarPage'
+
 import { CustomersPage } from './pages/CustomersPage'
 import { CashRegisterPage } from './pages/CashRegisterPage'
 import { UsersPage } from './pages/UsersPage'
@@ -99,7 +99,6 @@ function App() {
                   } />
                   <Route path="tables" element={<OrdersPage />} />
                   <Route path="kitchen" element={<KitchenPage />} />
-                  <Route path="bar" element={<BarPage />} />
                   <Route path="customers" element={<CustomersPage />} />
                   <Route path="cash-register" element={
                     <ProtectedRoute requiredRole="manager">

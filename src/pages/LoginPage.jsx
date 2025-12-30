@@ -6,12 +6,26 @@ import '../styles/glassmorphism.css'; // Ensure we use the glass styles
 import { Settings } from 'lucide-react';
 
 export const LoginPage = () => {
+    const { login } = useAuth();
+    const navigate = useNavigate();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
 
-    const handleLogin = (e) => {
+    // Server Config State
+    const [isConfigOpen, setIsConfigOpen] = useState(false);
+    const [serverIp, setServerIp] = useState(localStorage.getItem('server_ip') || '');
+
+    const saveServerConfig = () => {
+        localStorage.setItem('server_ip', serverIp);
+        setIsConfigOpen(false);
+        alert('Configuración guardada');
+    };
+
+    const handleLogin = async (e) => {
         e.preventDefault();
-        const result = login(username, password);
+        setError('');
+        const result = await login(username, password);
         if (result.success) {
             navigate('/');
         } else {

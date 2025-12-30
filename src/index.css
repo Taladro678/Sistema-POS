@@ -608,3 +608,15 @@ textarea {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
+
+/* Hide Scrollbar Utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}

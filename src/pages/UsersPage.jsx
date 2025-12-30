@@ -181,7 +181,6 @@ export const UsersPage = () => {
                             <Key size={20} className="text-gray-400" />
                             <input
                                 type="password"
-                                maxLength="6"
                                 className="glass-input flex-1"
                                 placeholder="****"
                                 value={formData.pin}

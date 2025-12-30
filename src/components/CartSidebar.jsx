@@ -172,7 +172,30 @@ const CartSidebar = ({
                             borderLeftWidth: '3px',
                             borderLeftColor: getPriorityColor(item.priority || 'normal')
                         }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                {/* Product Image / Placeholder */}
+                                <div style={{
+                                    width: '40px',
+                                    height: '40px',
+                                    borderRadius: '6px',
+                                    overflow: 'hidden',
+                                    flexShrink: 0,
+                                    background: item.image ? 'transparent' : `hsl(${(item.name.charCodeAt(0) * 5) % 360}, 70%, 30%)`,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'white',
+                                    fontWeight: 'bold',
+                                    fontSize: '0.9rem',
+                                    textTransform: 'uppercase'
+                                }}>
+                                    {item.image ? (
+                                        <img src={item.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                        item.name.substring(0, 2)
+                                    )}
+                                </div>
+
                                 <div style={{ flex: 1 }}>
                                     <h4 style={{ fontSize: '0.85rem', margin: 0, fontWeight: '600' }}>
                                         {item.name}

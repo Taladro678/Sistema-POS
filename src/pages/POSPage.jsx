@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { categories } from '../data/mockData';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import ProductCard from '../components/ProductCard';
@@ -8,7 +7,12 @@ import CartSidebar from '../components/CartSidebar';
 import Modal from '../components/Modal';
 import { ShoppingBag, X, Search, ChevronDown, Clock, FileText, DollarSign, Calendar, Coffee, UserPlus, User, Trash2, AlertTriangle } from 'lucide-react';
 
+import ClientSearchModal from '../components/ClientSearchModal';
+
 export const POSPage = () => {
+    const { holdOrder, data, deleteHeldOrder, cancelHeldOrder, restoreCancelledOrder, permanentlyDeleteOrder, addTip, addItem, updateItem, sendOrderToProduction } = useData();
+    const { currentUser } = useAuth();
+
     const [cart, setCart] = useState(() => {
         try {
             const savedCart = localStorage.getItem('pos_cart');
@@ -25,6 +29,16 @@ export const POSPage = () => {
     }, [cart]);
     // State
     const [selectedCategory, setSelectedCategory] = useState('all');
+
+    // Dynamically extract categories from available products
+    // If no products, we can have a default list or empty
+    const derivedCategories = data.products
+        ? [...new Set(data.products.map(p => p.category))].filter(Boolean).map(c => ({ id: c, label: c }))
+        : [];
+
+    // Merge or usage derived? Usage derived to be dynamic.
+    // If we want hardcoded badged categories, we can define them locally
+    const displayCategories = derivedCategories.length > 0 ? derivedCategories : [];
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
     const [showAllCategories, setShowAllCategories] = useState(false);
@@ -48,11 +62,15 @@ export const POSPage = () => {
     const [discountType, setDiscountType] = useState('amount'); // 'amount' or 'percent'
     const [orderNote, setOrderNote] = useState('');
 
+    // Client Search Modal
+    const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+
     // Hold Order State
     const [isHeldOrdersModalOpen, setIsHeldOrdersModalOpen] = useState(false);
     const [heldOrderTab, setHeldOrderTab] = useState('active'); // 'active' | 'trash'
-    const { holdOrder, data, deleteHeldOrder, cancelHeldOrder, restoreCancelledOrder, permanentlyDeleteOrder, addTip, addItem, updateItem, sendOrderToProduction } = useData();
-    const { currentUser } = useAuth(); // Auth Context
+
+    // Auth Context
+    // const { currentUser } = useAuth(); // Moved to top
     const heldOrders = data.heldOrders || [];
     const cancelledOrders = data.cancelledOrders || [];
 
@@ -169,7 +187,8 @@ export const POSPage = () => {
             // This suggests it appeared in the list.
 
             // I will implement `handleSendToKitchen` now.
-            holdOrder(cart, note);
+            // Strict "En Espera" Logic: ONLY 'Hold' button sets isWaitList=true
+            holdOrder(cart, note, { isWaitList: true });
             setCart([]);
             setIsCartOpen(false);
             alert("Orden puesta en espera.");
@@ -216,10 +235,12 @@ export const POSPage = () => {
             // Retail Order - Ask for Location
             // const locationName = prompt("¿Ubicación? (ej: Barra, Mesa 5, Para Llevar)", "Barra");
             // if (locationName === null) return; // Cancelled
-            const locationName = "Barra / Llevar"; // Simplify for now or use specific logic
+            // Retail Order - Logic based on Takeaway Toggle
+            const locationName = isTakeaway ? "Llevar" : "Sin Mesa";
 
             orderMetadata.tableName = locationName;
 
+            // Critical: isWaitList is NOT set (defaults to false in DataContext) so it doesn't show in "En Espera" list
             sendOrderToProduction(cart, "Pedido Rápido", orderMetadata);
 
             setCart([]);
@@ -338,6 +359,23 @@ export const POSPage = () => {
 
     const filteredProducts = useMemo(() => {
         let result = data.products || [];
+
+        // Special "Best Sellers" Filter
+        if (selectedCategory === 'mas_vendidos') {
+            const productCounts = {};
+            (data.sales || []).forEach(sale => {
+                (sale.items || []).forEach(item => {
+                    productCounts[item.name] = (productCounts[item.name] || 0) + (item.quantity || 1);
+                });
+            });
+
+            // Sort products by sales count (descending)
+            return [...result]
+                .map(p => ({ ...p, salesCount: productCounts[p.name] || 0 }))
+                .sort((a, b) => b.salesCount - a.salesCount)
+                .slice(0, 20); // Top 20
+        }
+
         if (selectedCategory !== 'all') {
             result = result.filter(p => p.category === selectedCategory);
         }
@@ -345,7 +383,7 @@ export const POSPage = () => {
             result = result.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
         }
         return result;
-    }, [selectedCategory, searchQuery, data.products]);
+    }, [selectedCategory, searchQuery, data.products, data.sales]);
 
     const addToCart = (product) => {
         setCart(prevCart => {
@@ -448,6 +486,38 @@ export const POSPage = () => {
                         </div>
                     )}
 
+
+
+                    {/* Customer Selector */}
+                    <div style={{ position: 'relative', zIndex: 50 }}>
+                        <button
+                            className="glass-button"
+                            onClick={() => setIsClientModalOpen(true)}
+                            style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                        >
+                            <User size={16} />
+                            {selectedCustomerId
+                                ? (data.customers.find(c => c.id === selectedCustomerId)?.name || 'Cliente')
+                                : 'Cliente General'}
+                        </button>
+                        {selectedCustomerId && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setSelectedCustomerId(''); }}
+                                style={{ position: 'absolute', top: '-5px', right: '-5px', background: 'red', color: 'white', borderRadius: '50%', width: '16px', height: '16px', border: 'none', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                            >
+                                <X size={10} />
+                            </button>
+                        )}
+                    </div>
+
+                    {isClientModalOpen && (
+                        <ClientSearchModal
+                            isOpen={isClientModalOpen}
+                            onClose={() => setIsClientModalOpen(false)}
+                            onSelectClient={(client) => setSelectedCustomerId(client.id)}
+                        />
+                    )}
+
                     {/* Integrated Search & Categories (Flex 1 to take available space) */}
                     <div style={{ display: 'flex', flex: 1, gap: '0.5rem', alignItems: 'center', position: 'relative', minWidth: 0 }}>
 
@@ -496,7 +566,14 @@ export const POSPage = () => {
 
                                 {/* Dynamic Category List (Scrollable) */}
                                 <div className="no-scrollbar" style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', flex: 1, alignItems: 'center', paddingRight: '1rem', minWidth: 0 }}>
-                                    {categories.map(cat => (
+                                    <button
+                                        className={`glass-button ${selectedCategory === 'mas_vendidos' ? 'primary' : ''}`}
+                                        onClick={() => setSelectedCategory('mas_vendidos')}
+                                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', whiteSpace: 'nowrap', flexShrink: 0, fontWeight: 'bold' }}
+                                    >
+                                        ⭐ Más Vendidos
+                                    </button>
+                                    {displayCategories.map(cat => (
                                         <button
                                             key={cat.id}
                                             className={`glass-button ${selectedCategory === cat.id ? 'primary' : ''}`}
@@ -548,7 +625,7 @@ export const POSPage = () => {
                                 >
                                     Todos
                                 </button>
-                                {categories.map(cat => (
+                                {displayCategories.map(cat => (
                                     <button
                                         key={cat.id}
                                         className={`glass-button ${selectedCategory === cat.id ? 'primary' : ''}`}
@@ -611,7 +688,7 @@ export const POSPage = () => {
                             title="Ver Órdenes en Espera"
                         >
                             <Clock size={18} />
-                            {heldOrders.filter(o => o.status !== 'kitchen').length > 0 && (
+                            {heldOrders.filter(o => o.isWaitList).length > 0 && (
                                 <span style={{
                                     marginLeft: '0.25rem',
                                     background: 'var(--accent-orange)',
@@ -625,7 +702,7 @@ export const POSPage = () => {
                                     justifyContent: 'center',
                                     fontWeight: 'bold'
                                 }}>
-                                    {heldOrders.filter(o => o.status !== 'kitchen').length}
+                                    {heldOrders.filter(o => o.isWaitList).length}
                                 </span>
                             )}
                         </button>

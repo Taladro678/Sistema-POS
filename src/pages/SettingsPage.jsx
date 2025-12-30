@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSettings } from '../context/SettingsContext';
 import { useData } from '../context/DataContext';
-import { Save, Download, Upload, Trash2, Users, Lock } from 'lucide-react';
+import { Save, Download, Upload, Trash2, Users, Lock, FileSpreadsheet } from 'lucide-react';
+import { read, utils } from 'xlsx';
 
 export const SettingsPage = () => {
     const { settings, updateSettings } = useSettings();
@@ -164,6 +165,122 @@ export const SettingsPage = () => {
                                     }}
                                 />
                             </label>
+
+                            <label
+                                className="glass-button primary"
+                                style={{ flex: '1 1 140px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', cursor: 'pointer' }}
+                            >
+                                <FileSpreadsheet size={18} />
+                                Importar Excel
+                                <input
+                                    type="file"
+                                    accept=".xls,.xlsx"
+                                    style={{ display: 'none' }}
+                                    onChange={async (e) => {
+                                        const file = e.target.files[0];
+                                        if (!file) return;
+
+                                        try {
+                                            const dataBuffer = await file.arrayBuffer();
+                                            const workbook = read(dataBuffer);
+                                            const sheetName = workbook.SheetNames[0];
+                                            const sheet = workbook.Sheets[sheetName];
+                                            const jsonData = utils.sheet_to_json(sheet, { header: 'A' });
+
+                                            // const newProducts = []; // Removed to avoid redeclaration error
+                                            const timestamp = Date.now();
+
+                                            // Auto-categorization Rules
+                                            // Ordered by specificity (Food first, then Drinks)
+                                            const CATEGORY_RULES = [
+                                                { id: 'comida', label: 'Comida', keywords: ['hamburguesa', 'burger', 'carne', 'doble', 'triple', 'bacon', 'queso', 'bbq', 'angus', 'wagyu', 'cheeseburger', 'pizza', 'perro', 'hot dog', 'salchicha', 'pollo', 'frito', 'asado', 'parrilla', 'bistec', 'solomo', 'punta', 'costilla', 'cerdo', 'chuleta', 'pescado', 'sandwich', 'pan', 'pepito', 'enrollado', 'shawarma', 'tostada', 'arepa', 'cachapa', 'taco', 'burrito', 'quesadilla', 'nachos', 'papas', 'fritas', 'yuca', 'aros', 'cebolla', 'pure', 'arroz', 'platano', 'tostones', 'tajadas', 'ensalada', 'cesar', 'aguacate'] },
+                                                { id: 'bebidas', label: 'Bebidas', keywords: ['bebida', 'refresco', 'jugo', 'agua', 'energizante', 'cola', 'pepsi', 'fanta', 'sprite', 'malta', 'te', 'té', 'cafe', 'café', 'limonada', 'naranja', 'manzana', 'batido', 'smoothie', 'soda', 'coca', 'cerveza', 'licor', 'vino'] },
+                                                { id: 'sopas', label: 'Sopas', keywords: ['sopa', 'caldo', 'consomé', 'crema', 'sancocho', 'mondongo', 'hervido', 'fosforera', 'gallina', 'res', 'costilla', 'lagarto', 'pescado', 'mariscos', 'chupe', 'ajiaco', 'potaje', 'lentejas', 'caraotas', 'granos'] },
+                                                { id: 'dulces', label: 'Dulces', keywords: ['postre', 'dulce', 'helado', 'torta', 'pastel', 'cake', 'flan', 'gelatina', 'brownie', 'pie', 'mousse', 'quesillo', 'tres leches', 'marquesa', 'tiramisu', 'galleta', 'cookie', 'chocolate', 'vainilla', 'fresa', 'arequipe', 'nutella', 'donas', 'churros'] }
+                                            ];
+
+                                            const detectCategory = (name) => {
+                                                const lowerName = name.toLowerCase();
+                                                for (const cat of CATEGORY_RULES) {
+                                                    // Use word boundaries/flexible matching
+                                                    // \b ensures "agua" doesn't match "aguacate"
+                                                    if (cat.keywords.some(k => {
+                                                        try {
+                                                            // Escape special chars just in case, though our keywords are simple
+                                                            const regex = new RegExp(`\\b${k}\\b`, 'i'); // Create regex here
+                                                            return regex.test(lowerName);
+                                                        } catch {
+                                                            return lowerName.includes(k);
+                                                        }
+                                                    })) {
+                                                        return cat.id; // Return ID (e.g., 'bebidas')
+                                                    }
+                                                }
+                                                return 'General'; // Default
+                                            };
+
+                                            // Map to store unique products (Deduplication)
+                                            const productsMap = new Map();
+
+                                            jsonData.forEach((row, index) => {
+                                                // FIXED COLUMN MAPPING based on file analysis:
+                                                // B: Name (was A)
+                                                // K: Cost (was L/K)
+                                                // N: Price (was P)
+
+                                                const nameRaw = row['B'];
+                                                const costRaw = row['K'];
+                                                const priceRaw = row['N'];
+
+                                                // 1. Strict Name Validation
+                                                if (typeof nameRaw !== 'string' || !nameRaw) return;
+                                                const name = nameRaw.trim();
+
+                                                if (name.length < 2) return;
+                                                // Exclude internal ledger keywords if they appear in Name column
+                                                const invalidKeywords = ['Nombre', 'Periodo', 'Existencia', 'Total', 'Saldo'];
+                                                if (invalidKeywords.some(k => name.includes(k))) return;
+
+                                                const numPrice = parseFloat(priceRaw) || 0;
+                                                const numCost = parseFloat(costRaw) || 0;
+
+                                                // Valid product must have a name. Price can be 0 if it's an ingredient, 
+                                                // but usually we want sellable items. Let's include everything that looks valid.
+
+                                                const product = {
+                                                    id: `imported_${timestamp}_${index}`,
+                                                    name: name,
+                                                    price: numPrice,
+                                                    cost: numCost,
+                                                    category: detectCategory(name),
+                                                    image: null,
+                                                    stock: 0
+                                                };
+
+                                                // Save to map (Overwrites previous entry, keeping latest price/cost)
+                                                productsMap.set(name, product);
+                                            });
+
+                                            // Convert map to array
+                                            const newProducts = Array.from(productsMap.values());
+
+                                            if (newProducts.length > 0) {
+                                                if (window.confirm(`Se encontraron ${newProducts.length} productos ÚNICOS válidos.\n\nEjemplos:\n- ${newProducts[0].name} (${newProducts[0].category}) - $${newProducts[0].price}\n- ${newProducts[newProducts.length - 1].name} (${newProducts[newProducts.length - 1].category}) - $${newProducts[newProducts.length - 1].price}\n\n¿Desea importarlos?`)) {
+                                                    updateData('products', [...(data.products || []), ...newProducts]);
+                                                    alert(`${newProducts.length} productos importados exitosamente.`);
+                                                }
+                                            } else {
+                                                alert('No se encontraron productos válidos. Verifique el archivo.');
+                                            }
+
+                                        } catch (error) {
+                                            console.error("Error importing excel:", error);
+                                            alert('Error al procesar el archivo Excel.');
+                                        }
+                                        e.target.value = '';
+                                    }}
+                                />
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -178,7 +295,6 @@ export const SettingsPage = () => {
                         <input
                             type="text"
                             name="masterPin"
-                            maxLength="6"
                             value={formData.masterPin || '0000'}
                             onChange={handleChange}
                             className="glass-input"

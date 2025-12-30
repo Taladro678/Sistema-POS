@@ -262,11 +262,10 @@ export const OrdersPage = () => {
                 </div>
             )}
 
-            {/* All Orders List */}
             {viewMode === 'orders' && (
                 <div className="flex flex-col gap-4 pb-20">
+                    {/* Aggregating ALL orders: Held, Kitchen, Bar */}
                     {(data.heldOrders || [])
-                        .filter(o => !o.isProduction || o.status === 'ready')
                         .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
                         .map(order => {
                             const table = order.tableId ? tables.find(t => t.id === order.tableId) : null;
@@ -348,7 +347,8 @@ export const OrdersPage = () => {
                                     </div>
                                 </div>
                             );
-                        })}
+                        })
+                    }
                 </div>
             )}
 

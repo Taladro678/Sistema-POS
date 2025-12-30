@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useData } from '../context/DataContext';
+import { useAuth } from '../context/AuthContext';
 import { ChefHat, Clock, CheckCircle, AlertCircle, X } from 'lucide-react';
+import Modal from '../components/Modal';
 
 /**
  * PÁGINA: KitchenPage - Pantalla de Cocina/Barra
@@ -17,6 +19,8 @@ export const KitchenPage = () => {
     const { data, updateItem, deleteItem, addItem } = useData();
     const [selectedStatus, setSelectedStatus] = useState('all');
     const [viewMode, setViewMode] = useState('active'); // 'active' | 'cancelled'
+    const [selectedOrder, setSelectedOrder] = useState(null); // For modal
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const lastOrderCountRef = useRef(0);
     const kitchenOrders = useMemo(() => data.kitchenOrders || [], [data.kitchenOrders]);
     const cancelledKitchenOrders = useMemo(() => data.cancelledKitchenOrders || [], [data.cancelledKitchenOrders]);
@@ -39,7 +43,12 @@ export const KitchenPage = () => {
         lastOrderCountRef.current = kitchenOrders.length;
     }, [kitchenOrders.length]);
 
+    const { currentUser } = useAuth();
+
     const handleStatusChange = (orderId, newStatus) => {
+        const timestamp = new Date().toISOString();
+        const modifierName = currentUser?.username || 'Desconocido';
+
         if (newStatus === 'completed') {
             // When marked as ready, update the source heldOrder
             const order = kitchenOrders.find(o => o.id === orderId);
@@ -47,14 +56,19 @@ export const KitchenPage = () => {
                 // Update the held order status to "ready"
                 updateItem('heldOrders', order.sourceOrderId, {
                     status: 'ready',
-                    completedAt: new Date().toISOString()
+                    completedAt: timestamp,
+                    modifiedBy: modifierName
                 });
             }
             // Remove from kitchen
             deleteItem('kitchenOrders', orderId);
         } else {
             // For other status changes (pending -> in-progress)
-            updateItem('kitchenOrders', orderId, { status: newStatus });
+            updateItem('kitchenOrders', orderId, {
+                status: newStatus,
+                modifiedBy: modifierName,
+                lastModified: timestamp
+            });
         }
     };
 
@@ -135,6 +149,19 @@ export const KitchenPage = () => {
             return new Date(a.timestamp) - new Date(b.timestamp);
         });
     }, [kitchenOrders, cancelledKitchenOrders, selectedStatus, viewMode]);
+
+    const handleMarkAsTakeaway = (orderId) => {
+        const modifierName = currentUser?.username || 'Desconocido';
+        updateItem('kitchenOrders', orderId, {
+            tableName: 'Llevar',
+            modifiedBy: modifierName,
+            lastModified: new Date().toISOString()
+        });
+        // Close modal if open
+        if (selectedOrder && selectedOrder.id === orderId) {
+            setIsModalOpen(false);
+        }
+    };
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%', padding: '1rem' }}>
@@ -217,7 +244,7 @@ export const KitchenPage = () => {
                     overflowX: 'hidden',
                     paddingRight: '0.5rem',
                     width: '100%',
-                    paddingBottom: '2rem'
+                    paddingBottom: '3rem'
                 }}>
                     {filteredOrders.map(order => {
                         const priorityInfo = getPriorityData(order.priority);
@@ -232,13 +259,21 @@ export const KitchenPage = () => {
                                         ? `linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(0,0,0,0.6))`
                                         : `linear-gradient(135deg, rgba(0,0,0,0.4), rgba(0,0,0,0.2))`,
                                     position: 'relative',
-                                    animation: order.priority === 'high' || order.status === 'pending' ? 'pulse 2s infinite' : 'none',
-                                    boxShadow: order.priority === 'high' ? '0 0 20px rgba(239, 68, 68, 0.2)' : 'none',
+                                    animation: order.priority === 'high' ? 'pulse 2s infinite' : 'none',
+                                    boxShadow: order.priority === 'high' ? '0 0 15px rgba(239, 68, 68, 0.15)' : 'none',
                                     overflow: 'hidden',
                                     wordWrap: 'break-word',
                                     maxWidth: '100%',
-                                    boxSizing: 'border-box'
+                                    boxSizing: 'border-box',
+                                    cursor: 'pointer',
+                                    transition: 'transform 0.2s'
                                 }}
+                                onClick={() => {
+                                    setSelectedOrder(order);
+                                    setIsModalOpen(true);
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                             >
                                 {/* Priority Badge Layer */}
                                 {order.priority !== 'normal' && (
@@ -289,6 +324,9 @@ export const KitchenPage = () => {
                                         {getStatusLabel(order.status)}
                                     </div>
                                 </div>
+                                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', fontStyle: 'italic' }}>
+                                    Por: {order.createdBy || 'Desconocido'}
+                                </div>
 
                                 {/* Items de la orden */}
                                 <div style={{ marginBottom: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1rem' }}>
@@ -335,10 +373,7 @@ export const KitchenPage = () => {
                                 </div>
 
                                 {/* Botones de acción */}
-                                <div
-                                    onClick={(e) => e.stopPropagation()}
-                                    style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column', width: '100%' }}
-                                >
+                                <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column', width: '100%' }}>
                                     {order.status === 'pending' && (
                                         <button
                                             className="glass-button"
@@ -426,14 +461,212 @@ export const KitchenPage = () => {
                 </div>
             )}
 
+            {/* Order Detail Modal */}
+            {isModalOpen && selectedOrder && (
+                <Modal isOpen={true} onClose={() => setIsModalOpen(false)} title={`Orden: ${selectedOrder.tableName}`}>
+                    <div style={{ padding: '1rem' }}>
+                        {/* Order Info */}
+                        <div style={{ marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                <span style={{ color: 'var(--text-secondary)' }}>Estado:</span>
+                                <span style={{
+                                    color: getStatusColor(selectedOrder.status),
+                                    fontWeight: 'bold',
+                                    fontSize: '1.1rem'
+                                }}>{getStatusLabel(selectedOrder.status)}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                <span style={{ color: 'var(--text-secondary)' }}>Tiempo:</span>
+                                <span>{getTimeElapsed(selectedOrder.timestamp)}</span>
+                            </div>
+                            {selectedOrder.priority !== 'normal' && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span style={{ color: 'var(--text-secondary)' }}>Prioridad:</span>
+                                    <span style={{
+                                        color: getPriorityData(selectedOrder.priority).color,
+                                        fontWeight: 'bold'
+                                    }}>{getPriorityData(selectedOrder.priority).label}</span>
+                                </div>
+                            )}
+                            <div style={{ marginTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.5rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                    <span>Creado por:</span>
+                                    <span style={{ color: 'white' }}>{selectedOrder.createdBy || 'Desconocido'}</span>
+                                </div>
+                                {selectedOrder.modifiedBy && (
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                        <span>Modificado por:</span>
+                                        <span style={{ color: 'var(--accent-blue)' }}>{selectedOrder.modifiedBy}</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Items List */}
+                        <h3 style={{ marginBottom: '0.75rem', fontSize: '1.1rem' }}>Items:</h3>
+                        <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                            {selectedOrder.items.map((item, idx) => {
+                                const itemPriority = getPriorityData(item.priority);
+                                return (
+                                    <div key={idx} style={{
+                                        padding: '0.75rem',
+                                        marginBottom: '0.5rem',
+                                        background: 'rgba(255,255,255,0.05)',
+                                        borderRadius: '8px',
+                                        borderLeft: `4px solid ${itemPriority.color}`,
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                    }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                                            <span style={{ fontWeight: 'bold', fontSize: '1rem' }}>
+                                                {item.quantity}x {item.name}
+                                            </span>
+                                            {item.priority !== 'normal' && (
+                                                <span style={{
+                                                    padding: '0.2rem 0.5rem',
+                                                    background: itemPriority.color,
+                                                    color: '#000',
+                                                    borderRadius: '4px',
+                                                    fontSize: '0.7rem',
+                                                    fontWeight: 'bold'
+                                                }}>
+                                                    {itemPriority.label}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {item.note && (
+                                            <div style={{
+                                                fontSize: '0.85rem',
+                                                color: 'var(--accent-orange)',
+                                                fontStyle: 'italic',
+                                                marginTop: '0.25rem'
+                                            }}>
+                                                Nota: {item.note}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {/* Mark as Takeaway Button */}
+                            {selectedOrder.tableName !== 'Llevar' && viewMode === 'active' && (
+                                <button
+                                    className="glass-button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (window.confirm('¿Marcar orden "Para Llevar"?')) {
+                                            handleMarkAsTakeaway(selectedOrder.id);
+                                        }
+                                    }}
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.75rem',
+                                        fontSize: '0.9rem',
+                                        background: 'transparent',
+                                        borderColor: 'var(--accent-blue)',
+                                        color: 'var(--accent-blue)',
+                                        fontWeight: 'bold',
+                                        marginBottom: '0.5rem'
+                                    }}
+                                >
+                                    🛍️ Marcar para Llevar
+                                </button>
+                            )}
+
+                            {selectedOrder.status === 'pending' && (
+                                <button
+                                    className="glass-button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleStatusChange(selectedOrder.id, 'in-progress');
+                                        setIsModalOpen(false);
+                                    }}
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.75rem',
+                                        background: 'var(--accent-orange)',
+                                        borderColor: 'var(--accent-orange)',
+                                        color: 'white',
+                                        fontWeight: 'bold'
+                                    }}
+                                >
+                                    🔥 Iniciar Preparación
+                                </button>
+                            )}
+
+                            {selectedOrder.status === 'in-progress' && (
+                                <button
+                                    className="glass-button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleStatusChange(selectedOrder.id, 'completed');
+                                        setIsModalOpen(false);
+                                    }}
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.75rem',
+                                        background: 'var(--accent-green)',
+                                        borderColor: 'var(--accent-green)',
+                                        color: 'white',
+                                        fontWeight: 'bold'
+                                    }}
+                                >
+                                    ✓ Marcar como Listo
+                                </button>
+                            )}
+
+                            {viewMode === 'active' ? (
+                                <button
+                                    className="glass-button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleCancelOrder(selectedOrder.id);
+                                        setIsModalOpen(false);
+                                    }}
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.75rem',
+                                        background: 'transparent',
+                                        borderColor: 'var(--accent-red)',
+                                        color: 'var(--accent-red)'
+                                    }}
+                                >
+                                    ✕ Cancelar Orden
+                                </button>
+                            ) : (
+                                <button
+                                    className="glass-button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleRestoreOrder(selectedOrder.id);
+                                        setIsModalOpen(false);
+                                    }}
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.75rem',
+                                        background: 'var(--accent-blue)',
+                                        borderColor: 'var(--accent-blue)',
+                                        color: 'white'
+                                    }}
+                                >
+                                    ↺ Restaurar Orden
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </Modal>
+            )}
+
             {/* CSS para animación */}
             <style>{`
                 @keyframes pulse {
                     0%, 100% {
-                        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+                        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.0);
                     }
                     50% {
-                        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+                        box-shadow: 0 0 10px 0 rgba(239, 68, 68, 0.1);
                     }
                 }
             `}</style>

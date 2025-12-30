@@ -107,7 +107,7 @@ io.on('connection', (socket) => {
 
 // API Routes (Optional fallback)
 app.post('/api/sync', (req, res) => {
-    const { clientData } = req.body;
+    // const { clientData } = req.body;
     // Logic to merge...
     res.json({ success: true, serverData: appState });
 });

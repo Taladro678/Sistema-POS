@@ -192,6 +192,28 @@ const mobileVisibleCount = 5; // Primeros 5 visibles en móvil
 
 ---
 
+---
+
+### 4. Gestión de Pedidos y Enrutamiento
+
+#### Lógica de "En Espera" (Wait List)
+
+- **Estricta Separación**: La lista "En Espera" en el POS (ícono de reloj) muestra **EXCLUSIVAMENTE** órdenes que fueron creadas usando el botón "Poner en Espera" (flag `isWaitList: true`).
+- **Enrutamiento**: Las órdenes enviadas a producción NO aparecen en la lista de espera del POS.
+
+#### Enrutamiento de Barra y Cocina
+
+- **Barra**: Categorías "Bebidas", "Jugo", "Cafe", etc., van a `BarPage`.
+- **Cocina**: Todo lo demás va a `KitchenPage`.
+- **Info**: Incluye `customerName` y `createdBy`.
+
+#### Gestión de Pedidos (OrdersPage)
+
+- **Visibilidad Total**: Muestra TODAS las órdenes del sistema.
+- **Interacción**: Clic para cargar en POS.
+
+---
+
 ## 🌐 Contextos y Estado Global
 
 ### DataContext.jsx ⭐

@@ -96,7 +96,6 @@
  */
 
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { inventoryItems, suppliers, personnel, products } from '../data/mockData';
 import { googleDriveService } from '../services/googleDrive';
 import { localSyncService } from '../services/localSync';
 import { firebaseSyncService } from '../services/firebase';
@@ -154,11 +153,11 @@ export const DataProvider = ({ children }) => {
     ];
 
     const [data, setData] = useState({
-        inventory: loadData('inventory', inventoryItems),
-        suppliers: loadData('suppliers', suppliers),
-        personnel: loadData('personnel', personnel),
+        inventory: loadData('inventory', []),
+        suppliers: loadData('suppliers', []),
+        personnel: loadData('personnel', []),
         users: loadData('users', []), // New Users Collection
-        products: loadData('products', products),
+        products: loadData('products', []),
         categories: loadData('categories', defaultCategories), // Dynamic categories
         sales: loadData('sales', []),
         heldOrders: loadData('heldOrders', []),
@@ -203,7 +202,7 @@ export const DataProvider = ({ children }) => {
 
     // Migration: If users is empty but personnel exists, migrate credentials
     useEffect(() => {
-        if (data.users.length === 0 && data.personnel.length > 0) {
+        if (data.users?.length === 0 && data.personnel?.length > 0) {
             console.log('🔄 Migrating Personnel to System Users...');
             const migratedUsers = data.personnel
                 .filter(p => p.pin) // Only migrate if they have a PIN
@@ -425,23 +424,39 @@ export const DataProvider = ({ children }) => {
             inventory: [],
             suppliers: [],
             personnel: [],
+            users: [], // Critical to prevent crash
             products: [],
+            categories: defaultCategories, // Restore default categories
             sales: [],
             heldOrders: [],
+            cancelledOrders: [],
             tips: 0,
             tipHistory: [],
-            tables: Array.from({ length: 10 }, (_, i) => ({ id: i + 1, name: `Mesa ${i + 1}`, status: 'available' })),
+            tipDistributions: [],
+            tables: Array.from({ length: 10 }, (_, i) => ({ id: i + 1, name: `Mesa ${i + 1}`, status: 'available', area: 'Restaurante' })),
             customers: [],
             kitchenOrders: [],
             barOrders: [],
+            cancelledKitchenOrders: [],
+            cancelledBarOrders: [],
+            pendingPayment: [],
+            inventoryEntries: [],
             exchangeRate: 60,
+            rateHistory: [],
             cashRegister: {
                 isOpen: false,
                 openingTime: null,
                 openingBalanceBs: 0,
                 openingBalanceUsd: 0,
-                withdrawals: []
+                withdrawalsBs: 0,
+                withdrawalsUsd: 0,
+                withdrawalComment: '',
+                closingTime: null,
+                closingBalanceBs: 0,
+                closingBalanceUsd: 0,
+                status: 'closed'
             },
+            defaultForeignCurrencyDiscountPercent: 0,
             lastModified: new Date().toISOString()
         };
         setData(emptyData);
@@ -456,7 +471,9 @@ export const DataProvider = ({ children }) => {
             note: note,
             timestamp: new Date().toISOString(),
             total: cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0),
-            ...metadata // tableId, customerId, createdBy
+            status: 'active', // Default status
+            isWaitList: metadata.isWaitList || false, // STRICT FLAG: Only true if explicitly "Put on Hold"
+            ...metadata // tableId, customerId, createdBy, etc.
         };
         // Use generic addItem to ensure lastModified is updated
         addItem('heldOrders', newOrder);
@@ -474,31 +491,18 @@ export const DataProvider = ({ children }) => {
         return newOrder.id;
     };
 
-    // New Function to Send to Kitchen/Bar
+    // New Function to Send to Production (Unified Kitchen)
     const sendOrderToProduction = (cart, note = '', metadata = {}) => {
-        // 1. Create the Master Record (Held Order) so it exists in the system (and on the Table)
-        const orderId = holdOrder(cart, note, metadata);
+        // 1. Create the Master Record (Held Order)
+        // CRITICAL: isWaitList is FALSE because this is a production order
+        const orderId = holdOrder(cart, note, { ...metadata, isWaitList: false });
 
-        // 2. Split items for Kitchen vs Bar
-        // Simple logic: Categories 'Bebidas', 'Cocteles', 'Vinos' -> Bar. Others -> Kitchen.
-        // We can refine this later or add a 'station' property to products.
-        // IMPORTANT: Add 'drinks' (mockData ID) and other potential IDs/Labels
-        const barCategories = ['drinks', 'Bebidas', 'Cocteles', 'Vinos', 'Cervezas', 'Tragos', 'Licor', 'Refrescos'];
-
-        // Helper to check if item is bar
-        const isBarItem = (item) => {
-            const cat = item.category || '';
-            const label = item.categoryLabel || '';
-            return barCategories.some(c => cat.toLowerCase() === c.toLowerCase()) ||
-                barCategories.some(c => label.toLowerCase() === c.toLowerCase());
-        };
-
-        const barItems = cart.filter(isBarItem);
-        const kitchenItems = cart.filter(item => !isBarItem(item));
+        // 2. Unify ALL items for Kitchen
+        // We no longer split Bar/Kitchen. Everything goes to Kitchen.
 
         const commonData = {
             sourceOrderId: orderId,
-            tableName: metadata.tableName || 'N/A', // Holds "Mesa 1", "Barra", or "Sin Lugar"
+            tableName: metadata.tableName || 'Sin Mesa',
             tableId: metadata.tableId,
             customerId: metadata.customerId,
             customerName: metadata.customerName,
@@ -508,28 +512,15 @@ export const DataProvider = ({ children }) => {
             priority: metadata.priority || 'normal'
         };
 
-        // Fallback: If kitchenItems calculation misses something, we rely on the logic that !isBarItem covers everything else.
-
-        if (kitchenItems.length > 0) {
+        if (cart.length > 0) {
             const kitchenOrder = {
                 id: Date.now() + 1, // unique id
-                items: kitchenItems,
+                items: cart, // ALL items
                 type: 'kitchen',
                 ...commonData
             };
             addItem('kitchenOrders', kitchenOrder);
             if (isLocalServerConnected) localSyncService.sendKitchenOrder(kitchenOrder);
-        }
-
-        if (barItems.length > 0) {
-            const barOrder = {
-                id: Date.now() + 2, // unique id
-                items: barItems,
-                type: 'bar',
-                ...commonData
-            };
-            addItem('barOrders', barOrder);
-            // if (isLocalServerConnected) localSyncService.sendBarOrder(barOrder);
         }
 
         return orderId;
