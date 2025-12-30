@@ -106,6 +106,11 @@ export const POSPage = () => {
     const navigate = useNavigate();
     const searchParams = new URLSearchParams(location.search);
     const tableId = searchParams.get('tableId');
+    const orderId = searchParams.get('orderId');
+
+    // State for Editing
+    const [originalOrder, setOriginalOrder] = useState(null);
+
     // Removed duplicate useData here
     const tables = data.tables || [];
     const currentTable = tableId ? tables.find(t => t.id === parseInt(tableId)) : null;
@@ -116,12 +121,29 @@ export const POSPage = () => {
             const existingOrder = data.heldOrders.find(o => o.id === currentTable.currentOrderId);
             if (existingOrder) {
                 setCart(existingOrder.items);
-                // We don't delete it yet, we just load it. 
-                // In a real app, we might want to distinguish between "loaded from DB" and "local changes".
-                // For simplicity, we assume we are editing the live order.
+                setOriginalOrder(existingOrder);
+                setOrderNote(existingOrder.note || '');
+                setIsTakeaway(existingOrder.takeaway || false);
+                setOrderPriority(existingOrder.priority || 'normal');
             }
         }
     }, [tableId, currentTable, data.heldOrders]);
+
+    // Load non-table order (Edit Mode)
+    React.useEffect(() => {
+        if (orderId && !tableId) {
+            const existingOrder = data.heldOrders.find(o => o.id === parseInt(orderId) || o.id === orderId); // Check both types
+            if (existingOrder) {
+                setCart(existingOrder.items);
+                setOriginalOrder(existingOrder);
+                setOrderNote(existingOrder.note || '');
+                setIsTakeaway(existingOrder.takeaway || false);
+                setOrderPriority(existingOrder.priority || 'normal');
+                // Allow editing customer if linked
+                if (existingOrder.customerId) setSelectedCustomerId(existingOrder.customerId);
+            }
+        }
+    }, [orderId, data.heldOrders, tableId]);
 
     const handleCancelCurrentOrder = () => {
         if (!currentTable) return;
@@ -143,69 +165,48 @@ export const POSPage = () => {
     const handleHoldOrder = () => {
         if (cart.length === 0) return;
 
-        const note = prompt("Nota para poner en espera (opcional):");
+        const note = prompt("Nota para poner en espera (opcional):", orderNote);
         if (note !== null) {
-            // Force no table association for "Hold" button so it goes to "En Espera" list strictly?
-            // User said: "Orders on Hold are EXCLUSIVELY FOR WHEN THE HOLD BUTTON IS PRESSED"
-            // If I am at a table and press "Hold", does it go to "En Espera"? YES.
-            // So we explicitly DO NOT pass tableId here if we want it in the generic list?
-            // OR we pass it, but the list filters IN things that are "on hold" status?
-            // for simplicity/robustness:
-            // If I am at a Table, and I press Hold, it's a "Saved Draft" for the table, OR a "Separate Hold Order"?
-            // Usually "Hold" on a table means "Save changes without sending".
-            // But if the user wants "En Espera" list to be ONLY "Hold button", then:
-
-            // Logic:
-            // Hold Button -> heldOrders (with or without tableId).
-            // Send to Kitchen -> heldOrders (with tableId) AND Table Status Occupied.
-
-            // The FILTER in the modal is key.
-            // IF we filter `!order.tableId` in the modal, then "Send to Kitchen" (which has tableId) won't show.
-            // BUT "Hold Order" for a table (which has tableId) won't show either!
-
-            // Solution: Add a flag `isSentToKitchen`? or `status`.
-            // Let's stick to the User's core request: "En Espera" list is for "Hold Button".
-
-            holdOrder(cart, note || 'En Espera'); // We won't pass tableId here to ensure it falls into the "Retail/Generic Hold" bucket?
-            // Wait, if we don't pass tableId, we lose the link.
-            // Let's pass tableId but maybe we need a `status: 'held'` vs `status: 'kitchen'`.
-            // For now, I will implement `handleSendToKitchen` and `handleHoldOrder` identically regarding data saving,
-            // BUT I will use the *Modal Filter* to differentiate.
-            // Actually, if I am at Mesa 1 and press Clock, I probably WANT it to show in En Espera list.
-            // If I Press Chef Hat, I DO NOT want it in En Espera list.
-
-            // So: 
-            // Send To Kitchen: adds `sentToKitchen: true`.
-            // Hold Order: adds `sentToKitchen: false` (default).
-
-            // I can't easily change `holdOrder` signature in DataContext without seeing it.
-            // I'll stick to:
-            // Chef Hat -> Occupies Table.
-            // Clock -> Holds Order.
-
-            // The User's specific complaint: "It sent it to hold".
-            // This suggests it appeared in the list.
-
-            // I will implement `handleSendToKitchen` now.
             // Strict "En Espera" Logic: ONLY 'Hold' button sets isWaitList=true
-            holdOrder(cart, note, { isWaitList: true });
+            // If editing, delete original?
+            // "Hold" usually usually implies "Save as Draft".
+            // If I was editing "Order 123", and I click Hold, should I update 123 or create new?
+            // User flow: "Edit order -> Hold" changes it to "En Espera" status?
+            // Let's assume yes.
+            if (originalOrder && !originalOrder.tableId) {
+                deleteHeldOrder(originalOrder.id);
+            }
+
+            const metadata = {
+                isWaitList: true,
+                takeaway: isTakeaway,
+                priority: orderPriority,
+                customerId: selectedCustomerId,
+                createdBy: originalOrder?.createdBy || currentUser?.username || 'Cajero', // Preserve creator
+                modifiedBy: originalOrder ? (currentUser?.username || 'Cajero') : null
+            };
+
+            holdOrder(cart, note || 'En Espera', metadata);
             setCart([]);
+            setOriginalOrder(null);
             setIsCartOpen(false);
+            setOrderNote('');
+            setIsTakeaway(false);
             alert("Orden puesta en espera.");
+            if (orderId) navigate('/'); // Clear URL
         }
     };
 
     const handleSendToKitchen = () => {
         if (cart.length === 0) return;
 
-
-
         // Resolve Customer Name
         const selectedCustomer = data.customers.find(c => c.id === selectedCustomerId);
         const customerName = selectedCustomer ? selectedCustomer.name : 'Cliente General';
 
         const orderMetadata = {
-            createdBy: currentUser?.username || 'Cajero', // Use Auth User
+            createdBy: originalOrder?.createdBy || currentUser?.username || 'Cajero', // Persist Original Creator
+            modifiedBy: originalOrder ? (currentUser?.username || 'Cajero') : null, // Add modifier
             customerId: selectedCustomerId,
             customerName: customerName,
             priority: orderPriority,
@@ -220,32 +221,43 @@ export const POSPage = () => {
             // Send to Production (Kitchen & Bar)
             sendOrderToProduction(cart, `Orden Mesa ${currentTable.name}`, orderMetadata);
 
-            // Update Table Status (Manually or let DataContext do it? sendOrderToProduction calls holdOrder which does it)
-            // But let's be safe.
+            // Update Table Status
             updateItem('tables', currentTable.id, {
                 status: 'occupied',
                 occupiedAt: currentTable.occupiedAt || new Date().toISOString()
             });
 
             setCart([]);
+            setOriginalOrder(null);
             setIsCartOpen(false);
             alert(`Orden enviada a cocina para ${currentTable.name}`);
             navigate('/tables');
         } else {
-            // Retail Order - Ask for Location
-            // const locationName = prompt("¿Ubicación? (ej: Barra, Mesa 5, Para Llevar)", "Barra");
-            // if (locationName === null) return; // Cancelled
-            // Retail Order - Logic based on Takeaway Toggle
+            // Retail / Takeaway / Fast Food Order
+
+            // If we are editing an existing order, DELETE the old one before creating the new one
+            // This acts as an "Update"
+            if (originalOrder && !originalOrder.tableId) {
+                deleteHeldOrder(originalOrder.id);
+            }
+
+            // Logic based on Takeaway Toggle
             const locationName = isTakeaway ? "Llevar" : "Sin Mesa";
 
             orderMetadata.tableName = locationName;
 
             // Critical: isWaitList is NOT set (defaults to false in DataContext) so it doesn't show in "En Espera" list
+            // Unless it was already there? No, "Send to Kitchen" removes it from "Wait List" effectively by not setting the flag.
+
             sendOrderToProduction(cart, "Pedido Rápido", orderMetadata);
 
             setCart([]);
+            setOriginalOrder(null);
             setIsCartOpen(false);
+            setOrderNote('');
+            setIsTakeaway(false);
             alert("Orden enviada a barra/cocina correctamente.");
+            if (orderId) navigate('/'); // Clear URL
         }
     };
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
-import { Users, Coffee, CheckCircle, Clock, Edit2, Plus, Trash2, LayoutGrid, History } from 'lucide-react';
+import { Users, Coffee, CheckCircle, Clock, Edit2, Plus, Trash2, LayoutGrid, History, ShoppingBag, Flag } from 'lucide-react';
 import Modal from '../components/Modal';
 
 export const OrdersPage = () => {
@@ -287,9 +287,29 @@ export const OrdersPage = () => {
                                 >
                                     <div className="flex justify-between items-start mb-3">
                                         <div>
-                                            <h3 className="text-lg font-bold text-white">
-                                                {order.tableName || table?.name || 'Pedido Rápido'}
-                                            </h3>
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="text-lg font-bold text-white">
+                                                    {order.tableName || table?.name || 'Pedido Rápido'}
+                                                </h3>
+                                                {order.takeaway && (
+                                                    <span className="flex items-center gap-1 text-[10px] uppercase font-bold bg-indigo-500/30 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-500/30">
+                                                        <ShoppingBag size={10} />
+                                                        Llevar
+                                                    </span>
+                                                )}
+                                                {order.priority === 'high' && (
+                                                    <span className="flex items-center gap-1 text-[10px] uppercase font-bold bg-red-500/30 text-red-300 px-2 py-0.5 rounded-full border border-red-500/30">
+                                                        <Flag size={10} />
+                                                        Urgente
+                                                    </span>
+                                                )}
+                                                {order.priority === 'priority' && (
+                                                    <span className="flex items-center gap-1 text-[10px] uppercase font-bold bg-amber-500/30 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30">
+                                                        <Flag size={10} />
+                                                        Prioridad
+                                                    </span>
+                                                )}
+                                            </div>
                                             <div className="flex gap-2 items-center text-sm text-[var(--vscode-text-secondary)] mt-1">
                                                 <Clock size={14} />
                                                 <span>{new Date(order.timestamp).toLocaleString()}</span>

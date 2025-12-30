@@ -33,20 +33,23 @@ const ProductCard = ({ product, onAdd }) => {
             style={{
                 padding: '0.5rem',
                 cursor: 'pointer',
-                transition: 'transform 0.2s',
+                transition: 'all 0.2s',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.5rem'
+                gap: '0.5rem',
+                height: '100%' // Ensure card takes full height of grid cell
             }}
             onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
             onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+            title={product.name}
         >
             <div style={{
                 width: '100%',
-                height: '100px',
+                height: '100px', // Fixed height for image area
                 borderRadius: '6px',
                 overflow: 'hidden',
-                position: 'relative'
+                position: 'relative',
+                flexShrink: 0 // Prevent image from shrinking
             }}>
                 {imgSrc ? (
                     <img
@@ -54,11 +57,7 @@ const ProductCard = ({ product, onAdd }) => {
                         alt={product.name}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         onError={(e) => {
-                            e.target.style.display = 'none'; // Hide broken image
-                            // setImgSrc(null); // Force fallback render
-                            // But better logic: if we tried local and failed, we show placeholder.
-                            // The current DOM structure hides img and shows div if src is invalid? No, it shows alt.
-                            // We need to conditionally render the fallback DIV if image errors.
+                            e.target.style.display = 'none';
                             e.currentTarget.parentElement.classList.add('image-error');
                         }}
                         onLoad={(e) => {
@@ -67,35 +66,31 @@ const ProductCard = ({ product, onAdd }) => {
                     />
                 ) : null}
 
-                {/* Fallback Placeholder - Show if img has error (via CSS class trick or state) */}
-                {/* State based approach is cleaner but async */}
                 <div
                     className="fallback-placeholder"
                     style={{
                         width: '100%',
                         height: '100%',
-                        display: 'flex', // Default flex, we will hide it if image loads? 
-                        // Actually, simplified: always render image, if it fails, hide it.
-                        // ALWAYS render placeholder BEHIND image?
-                        // If image loads, it covers placeholder. If image is transparent png, it works too.
                         position: 'absolute',
                         top: 0,
                         left: 0,
                         zIndex: -1,
+                        display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         padding: '0.25rem',
                         background: `hsl(${(product.name.charCodeAt(0) * 10) % 360}, 60%, 25%)`,
                         color: 'rgba(255,255,255,0.95)',
-                        fontSize: product.name.length > 50 ? '0.5rem'
-                            : product.name.length > 30 ? '0.55rem'
-                                : product.name.length > 15 ? '0.65rem'
-                                    : '0.8rem',
+                        // Dynamic Font Size for Placeholder
+                        fontSize: product.name.length > 50 ? '0.55rem'
+                            : product.name.length > 30 ? '0.65rem'
+                                : product.name.length > 15 ? '0.75rem'
+                                    : '0.9rem',
                         lineHeight: '1.2',
                         fontWeight: '700',
                         textAlign: 'center',
                         textTransform: 'uppercase',
-                        overflowWrap: 'anywhere',
+                        overflowWrap: 'break-word',
                         wordBreak: 'break-word',
                         hyphens: 'auto',
                         flexDirection: 'column',
@@ -125,9 +120,24 @@ const ProductCard = ({ product, onAdd }) => {
                     </div>
                 )}
             </div>
-            <div>
-                <h3 style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.1rem', wordWrap: 'break-word', lineHeight: '1.2' }}>{product.name}</h3>
-                <p style={{ color: 'var(--accent-orange)', fontWeight: 'bold', fontSize: '0.9rem' }}>${product.price.toFixed(2)}</p>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', gap: '0.1rem' }}>
+                <h3 style={{
+                    fontSize: '0.8rem',
+                    fontWeight: '600',
+                    marginBottom: '0',
+                    wordWrap: 'break-word',
+                    overflowWrap: 'break-word',
+                    lineHeight: '1.2',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden'
+                }}>
+                    {product.name}
+                </h3>
+                <p style={{ color: 'var(--accent-orange)', fontWeight: 'bold', fontSize: '0.9rem', marginTop: '0' }}>
+                    ${product.price.toFixed(2)}
+                </p>
             </div>
         </div>
     );
