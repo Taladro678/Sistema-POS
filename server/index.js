@@ -41,6 +41,33 @@ let appState = {
     tables: []
 };
 
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const DB_FILE = path.join(__dirname, 'server_db.json');
+
+// Load State from File
+if (fs.existsSync(DB_FILE)) {
+    try {
+        const data = fs.readFileSync(DB_FILE, 'utf8');
+        appState = { ...appState, ...JSON.parse(data) };
+        console.log('📂 Estado restaurado desde server_db.json');
+    } catch (e) {
+        console.error('⚠️ Error cargando base de datos local:', e);
+    }
+}
+
+// Save State Helper
+const saveState = () => {
+    try {
+        fs.writeFileSync(DB_FILE, JSON.stringify(appState, null, 2));
+    } catch (e) {
+        console.error('❌ Error guardando estado:', e);
+    }
+};
+
 io.on('connection', (socket) => {
     console.log('Cliente conectado:', socket.id);
 
@@ -53,6 +80,7 @@ io.on('connection', (socket) => {
         // Add to state if not exists
         if (!appState.kitchenOrders.find(o => o.id === order.id)) {
             appState.kitchenOrders.push(order);
+            saveState(); // Save
         }
         // Broadcast to ALL clients (Kitchen screens)
         io.emit('kitchen_order_received', order);
@@ -63,6 +91,7 @@ io.on('connection', (socket) => {
         console.log('🍹 Nueva Orden Barra:', order.id);
         if (!appState.barOrders.find(o => o.id === order.id)) {
             appState.barOrders.push(order);
+            saveState(); // Save
         }
         io.emit('bar_order_received', order); // (If we add specific event later)
         io.emit('sync_update', appState);
@@ -77,12 +106,14 @@ io.on('connection', (socket) => {
         } else {
             appState.heldOrders.push(order);
         }
+        saveState(); // Save
         io.emit('sync_update', appState);
     });
 
     socket.on('delete_held_order', (orderId) => {
         console.log('🗑️ Eliminar Orden:', orderId);
         appState.heldOrders = appState.heldOrders.filter(o => o.id !== orderId);
+        saveState(); // Save
         io.emit('held_order_deleted', orderId);
         io.emit('sync_update', appState);
     });
@@ -95,6 +126,8 @@ io.on('connection', (socket) => {
         if (newState.kitchenOrders) appState.kitchenOrders = newState.kitchenOrders;
         if (newState.barOrders) appState.barOrders = newState.barOrders;
         if (newState.tables) appState.tables = newState.tables;
+
+        saveState(); // Save
 
         // Broadcast Update
         socket.broadcast.emit('sync_update', appState);

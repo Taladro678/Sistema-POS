@@ -4,12 +4,12 @@ import { getFirestore, doc, setDoc, writeBatch } from 'firebase/firestore';
 // ⚠️ IMPORTANTE: SUSTITUIR ESTOS VALORES POR LOS DE TU PROYECTO FIREBASE REAL
 // Ve a https://console.firebase.google.com/ > Configuración del Proyecto > General > Tus Apps > SDK setup
 const firebaseConfig = {
-    apiKey: "AIzaSyD_PLACEHOLDER_KEY",
-    authDomain: "tu-proyecto.firebaseapp.com",
-    projectId: "tu-proyecto",
-    storageBucket: "tu-proyecto.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:abcdef123456"
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 // Initialize Firebase

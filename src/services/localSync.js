@@ -29,8 +29,14 @@ class LocalSyncService {
 
         console.log('🔌 Connecting to Local Sync Server:', urlToUse);
         this.socket = io(urlToUse, {
-            reconnectionAttempts: 5,
-            timeout: 2000
+            reconnectionAttempts: 3, // Reduced attempts
+            timeout: 2000,
+            autoConnect: true
+        });
+
+        this.socket.on("connect_error", (err) => {
+            // Suppress loud errors for cloud-only users
+            console.debug("Local sync server not found (using cloud only):", err.message);
         });
 
         this.socket.on("connect", () => {

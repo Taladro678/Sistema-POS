@@ -24,15 +24,15 @@ const Sidebar = () => {
     const { settings, toggleSidebar } = useSettings();
     const isCollapsed = settings.isSidebarCollapsed;
 
-    // Estado para detectar si estamos en móvil (<=768px)
-    const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
+    // Estado para detectar si estamos en móvil (<=640px) - Tablets usan Sidebar
+    const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 640);
 
     // Estado para controlar el menú popup de overflow en móvil
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
     // Listener para detectar cambios de tamaño de pantalla y actualizar isMobile
     React.useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        const handleResize = () => setIsMobile(window.innerWidth <= 640);
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
