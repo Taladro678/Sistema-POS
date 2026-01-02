@@ -24,15 +24,15 @@ const Sidebar = () => {
     const { settings, toggleSidebar } = useSettings();
     const isCollapsed = settings.isSidebarCollapsed;
 
-    // Estado para detectar si estamos en móvil (<=640px) - Tablets usan Sidebar
-    const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 640);
+    // Estado para detectar si estamos en móvil (<=768px) - Tablets usan Sidebar
+    const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
 
     // Estado para controlar el menú popup de overflow en móvil
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
     // Listener para detectar cambios de tamaño de pantalla y actualizar isMobile
     React.useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth <= 640);
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
@@ -62,10 +62,8 @@ const Sidebar = () => {
         { path: '/customers', icon: UserCircle, label: 'Clientes', roles: ['admin', 'manager', 'waiter', 'cashier'] },
         { path: '/inventory', icon: Package, label: 'Inventario', roles: ['admin', 'manager'] },
         { path: '/products', icon: Tag, label: 'Productos', roles: ['admin', 'manager'] },
-        { path: '/categories', icon: Layers, label: 'Categorías', roles: ['admin', 'manager'] },
         { path: '/suppliers', icon: Truck, label: 'Proveedores', roles: ['admin', 'manager'] },
         { path: '/personnel', icon: Users, label: 'Personal', roles: ['admin'] },
-        { path: '/users', icon: Shield, label: 'Usuarios (Acceso)', roles: ['admin'] },
         { path: '/reports', icon: BarChart, label: 'Reportes', roles: ['admin', 'manager'] },
         { path: '/settings', icon: Settings, label: 'Configuración', roles: ['admin'] },
     ];
@@ -145,7 +143,7 @@ const Sidebar = () => {
             className={`glass-panel sidebar ${isCollapsed ? 'collapsed' : ''}`}
             style={{
                 width: isMobile ? '100%' : (isCollapsed ? '50px' : settings.sidebarWidth),
-                padding: isCollapsed ? '0' : '1rem',
+                padding: 0, // Removed padding as requested
                 borderRadius: 0, // Flush look
                 borderLeft: 'none',
                 borderTop: 'none',
@@ -158,8 +156,8 @@ const Sidebar = () => {
         >
 
 
-            {/* Toggle Button at the top - HIDDEN ON MOBILE */}
-            {!isMobile && (
+            {/* Toggle Button at the top - REMOVED and moved to bottom */}
+            {/* {!isMobile && (
                 <div className="sidebar-toggle-container" style={{ display: 'flex', justifyContent: isCollapsed ? 'center' : 'flex-end', marginBottom: '1rem' }}>
                     <button
                         className="glass-button"
@@ -176,53 +174,69 @@ const Sidebar = () => {
                         {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
                     </button>
                 </div>
-            )}
+            )} */}
 
             {/* Mobile Overflow Menu (Popup) */}
             {isMobile && isMobileMenuOpen && (
-                <div
-                    className="glass-panel"
-                    style={{
-                        position: 'absolute',
-                        bottom: '55px', // Above the bar
-                        right: '0.5rem',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.25rem',
-                        padding: '0.5rem',
-                        zIndex: 200,
-                        background: '#000', // Ensure visibility
-                        border: '1px solid var(--glass-border)',
-                        minWidth: '180px'
-                    }}
-                >
-                    {overflowItems.map(item => renderNavLink(item, true))}
-                    {!isCollapsed && <div style={{ height: '1px', background: 'var(--glass-border)', margin: '0.5rem 0' }}></div>}
-                    <button
-                        className="glass-button"
-                        onClick={() => {
-                            setIsMobileMenuOpen(false);
-                            if (window.confirm('¿Cerrar sesión?')) {
-                                logout();
-                            }
-                        }}
+                <>
+                    {/* Backdrop to close menu */}
+                    <div
                         style={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: 'rgba(0,0,0,0.5)',
+                            zIndex: 199
+                        }}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    />
+                    <div
+                        className="glass-panel"
+                        style={{
+                            position: 'absolute',
+                            bottom: '70px', // Above the bar with some spacing
+                            right: '10px',
                             display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.75rem',
-                            padding: '0.5rem 0.75rem',
-                            justifyContent: 'flex-start',
-                            color: 'var(--accent-red)',
-                            width: '100%'
+                            flexDirection: 'column',
+                            gap: '0.5rem',
+                            padding: '1rem',
+                            zIndex: 200,
+                            background: '#1a1a1a', // Solid dark background
+                            border: '1px solid var(--glass-border)',
+                            minWidth: '200px',
+                            boxShadow: '0 -5px 20px rgba(0,0,0,0.5)'
                         }}
                     >
-                        <LogOut size={20} />
-                        <span style={{ fontSize: '0.85rem' }}>Cerrar Sesión</span>
-                    </button>
-                </div>
+                        {overflowItems.map(item => renderNavLink(item, true))}
+                        {!isCollapsed && <div style={{ height: '1px', background: 'var(--glass-border)', margin: '0.5rem 0' }}></div>}
+                        <button
+                            className="glass-button"
+                            onClick={() => {
+                                setIsMobileMenuOpen(false);
+                                if (window.confirm('¿Cerrar sesión?')) {
+                                    logout();
+                                }
+                            }}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.75rem',
+                                padding: '0.75rem',
+                                justifyContent: 'flex-start',
+                                color: 'var(--accent-red)',
+                                width: '100%'
+                            }}
+                        >
+                            <LogOut size={20} />
+                            <span style={{ fontSize: '0.9rem' }}>Cerrar Sesión</span>
+                        </button>
+                    </div>
+                </>
             )}
 
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 0 : '0.25rem', overflowY: 'auto' }}>
+            <nav className="no-scrollbar" style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 0 : '0.25rem', overflowY: 'auto', flex: 1 }}>
                 {mainItems.map(item => renderNavLink(item))}
 
                 {/* Mobile "More" Button */}
@@ -250,8 +264,8 @@ const Sidebar = () => {
                 )}
             </nav>
 
-            {/* Desktop Logout Button - Outside nav, at bottom */}
-            {!isMobile && (
+            {/* Desktop Logout Button - Outside nav, at bottom - REMOVED AS PER USER REQUEST */}
+            {/* {!isMobile && (
                 <>
                     {!isCollapsed && <div style={{ height: '1px', background: 'var(--glass-border)', margin: '0.5rem 0' }}></div>}
                     <button
@@ -272,8 +286,26 @@ const Sidebar = () => {
                         }}
                         title="Cerrar Sesión"
                     >
-                        <LogOut size={20} />
-                        {!isCollapsed && <span className="sidebar-label" style={{ fontSize: '0.85rem' }}>Cerrar Sesión</span>}
+            {/* Desktop Toggle Button - Moved to bottom */}
+            {!isMobile && (
+                <>
+                    <div style={{ marginTop: 'auto' }}></div>
+                    {!isCollapsed && <div style={{ height: '1px', background: 'var(--glass-border)', margin: '0.5rem 0' }}></div>}
+                    <button
+                        className="glass-button"
+                        onClick={toggleSidebar}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '0.5rem',
+                            width: '100%',
+                            color: 'var(--text-secondary)',
+                            marginTop: '0.5rem'
+                        }}
+                        title={isCollapsed ? "Expandir" : "Contraer"}
+                    >
+                        {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
                     </button>
                 </>
             )}

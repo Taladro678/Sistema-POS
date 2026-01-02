@@ -46,7 +46,15 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   return children;
 };
 
+import EncryptionKeyPrompt from './components/EncryptionKeyPrompt'
+
 function App() {
+  const [isUnlocked, setIsUnlocked] = React.useState(false);
+
+  if (!isUnlocked) {
+    return <EncryptionKeyPrompt onUnlock={() => setIsUnlocked(true)} />;
+  }
+
   return (
     <ErrorBoundary>
       <SettingsProvider>
@@ -77,21 +85,12 @@ function App() {
                       <ProductsPage />
                     </ProtectedRoute>
                   } />
-                  <Route path="categories" element={
-                    <ProtectedRoute requiredRole="manager">
-                      <CategoriesPage />
-                    </ProtectedRoute>
-                  } />
                   <Route path="personnel" element={
                     <ProtectedRoute requiredRole="admin">
                       <PersonnelPage />
                     </ProtectedRoute>
                   } />
-                  <Route path="users" element={
-                    <ProtectedRoute requiredRole="admin">
-                      <UsersPage />
-                    </ProtectedRoute>
-                  } />
+
                   <Route path="reports" element={
                     <ProtectedRoute requiredRole="manager">
                       <ReportsPage />

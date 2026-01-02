@@ -13,7 +13,8 @@
     margin: 0;
     display: flex;
     flex-direction: column;
-    padding: 1rem;
+    padding: 0;
+    /* Removed padding */
     transition: width 0.3s ease;
     border-radius: 0;
     /* Remove rounded corners for flush look */
@@ -94,7 +95,7 @@
         bottom: 0;
         left: 0;
         width: 100%;
-        height: 50px;
+        height: 60px;
         /* Increased from auto for better touch targets */
         margin: 0;
         flex-direction: row;
@@ -129,7 +130,7 @@
         position: fixed;
         top: 0;
         right: 0;
-        height: calc(100dvh - 55px) !important;
+        height: calc(100dvh - 65px) !important;
         width: 100% !important;
         max-width: none !important;
         z-index: 2147483647 !important;

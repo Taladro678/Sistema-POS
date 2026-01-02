@@ -4,6 +4,7 @@ import './index.css'
 import './styles/glassmorphism.css'
 import './styles/responsive.css'
 import App from './App.jsx'
+import { ToastProvider } from './context/ToastContext'
 
 console.log('Main.jsx is running');
 try {
@@ -16,7 +17,9 @@ try {
 
   createRoot(rootElement).render(
     <StrictMode>
-      <App />
+      <ToastProvider>
+        <App />
+      </ToastProvider>
     </StrictMode>,
   )
 } catch (error) {

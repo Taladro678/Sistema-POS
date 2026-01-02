@@ -8,7 +8,8 @@ import { Upload, FileSpreadsheet, Loader } from 'lucide-react';
  * @param {String} buttonText - Texto del botón
  * @param {String} templateName - Nombre para mostrar en mensajes
  */
-const ExcelImporter = ({ onDataLoaded, buttonText = "Importar Excel", templateName = "datos" }) => {
+const ExcelImporter = (props) => {
+    const { onDataLoaded, buttonText = "Importar Excel", templateName = "datos" } = props;
     const fileInputRef = useRef(null);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -50,7 +51,8 @@ const ExcelImporter = ({ onDataLoaded, buttonText = "Importar Excel", templateNa
                     const sheet = workbook.Sheets[sheetName];
 
                     // Convertimos a JSON
-                    const jsonData = XLSX.utils.sheet_to_json(sheet);
+                    const options = props.sheetToJsonOptions || {};
+                    const jsonData = XLSX.utils.sheet_to_json(sheet, options);
                     resolve(jsonData);
                 } catch (err) {
                     reject(err);

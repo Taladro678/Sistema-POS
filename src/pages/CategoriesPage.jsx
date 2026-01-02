@@ -189,38 +189,41 @@ export const CategoriesPage = () => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', height: '100%' }}>
             {/* Compact Header Stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', alignItems: 'center' }}>
+            {/* Compact Header Stats */}
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <h1 style={{ fontSize: '1.75rem', margin: 0 }}>Categorías</h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>Gestión y Clasificación</p>
+                    <h1 style={{ fontSize: '1.5rem', margin: 0 }}>Categorías</h1>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: 0 }}>Gestión y Clasificación</p>
                 </div>
 
-                <div className="glass-panel" style={{ padding: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Total</div>
-                        <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{data.categories?.length || 0}</div>
-                    </div>
-                    <Tag size={20} color="var(--accent-cyan)" style={{ opacity: 0.5 }} />
-                </div>
-
-                <div className="glass-panel" style={{ padding: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Keywords</div>
-                        <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--accent-purple)' }}>
-                            {(data.categories || []).reduce((sum, cat) => sum + (cat.keywords?.length || 0), 0)}
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <div className="glass-panel" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Total</div>
+                            <div style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>{data.categories?.length || 0}</div>
                         </div>
+                        <Tag size={18} color="var(--accent-cyan)" style={{ opacity: 0.5 }} />
                     </div>
-                    <Hash size={20} color="var(--accent-purple)" style={{ opacity: 0.5 }} />
-                </div>
 
-                <button
-                    className="glass-button primary"
-                    style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-                    onClick={() => { resetForm(); setIsModalOpen(true); }}
-                >
-                    <Plus size={20} />
-                    Nueva Categoría
-                </button>
+                    <div className="glass-panel" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Keywords</div>
+                            <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--accent-purple)' }}>
+                                {(data.categories || []).reduce((sum, cat) => sum + (cat.keywords?.length || 0), 0)}
+                            </div>
+                        </div>
+                        <Hash size={18} color="var(--accent-purple)" style={{ opacity: 0.5 }} />
+                    </div>
+
+                    <button
+                        className="glass-button primary"
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem' }}
+                        onClick={() => { resetForm(); setIsModalOpen(true); }}
+                    >
+                        <Plus size={18} />
+                        Nueva
+                    </button>
+                </div>
             </div>
 
             {/* Utility (Compact) */}

@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, setDoc, writeBatch } from 'firebase/firestore';
+import CryptoJS from 'crypto-js';
 
 // ⚠️ IMPORTANTE: SUSTITUIR ESTOS VALORES POR LOS DE TU PROYECTO FIREBASE REAL
 // Ve a https://console.firebase.google.com/ > Configuración del Proyecto > General > Tus Apps > SDK setup
@@ -24,6 +25,28 @@ try {
     console.error('❌ Error initializing Firebase:', error);
 }
 
+// Encryption Helper
+let ENCRYPTION_KEY = null;
+
+export const setEncryptionKey = (key) => {
+    ENCRYPTION_KEY = key;
+    console.log('🔐 Encryption Key Set');
+};
+
+const encryptData = (data) => {
+    if (!ENCRYPTION_KEY) {
+        console.warn('⚠️ No encryption key set. Data will NOT be encrypted.');
+        return null;
+    }
+    try {
+        const jsonString = JSON.stringify(data);
+        return CryptoJS.AES.encrypt(jsonString, ENCRYPTION_KEY).toString();
+    } catch (e) {
+        console.error('Encryption failed:', e);
+        return null;
+    }
+};
+
 /**
  * Service to handle background sync with Firebase Cloud
  */
@@ -35,12 +58,17 @@ export const firebaseSyncService = {
     async uploadSale(sale) {
         if (!db) return false;
         try {
+            const encryptedData = encryptData(sale);
+            if (!encryptedData) return false;
+
             // Use setDoc with sale ID to ensure idempotency (avoid duplicates)
+            // We store the encrypted string in a field called 'payload'
             await setDoc(doc(db, "sales", String(sale.id)), {
-                ...sale,
-                _syncedAt: new Date().toISOString()
+                payload: encryptedData,
+                _syncedAt: new Date().toISOString(),
+                _encrypted: true
             });
-            console.log(`☁️ Sale ${sale.id} synced to Cloud`);
+            console.log(`☁️ Sale ${sale.id} synced to Cloud (Encrypted)`);
             return true;
         } catch (error) {
             console.warn(`⚠️ Cloud Sync failed for sale ${sale.id} (will retry later):`, error);
@@ -63,16 +91,20 @@ export const firebaseSyncService = {
             const batch = writeBatch(db);
 
             sales.forEach(sale => {
-                const saleRef = doc(db, "sales", String(sale.id));
-                batch.set(saleRef, {
-                    ...sale,
-                    _syncedAt: new Date().toISOString()
-                });
+                const encryptedData = encryptData(sale);
+                if (encryptedData) {
+                    const saleRef = doc(db, "sales", String(sale.id));
+                    batch.set(saleRef, {
+                        payload: encryptedData,
+                        _syncedAt: new Date().toISOString(),
+                        _encrypted: true
+                    });
+                }
             });
 
             await batch.commit();
             successCount = sales.length;
-            console.log(`☁️ Batch synced ${successCount} sales to Cloud`);
+            console.log(`☁️ Batch synced ${successCount} sales to Cloud (Encrypted)`);
         } catch (error) {
             console.error('❌ Batch cloud sync failed:', error);
         }

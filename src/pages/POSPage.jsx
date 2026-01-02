@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import ProductCard from '../components/ProductCard';
 import CartSidebar from '../components/CartSidebar';
 import Modal from '../components/Modal';
@@ -12,6 +13,7 @@ import ClientSearchModal from '../components/ClientSearchModal';
 export const POSPage = () => {
     const { holdOrder, data, deleteHeldOrder, cancelHeldOrder, restoreCancelledOrder, permanentlyDeleteOrder, addTip, addItem, updateItem, sendOrderToProduction } = useData();
     const { currentUser } = useAuth();
+    const { addToast } = useToast();
 
     const [cart, setCart] = useState(() => {
         try {
@@ -30,20 +32,21 @@ export const POSPage = () => {
     // State
     const [selectedCategory, setSelectedCategory] = useState('all');
 
-    // Dynamically extract categories from available products
-    // If no products, we can have a default list or empty
-    const derivedCategories = data.products
-        ? [...new Set(data.products.map(p => p.category))].filter(Boolean).map(c => ({ id: c, label: c }))
-        : [];
-
-    // Merge or usage derived? Usage derived to be dynamic.
-    // If we want hardcoded badged categories, we can define them locally
-    const displayCategories = derivedCategories.length > 0 ? derivedCategories : [];
+    // Use defined categories from data context to ensure all are visible, not just those with products
+    const displayCategories = data.categories || [];
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
     const [showAllCategories, setShowAllCategories] = useState(false);
     // Cart Open State (Restored)
     const [isCartOpen, setIsCartOpen] = useState(false);
+    // Mobile Detection
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+    React.useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
 
     // Payment State
@@ -193,6 +196,7 @@ export const POSPage = () => {
             setOrderNote('');
             setIsTakeaway(false);
             alert("Orden puesta en espera.");
+            addToast("Orden puesta en espera", 'info');
             if (orderId) navigate('/'); // Clear URL
         }
     };
@@ -230,7 +234,8 @@ export const POSPage = () => {
             setCart([]);
             setOriginalOrder(null);
             setIsCartOpen(false);
-            alert(`Orden enviada a cocina para ${currentTable.name}`);
+            // alert(`Orden enviada a cocina para ${currentTable.name}`);
+            addToast(`Orden enviada a cocina para ${currentTable.name}`, 'success');
             navigate('/tables');
         } else {
             // Retail / Takeaway / Fast Food Order
@@ -257,6 +262,7 @@ export const POSPage = () => {
             setOrderNote('');
             setIsTakeaway(false);
             alert("Orden enviada a barra/cocina correctamente.");
+            addToast("Orden enviada a barra/cocina", 'success');
             if (orderId) navigate('/'); // Clear URL
         }
     };
@@ -355,7 +361,8 @@ export const POSPage = () => {
             deleteHeldOrder(currentTable.currentOrderId); // This also frees the table in DataContext
         }
 
-        alert(`Venta registrada exitosamente.`);
+        // alert(`Venta registrada exitosamente.`);
+        addToast(`Venta registrada exitosamente`, 'success');
         setCart([]);
         setTipAmount('');
         setDiscountValue('');
@@ -406,8 +413,10 @@ export const POSPage = () => {
                     ...newCart[existingItemIndex],
                     quantity: (newCart[existingItemIndex].quantity || 1) + 1
                 };
+                addToast(`Agregado: ${product.name}`, 'success', 1000);
                 return newCart;
             }
+            addToast(`Agregado: ${product.name}`, 'success', 1000);
             return [...prevCart, { ...product, quantity: 1 }];
         });
     };
@@ -536,20 +545,28 @@ export const POSPage = () => {
                         {/* Expandable Search */}
                         {isSearchExpanded ? (
                             <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.5rem' }} className="glass-panel">
-                                <Search size={18} style={{ color: 'var(--text-secondary)' }} />
+                                <Search size={18} style={{ color: 'var(--text-secondary)', marginLeft: '0.5rem' }} />
                                 <input
                                     type="text"
                                     autoFocus
                                     className="glass-input"
-                                    placeholder="Buscar producto..."
-                                    style={{ border: 'none', background: 'transparent', width: '100%', height: '100%', padding: '0.25rem' }}
+                                    placeholder="Buscar..."
+                                    style={{
+                                        border: 'none',
+                                        background: 'transparent',
+                                        width: '100%',
+                                        height: '100%',
+                                        padding: '0.25rem',
+                                        outline: 'none',
+                                        boxShadow: 'none'
+                                    }}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     onBlur={() => !searchQuery && setIsSearchExpanded(false)}
                                 />
                                 <button
                                     onClick={() => { setIsSearchExpanded(false); setSearchQuery(''); }}
-                                    style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', padding: 0 }}
+                                    style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', padding: '0 0.5rem', cursor: 'pointer' }}
                                 >
                                     <X size={16} />
                                 </button>
@@ -558,39 +575,63 @@ export const POSPage = () => {
                             <button
                                 className="glass-button"
                                 onClick={() => setIsSearchExpanded(true)}
-                                style={{ padding: '0.4rem', flexShrink: 0 }}
+                                style={{ padding: '0.5rem', flexShrink: 0, height: '40px', width: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                 title="Buscar"
                             >
-                                <Search size={18} />
+                                <Search size={20} />
                             </button>
                         )}
 
-                        {/* Categories (Hidden if Search Expanded on small screens) */}
+                        {/* Categories List (Hidden if Search Expanded) */}
                         {!isSearchExpanded && (
                             <>
-                                <button
-                                    className={`glass-button ${selectedCategory === 'all' ? 'primary' : ''}`}
-                                    onClick={() => setSelectedCategory('all')}
-                                    style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', whiteSpace: 'nowrap', flexShrink: 0 }}
-                                >
-                                    Todos
-                                </button>
+                                <div className="no-scrollbar" style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', flex: 1, alignItems: 'center', paddingRight: '0.5rem', minWidth: 0 }}>
+                                    <button
+                                        className={`glass-button ${selectedCategory === 'all' ? 'primary' : ''}`}
+                                        onClick={() => setSelectedCategory('all')}
+                                        style={{
+                                            padding: '0.5rem 1.25rem',
+                                            fontSize: '0.9rem',
+                                            whiteSpace: 'nowrap',
+                                            flexShrink: 0,
+                                            height: '40px',
+                                            borderRadius: '20px', // Pill shape
+                                            border: selectedCategory === 'all' ? '1px solid var(--accent-blue)' : '1px solid rgba(255,255,255,0.1)'
+                                        }}
+                                    >
+                                        Todos
+                                    </button>
 
-                                {/* Dynamic Category List (Scrollable) */}
-                                <div className="no-scrollbar" style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', flex: 1, alignItems: 'center', paddingRight: '1rem', minWidth: 0 }}>
                                     <button
                                         className={`glass-button ${selectedCategory === 'mas_vendidos' ? 'primary' : ''}`}
                                         onClick={() => setSelectedCategory('mas_vendidos')}
-                                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', whiteSpace: 'nowrap', flexShrink: 0, fontWeight: 'bold' }}
+                                        style={{
+                                            padding: '0.5rem 1.25rem',
+                                            fontSize: '0.9rem',
+                                            whiteSpace: 'nowrap',
+                                            flexShrink: 0,
+                                            fontWeight: 'bold',
+                                            height: '40px',
+                                            borderRadius: '20px',
+                                            border: selectedCategory === 'mas_vendidos' ? '1px solid var(--accent-blue)' : '1px solid rgba(255,255,255,0.1)'
+                                        }}
                                     >
-                                        ⭐ Más Vendidos
+                                        ⭐ Top
                                     </button>
                                     {displayCategories.map(cat => (
                                         <button
                                             key={cat.id}
                                             className={`glass-button ${selectedCategory === cat.id ? 'primary' : ''}`}
                                             onClick={() => setSelectedCategory(cat.id)}
-                                            style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', whiteSpace: 'nowrap', flexShrink: 0 }}
+                                            style={{
+                                                padding: '0.5rem 1.25rem',
+                                                fontSize: '0.9rem',
+                                                whiteSpace: 'nowrap',
+                                                flexShrink: 0,
+                                                height: '40px',
+                                                borderRadius: '20px',
+                                                border: selectedCategory === cat.id ? '1px solid var(--accent-blue)' : '1px solid rgba(255,255,255,0.1)'
+                                            }}
                                         >
                                             {cat.label}
                                         </button>
@@ -600,11 +641,11 @@ export const POSPage = () => {
                                 {/* Deploy Categories Button */}
                                 <button
                                     className="glass-button"
-                                    style={{ padding: '0.35rem', flexShrink: 0, marginLeft: '0.25rem' }}
+                                    style={{ padding: '0.5rem', flexShrink: 0, height: '40px', width: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                     onClick={() => setShowAllCategories(!showAllCategories)}
                                     title="Ver todas las categorías"
                                 >
-                                    <ChevronDown size={18} style={{ transform: showAllCategories ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+                                    <ChevronDown size={20} style={{ transform: showAllCategories ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
                                 </button>
                             </>
                         )}
@@ -661,31 +702,35 @@ export const POSPage = () => {
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    padding: '0.35rem',
+                                    padding: '0.5rem',
+                                    height: '40px',
+                                    width: '40px',
                                     borderColor: 'var(--accent-red)',
                                     color: 'var(--accent-red)'
                                 }}
                                 onClick={handleCancelCurrentOrder}
                                 title="Cancelar Pedido y Liberar Mesa"
                             >
-                                <Trash2 size={18} />
+                                <Trash2 size={20} />
                             </button>
                         )}
 
-                        {/* Reports Button */}
-                        <button
+                        {/* Reports Button - REMOVED AS PER USER REQUEST */}
+                        {/* <button
                             className="glass-button"
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                padding: '0.35rem'
+                                padding: '0.5rem',
+                                height: '40px',
+                                width: '40px'
                             }}
                             onClick={() => setIsSalesModalOpen(true)}
                             title="Reporte de Ventas"
                         >
-                            <FileText size={18} />
-                        </button>
+                            <FileText size={20} />
+                        </button> */}
 
                         {/* Held Orders Button */}
                         <button
@@ -694,21 +739,23 @@ export const POSPage = () => {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                padding: '0.35rem'
+                                padding: '0.5rem',
+                                height: '40px',
+                                minWidth: '40px'
                             }}
                             onClick={() => setIsHeldOrdersModalOpen(true)}
                             title="Ver Órdenes en Espera"
                         >
-                            <Clock size={18} />
+                            <Clock size={20} />
                             {heldOrders.filter(o => o.isWaitList).length > 0 && (
                                 <span style={{
                                     marginLeft: '0.25rem',
                                     background: 'var(--accent-orange)',
                                     color: 'white',
                                     borderRadius: '50%',
-                                    fontSize: '0.7rem',
-                                    width: '16px',
-                                    height: '16px',
+                                    fontSize: '0.75rem',
+                                    width: '18px',
+                                    height: '18px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -719,43 +766,66 @@ export const POSPage = () => {
                             )}
                         </button>
 
-                        {/* Cart Toggle */}
-                        <button
-                            className="glass-button accent"
-                            style={{
-                                display: 'flex',
-                                gap: '0.5rem',
-                                alignItems: 'center',
-                                padding: '0.35rem 0.75rem',
-                                whiteSpace: 'nowrap'
-                            }}
-                            onClick={() => setIsCartOpen(!isCartOpen)}
-                        >
-                            <div style={{ position: 'relative', display: 'flex' }}>
-                                <ShoppingBag size={18} />
-                                {cart.length > 0 && (
-                                    <span style={{
-                                        position: 'absolute',
-                                        top: '-8px',
-                                        right: '-8px',
-                                        background: 'var(--accent-red)',
-                                        color: 'white',
-                                        borderRadius: '50%',
-                                        fontSize: '0.7rem',
-                                        width: '16px',
-                                        height: '16px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontWeight: 'bold',
-                                        border: '1px solid rgba(255,255,255,0.2)'
-                                    }}>
-                                        {cart.length}
-                                    </span>
-                                )}
+                        {/* Cart Toggle (Mobile) or Exchange Rate (Desktop) */}
+                        {isMobile ? (
+                            <button
+                                className="glass-button accent"
+                                style={{
+                                    display: 'flex',
+                                    gap: '0.5rem',
+                                    alignItems: 'center',
+                                    padding: '0.5rem 1rem',
+                                    whiteSpace: 'nowrap',
+                                    height: '40px'
+                                }}
+                                onClick={() => setIsCartOpen(!isCartOpen)}
+                            >
+                                <div style={{ position: 'relative', display: 'flex' }}>
+                                    <ShoppingBag size={20} />
+                                    {cart.length > 0 && (
+                                        <span style={{
+                                            position: 'absolute',
+                                            top: '-8px',
+                                            right: '-8px',
+                                            background: 'var(--accent-red)',
+                                            color: 'white',
+                                            borderRadius: '50%',
+                                            fontSize: '0.75rem',
+                                            width: '18px',
+                                            height: '18px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontWeight: 'bold',
+                                            border: '1px solid rgba(255,255,255,0.2)'
+                                        }}>
+                                            {cart.length}
+                                        </span>
+                                    )}
+                                </div>
+                                <span style={{ fontWeight: 'bold', fontSize: '1rem' }}>${total.toFixed(2)}</span>
+                            </button>
+                        ) : (
+                            <div
+                                className="glass-panel"
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    padding: '0 1rem',
+                                    height: '40px',
+                                    background: 'rgba(0, 255, 0, 0.1)', // Subtle green tint
+                                    border: '1px solid rgba(0, 255, 0, 0.2)',
+                                    color: 'var(--accent-green)'
+                                }}
+                                title="Tasa de Cambio del Día"
+                            >
+                                <DollarSign size={18} />
+                                <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>
+                                    {data.exchangeRate ? `${data.exchangeRate.toFixed(2)} Bs/$` : 'N/A'}
+                                </span>
                             </div>
-                            <span style={{ fontWeight: 'bold' }}>${total.toFixed(2)}</span>
-                        </button>
+                        )}
                     </div>
                 </div>
 

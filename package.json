@@ -10,8 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/cli": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
     "@vladmandic/face-api": "^1.7.12",
     "cors": "^2.8.5",
+    "crypto-js": "^4.2.0",
     "express": "^4.21.2",
     "firebase": "^12.7.0",
     "lucide-react": "^0.562.0",
