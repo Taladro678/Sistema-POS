@@ -5,6 +5,9 @@ echo "   INSTALADOR SERVIDOR POS (ANDROID)    "
 echo "========================================"
 echo ""
 
+# Cambiar al directorio del script
+cd "$(dirname "$0")"
+
 echo "1. Solicitando acceso al almacenamiento..."
 termux-setup-storage
 sleep 2
