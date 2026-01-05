@@ -3,12 +3,29 @@ import { createServer } from 'http';
 import { Server } from "socket.io";
 import cors from 'cors';
 import os from 'os';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 const server = createServer(app);
+
+// Serve Static Files (Frontend)
+// Serve Static Files (Frontend)
+// Note: path and __dirname are defined below
+
+// Serve static files from the 'dist' directory (one level up)
+app.use(express.static(path.join(__dirname, '../dist')));
+
+// Handle React Routing (return index.html for all non-API routes)
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
 
 // Get Local IP
 const getLocalIp = () => {
@@ -41,11 +58,6 @@ let appState = {
     tables: []
 };
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DB_FILE = path.join(__dirname, 'server_db.json');
 
 // Load State from File
