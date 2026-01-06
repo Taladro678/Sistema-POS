@@ -27,3 +27,4 @@ dist-ssr
 *.xls
 *.xlsx
 local_db.json
+server/server_db.json
