@@ -102,6 +102,14 @@ class LocalSyncService {
         return false;
     }
 
+    sendFullStateUpdate(state) {
+        if (this.socket && this.isConnected) {
+            this.socket.emit("full_state_update", state);
+            return true;
+        }
+        return false;
+    }
+
     async syncData(localData) {
         if (!this.isConnected) return null;
 

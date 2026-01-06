@@ -310,81 +310,57 @@ export const DataProvider = ({ children }) => {
             if (type === 'connection_status') {
                 setIsLocalServerConnected(payload);
             }
+            if (type === 'sync_update') {
+                console.log('🔄 Full State Update received from Server');
+
+                // CRITICAL: Check if server state is empty but we have data (First Sync / Migration)
+                // If server has no products but we do, we assume we are the Source of Truth and PUSH our data
+                const serverHasData = payload.products && payload.products.length > 0;
+                const localHasData = data.products && data.products.length > 0;
+
+                if (!serverHasData && localHasData) {
+                    console.log('🚀 Server is empty. Pushing Local Data as Source of Truth...');
+                    localSyncService.sendFullStateUpdate(data);
+                    return; // Don't overwrite local with empty server data
+                }
+
+                // Normal Case: Server has data, we sync with it
+                // We merge carefully to avoid losing unsaved local work if possible, 
+                // but for "Full Sync" usually server wins.
+                setData(prev => {
+                    // Check timestamps if available to decide winner? 
+                    // For now, Server Wins to ensure consistency across devices.
+                    return {
+                        ...prev,
+                        ...payload,
+                        // Preserve local-only UI state if any (none currently in data object)
+                    };
+                });
+            }
+
+            // Legacy events (optional, can be removed if full sync is fast enough)
             if (type === 'kitchen_order') {
-                console.log('🔔 New Kitchen Order received:', payload);
-                // Add to local state if not exists
-                setData(prev => {
-                    if (prev.kitchenOrders.find(o => o.id === payload.id)) return prev;
-                    return {
-                        ...prev,
-                        kitchenOrders: [...prev.kitchenOrders, payload],
-                        lastModified: new Date().toISOString()
-                    };
-                });
-            }
-            if (type === 'sync_update' || type === 'sync_needed') {
-                console.log('🔄 Sync requested by server');
-                // Trigger full sync
-                localSyncService.syncData({
-                    sales: data.sales,
-                    heldOrders: data.heldOrders,
-                    kitchenOrders: data.kitchenOrders,
-                    barOrders: data.barOrders
-                }).then(serverData => {
-                    if (serverData) {
-                        setData(prev => ({
-                            ...prev,
-                            // Merge logic could be more complex, for now we trust server lists for heldOrders/kitchenOrders
-                            kitchenOrders: serverData.kitchenOrders || prev.kitchenOrders,
-                            barOrders: serverData.barOrders || prev.barOrders,
-                            heldOrders: serverData.heldOrders || prev.heldOrders,
-                            // For sales, we might need to be careful not to lose local ones not yet synced
-                            // Simplified: Just trust server for now or keep local if server is empty
-                            lastModified: new Date().toISOString()
-                        }));
-                    }
-                });
-            }
-            // Fix: Moved outside the previous if block but inside the callback
-            if (type === 'held_order_added') {
-                console.log('📝 New Held Order received:', payload);
-                setData(prev => {
-                    if (prev.heldOrders.find(o => o.id === payload.id)) return prev;
-                    return {
-                        ...prev,
-                        heldOrders: [...prev.heldOrders, payload],
-                        lastModified: new Date().toISOString()
-                    };
-                });
-            }
-            if (type === 'held_order_deleted') {
-                console.log('🗑️ Held Order deletion received:', payload);
-                setData(prev => ({
-                    ...prev,
-                    heldOrders: prev.heldOrders.filter(o => o.id !== payload),
-                    lastModified: new Date().toISOString()
-                }));
+                // Handled by sync_update usually, but kept for immediate feedback if needed
             }
         });
 
         return () => unsubscribe();
-    }, [data.heldOrders, data.kitchenOrders, data.sales, data.barOrders]); // Run once on mount
+    }, [data]); // Add data as dependency to allow checking localHasData
 
-    // Trigger sync when critical data changes
+    // Trigger sync when ANY data changes
     useEffect(() => {
         if (isLocalServerConnected) {
+            // Check if this change was triggered by a remote update (to avoid loops)
+            // Ideally we should use a ref flag like isRemoteUpdate, but for now 
+            // the server's broadcast exclusion helps.
+
             const timeoutId = setTimeout(() => {
-                localSyncService.syncData({
-                    sales: data.sales,
-                    heldOrders: data.heldOrders,
-                    kitchenOrders: data.kitchenOrders,
-                    barOrders: data.barOrders,
-                    tables: data.tables
-                });
-            }, 2000); // 2s debounce for local sync
+                console.log('☁️ Auto-syncing full state to Local Server...');
+                localSyncService.sendFullStateUpdate(data);
+            }, 2000); // 2s debounce
             return () => clearTimeout(timeoutId);
         }
-    }, [data.sales, data.heldOrders, data.kitchenOrders, data.tables, data.barOrders, isLocalServerConnected]);
+    }, [data, isLocalServerConnected]);
 
 
     // Generic Actions

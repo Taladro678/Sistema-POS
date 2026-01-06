@@ -49,13 +49,36 @@ const io = new Server(server, {
 
 const PORT = 3001;
 
-// In-Memory State (Simple storage)
+// In-Memory State (Centralized Source of Truth)
 let appState = {
+    // Core Data
+    inventory: [],
+    products: [],
+    suppliers: [],
+    personnel: [],
+    users: [],
+    categories: [],
+    customers: [],
+
+    // Transactional Data
     sales: [],
     heldOrders: [],
     kitchenOrders: [],
     barOrders: [],
-    tables: []
+    tables: [],
+    cancelledOrders: [],
+
+    // Financial Data
+    tips: 0,
+    tipHistory: [],
+    tipDistributions: [],
+    exchangeRate: 60,
+    rateHistory: [],
+    cashRegister: {},
+    defaultForeignCurrencyDiscountPercent: 0,
+
+    // Metadata
+    lastModified: new Date().toISOString()
 };
 
 const DB_FILE = path.join(__dirname, 'server_db.json');
@@ -64,7 +87,9 @@ const DB_FILE = path.join(__dirname, 'server_db.json');
 if (fs.existsSync(DB_FILE)) {
     try {
         const data = fs.readFileSync(DB_FILE, 'utf8');
-        appState = { ...appState, ...JSON.parse(data) };
+        const loadedState = JSON.parse(data);
+        // Merge loaded state with default structure to ensure all fields exist
+        appState = { ...appState, ...loadedState };
         console.log('📂 Estado restaurado desde server_db.json');
     } catch (e) {
         console.error('⚠️ Error cargando base de datos local:', e);
@@ -83,33 +108,54 @@ const saveState = () => {
 io.on('connection', (socket) => {
     console.log('Cliente conectado:', socket.id);
 
-    // Send current state on connection
+    // Send current FULL state on connection
     socket.emit('sync_update', appState);
 
-    // --- KITCHEN & BAR ---
+    // --- GENERIC FULL SYNC (Primary Mechanism) ---
+    // Clients send their full state (or partial updates) to be merged
+    socket.on('full_state_update', (newState) => {
+        console.log('🔄 Recibida actualización de estado desde cliente');
+
+        // Merge Strategy: Overwrite server state with client state for matching keys
+        // This assumes the client sending the update has the "latest" truth
+        // In a more complex system, we would use timestamps per field/record
+
+        Object.keys(newState).forEach(key => {
+            if (newState[key] !== undefined) {
+                appState[key] = newState[key];
+            }
+        });
+
+        appState.lastModified = new Date().toISOString();
+        saveState(); // Persist to disk
+
+        // Broadcast the UPDATED state to all OTHER clients
+        socket.broadcast.emit('sync_update', appState);
+    });
+
+    // --- LEGACY/SPECIFIC EVENTS (Kept for compatibility or specific triggers) ---
+    // These now just update the specific part of the state and broadcast full sync
+
     socket.on('new_kitchen_order', (order) => {
         console.log('👨‍🍳 Nueva Orden Cocina:', order.id);
-        // Add to state if not exists
         if (!appState.kitchenOrders.find(o => o.id === order.id)) {
             appState.kitchenOrders.push(order);
-            saveState(); // Save
+            saveState();
         }
-        // Broadcast to ALL clients (Kitchen screens)
         io.emit('kitchen_order_received', order);
-        io.emit('sync_update', appState); // Sync full state
+        io.emit('sync_update', appState);
     });
 
     socket.on('new_bar_order', (order) => {
         console.log('🍹 Nueva Orden Barra:', order.id);
         if (!appState.barOrders.find(o => o.id === order.id)) {
             appState.barOrders.push(order);
-            saveState(); // Save
+            saveState();
         }
-        io.emit('bar_order_received', order); // (If we add specific event later)
+        io.emit('bar_order_received', order);
         io.emit('sync_update', appState);
     });
 
-    // --- HELD ORDERS ---
     socket.on('add_held_order', (order) => {
         console.log('📝 Orden en Espera:', order.id);
         const exists = appState.heldOrders.find(o => o.id === order.id);
@@ -118,31 +164,16 @@ io.on('connection', (socket) => {
         } else {
             appState.heldOrders.push(order);
         }
-        saveState(); // Save
+        saveState();
         io.emit('sync_update', appState);
     });
 
     socket.on('delete_held_order', (orderId) => {
         console.log('🗑️ Eliminar Orden:', orderId);
         appState.heldOrders = appState.heldOrders.filter(o => o.id !== orderId);
-        saveState(); // Save
+        saveState();
         io.emit('held_order_deleted', orderId);
         io.emit('sync_update', appState);
-    });
-
-    // --- FULL SYNC ---
-    socket.on('full_state_update', (newState) => {
-        // Merge strategy: simpler to just trust the latest sender in a small local setup
-        // But let's be careful not to wipe data if newState is empty
-        if (newState.heldOrders) appState.heldOrders = newState.heldOrders;
-        if (newState.kitchenOrders) appState.kitchenOrders = newState.kitchenOrders;
-        if (newState.barOrders) appState.barOrders = newState.barOrders;
-        if (newState.tables) appState.tables = newState.tables;
-
-        saveState(); // Save
-
-        // Broadcast Update
-        socket.broadcast.emit('sync_update', appState);
     });
 
     socket.on('disconnect', () => {
