@@ -14,6 +14,7 @@ export const OrdersPage = () => {
     const [editingTable, setEditingTable] = useState(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isTrashModalOpen, setIsTrashModalOpen] = useState(false);
+    const [orderToAssignTable, setOrderToAssignTable] = useState(null);
 
     // Form States
     const [tableName, setTableName] = useState('');
@@ -353,6 +354,18 @@ export const OrdersPage = () => {
                                     </div>
 
                                     <div className="flex gap-2 justify-end">
+                                        {!order.tableId && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setOrderToAssignTable(order);
+                                                }}
+                                                className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded flex items-center gap-1 transition-all"
+                                            >
+                                                <LayoutGrid size={12} />
+                                                Asignar Mesa
+                                            </button>
+                                        )}
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -439,6 +452,12 @@ export const OrdersPage = () => {
             <TrashModal
                 isOpen={isTrashModalOpen}
                 onClose={() => setIsTrashModalOpen(false)}
+            />
+
+            <AssignTableModal
+                isOpen={!!orderToAssignTable}
+                onClose={() => setOrderToAssignTable(null)}
+                order={orderToAssignTable}
             />
         </div>
     );
@@ -554,6 +573,60 @@ const TrashModal = ({ isOpen, onClose }) => {
                             </div>
                         );
                     })
+                )}
+            </div>
+        </Modal>
+    );
+};
+
+const AssignTableModal = ({ isOpen, onClose, order }) => {
+    const { data, updateItem } = useData();
+    const availableTables = (data.tables || []).filter(t => t.status === 'available');
+
+    const handleAssign = (table) => {
+        if (window.confirm(`¿Asignar este pedido a la ${table.name}?`)) {
+            // 1. Update the order in heldOrders
+            updateItem('heldOrders', order.id, {
+                tableId: table.id,
+                tableName: table.name
+            });
+
+            // 2. Update the table status
+            updateItem('tables', table.id, {
+                status: 'occupied',
+                currentOrderId: order.id,
+                occupiedAt: new Date().toISOString(),
+                total: order.total
+            });
+
+            onClose();
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="Seleccionar Mesa para Asignar"
+        >
+            <div className="grid grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto p-1">
+                {availableTables.length === 0 ? (
+                    <div className="col-span-2 text-center py-8 text-[var(--vscode-text-secondary)]">
+                        <p>No hay mesas disponibles actualmente.</p>
+                    </div>
+                ) : (
+                    availableTables.map(table => (
+                        <button
+                            key={table.id}
+                            onClick={() => handleAssign(table)}
+                            className="p-4 rounded-lg border border-green-500/30 bg-green-500/5 hover:bg-green-500/20 transition-all text-left"
+                        >
+                            <div className="font-bold text-white">{table.name}</div>
+                            <div className="text-xs text-[var(--vscode-text-secondary)]">{table.area}</div>
+                        </button>
+                    ))
                 )}
             </div>
         </Modal>
