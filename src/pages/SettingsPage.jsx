@@ -383,6 +383,26 @@ export const SettingsPage = () => {
                             </button>
                         </div>
 
+                        <div style={{
+                            borderTop: '1px solid rgba(255,255,255,0.1)',
+                            paddingTop: '1.5rem',
+                            marginTop: '2rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            opacity: 0.8
+                        }}>
+                            <h3 style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>Acerca de este Sistema</h3>
+                            <p style={{ fontSize: '0.9rem', textAlign: 'center' }}>
+                                Construido usando las últimas tecnologías <br />
+                                por <span style={{ color: 'var(--accent-blue)', fontWeight: 'bold' }}>Luvin Rafael Bustillos Diaz</span>
+                            </p>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+                                Versión 2.1.0 • 2026
+                            </p>
+                        </div>
+
                         <button
                             className="glass-button primary"
                             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '1rem', padding: '1rem' }}

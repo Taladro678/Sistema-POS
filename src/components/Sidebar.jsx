@@ -286,11 +286,27 @@ const Sidebar = () => {
                         }}
                         title="Cerrar Sesión"
                     >
+            {/* Desktop About Section */}
+            {!isMobile && !isCollapsed && (
+                <div style={{
+                    padding: '0.75rem',
+                    fontSize: '0.65rem',
+                    color: 'var(--text-secondary)',
+                    textAlign: 'center',
+                    borderTop: '1px solid var(--glass-border)',
+                    marginTop: 'auto',
+                    opacity: 0.7
+                }}>
+                    <p style={{ margin: 0 }}>Construido usando las últimas tecnologías</p>
+                    <p style={{ fontWeight: '600', color: 'var(--accent-blue)', marginTop: '0.2rem' }}>Por Luvin Rafael Bustillos Diaz</p>
+                </div>
+            )}
+
             {/* Desktop Toggle Button - Moved to bottom */}
             {!isMobile && (
                 <>
-                    <div style={{ marginTop: 'auto' }}></div>
-                    {!isCollapsed && <div style={{ height: '1px', background: 'var(--glass-border)', margin: '0.5rem 0' }}></div>}
+                    {isCollapsed && <div style={{ marginTop: 'auto' }}></div>}
+                    {!isCollapsed && isCollapsed === undefined && <div style={{ height: '1px', background: 'var(--glass-border)', margin: '0.5rem 0' }}></div>}
                     <button
                         className="glass-button"
                         onClick={toggleSidebar}
@@ -301,7 +317,7 @@ const Sidebar = () => {
                             padding: '0.5rem',
                             width: '100%',
                             color: 'var(--text-secondary)',
-                            marginTop: '0.5rem'
+                            marginTop: isCollapsed ? 'auto' : '0'
                         }}
                         title={isCollapsed ? "Expandir" : "Contraer"}
                     >
