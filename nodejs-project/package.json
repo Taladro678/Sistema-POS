@@ -1,0 +1,13 @@
+{
+    "name": "pos-server-mobile",
+    "version": "1.0.0",
+    "description": "Internal POS Server for Android APK",
+    "main": "main.js",
+    "dependencies": {
+        "adm-zip": "^0.5.16",
+        "axios": "^1.13.2",
+        "cors": "^2.8.5",
+        "express": "^4.22.1",
+        "socket.io": "^4.8.3"
+    }
+}

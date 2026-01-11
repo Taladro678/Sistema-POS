@@ -9,12 +9,48 @@ import Modal from '../components/Modal';
 import { ShoppingBag, X, Search, ChevronDown, Clock, FileText, DollarSign, Calendar, Coffee, UserPlus, User, Trash2, AlertTriangle, Plus } from 'lucide-react';
 
 import ClientSearchModal from '../components/ClientSearchModal';
+import { Nodejs } from '@ahovakimyan/capacitor-nodejs';
+
 
 export const POSPage = () => {
-    const { holdOrder, data, deleteHeldOrder, cancelHeldOrder, restoreCancelledOrder, permanentlyDeleteOrder, addTip, addItem, updateItem, sendOrderToProduction } = useData();
+    const {
+        holdOrder,
+        data,
+        deleteHeldOrder,
+        cancelHeldOrder,
+        restoreCancelledOrder,
+        permanentlyDeleteOrder,
+        addTip,
+        addItem,
+        updateItem,
+        sendOrderToProduction,
+        exchangeRate
+    } = useData();
     const { currentUser } = useAuth();
     const { addToast } = useToast();
 
+    // -- Bridge con Servidor Interno (APK) --
+    React.useEffect(() => {
+        const initInternalServer = async () => {
+            try {
+                // Escuchar mensajes del servidor interno
+                const listener = await Nodejs.addListener('message', (event) => {
+                    console.log('📬 Mensaje de Servidor Interno:', event.value);
+                });
+
+                console.log('🔌 Bridge de Node.js inicializado');
+
+                return () => {
+                    listener.remove();
+                };
+            } catch (err) {
+                console.warn('⚠️ No se pudo inicializar el bridge nativo (probablemente ejecutando en navegador)');
+            }
+        };
+        initInternalServer();
+    }, []);
+
+    // Local cart state for responsiveness
     const [cart, setCart] = useState(() => {
         try {
             const savedCart = localStorage.getItem('pos_cart');
@@ -29,6 +65,7 @@ export const POSPage = () => {
     React.useEffect(() => {
         localStorage.setItem('pos_cart', JSON.stringify(cart));
     }, [cart]);
+
     // State
     const [selectedCategory, setSelectedCategory] = useState('all');
 

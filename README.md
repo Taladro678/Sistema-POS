@@ -122,7 +122,7 @@ O usar el script automatizado:
 
 La aplicación estará disponible en `http://localhost:5173`
 
-## 📱 Uso en Dispositivos Móviles
+### 📱 Uso en Dispositivos Móviles
 
 El sistema está optimizado para tablets y móviles:
 
@@ -131,11 +131,20 @@ El sistema está optimizado para tablets y móviles:
 - **Tarjetas compactas** en cocina/barra
 - **Touch-friendly** buttons y controles
 
-Para acceder desde otro dispositivo en la misma red:
+#### Opción 1: Navegador (Red Local)
 
 1. Inicia el servidor con `iniciar_app.bat`
 2. Busca la IP mostrada en consola
 3. Accede desde el dispositivo móvil: `http://[IP]:5173`
+
+#### Opción 2: APK Inteligente (Todo-en-uno)
+
+Ideal para independencia total y actualizaciones automáticas:
+
+1. Instala el APK generado en tu dispositivo.
+2. Al abrirlo, el servidor se iniciará internamente.
+3. La app buscará actualizaciones automáticamente desde el repositorio de GitHub cada vez que se inicie.
+4. **Offline**: Una vez actualizado, el sistema funciona sin internet en el local.
 
 ## 🔧 Configuración
 
