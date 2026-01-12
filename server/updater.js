@@ -13,9 +13,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const checkForUpdates = async (currentVersion = '0.0.0') => {
     const REPO = 'Taladro678/Sistema-POS';
     const GITHUB_API = `https://api.github.com/repos/${REPO}/releases/latest`;
-    
+
     console.log('📡 Buscando actualizaciones en GitHub...');
-    
+
     try {
         const response = await axios.get(GITHUB_API);
         const latestVersion = response.data.tag_name;
@@ -23,10 +23,10 @@ export const checkForUpdates = async (currentVersion = '0.0.0') => {
 
         if (latestVersion !== currentVersion) {
             console.log(`✨ Nueva versión encontrada: ${latestVersion}. Descargando...`);
-            await downloadAndExtract(downloadUrl, latestVersion);
+            await downloadAndExtract(downloadUrl);
             return { updated: true, version: latestVersion };
         }
-        
+
         console.log('✅ El sistema ya está actualizado.');
         return { updated: false };
     } catch (error) {
@@ -35,7 +35,7 @@ export const checkForUpdates = async (currentVersion = '0.0.0') => {
     }
 };
 
-const downloadAndExtract = async (url, version) => {
+const downloadAndExtract = async (url) => {
     const tempPath = path.join(__dirname, 'update_temp.zip');
     const extractPath = path.join(__dirname, '../update_staging');
 
@@ -55,7 +55,7 @@ const downloadAndExtract = async (url, version) => {
             try {
                 const zip = new admZip(tempPath);
                 zip.extractAllTo(extractPath, true);
-                
+
                 // Cleanup
                 fs.unlinkSync(tempPath);
                 console.log('🚀 Actualización lista en carpeta staging.');

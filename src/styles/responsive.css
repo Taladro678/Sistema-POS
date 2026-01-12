@@ -133,7 +133,7 @@
         height: calc(100dvh - 65px) !important;
         width: 100% !important;
         max-width: none !important;
-        z-index: 2147483647 !important;
+        z-index: 2000 !important;
         transform: translateX(110%);
         background: #000000 !important;
         border-left: none;

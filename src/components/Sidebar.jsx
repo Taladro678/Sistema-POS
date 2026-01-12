@@ -14,14 +14,20 @@
 
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { ShoppingCart, Package, Users, Truck, Settings, ChevronLeft, ChevronRight, Tag, Coffee, Calculator, BarChart, MoreVertical, ChefHat, UserCircle, Shield, Layers } from 'lucide-react';
+import {
+    ShoppingCart, Package, Users, Truck, Settings, ChevronLeft, ChevronRight,
+    Tag, Coffee, Calculator, BarChart, MoreVertical, ChefHat, UserCircle,
+    LogOut, Wifi, Globe
+} from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 import { useAuth } from '../context/AuthContext';
-import { LogOut } from 'lucide-react';
+import { useData } from '../context/DataContext';
+import { useDialog } from '../context/DialogContext';
 
 const Sidebar = () => {
     // Obtener configuración global del sidebar (ancho, estado colapsado, etc.)
     const { settings, toggleSidebar } = useSettings();
+    const { serverInfo, isLocalServerConnected } = useData();
     const isCollapsed = settings.isSidebarCollapsed;
 
     // Estado para detectar si estamos en móvil (<=768px) - Tablets usan Sidebar
@@ -50,6 +56,7 @@ const Sidebar = () => {
      * Cada item tiene: path (ruta), icon (componente de lucide-react), label (texto)
      */
     const { currentUser, logout } = useAuth();
+    const { confirm } = useDialog();
 
     /**
      * CONFIGURACIÓN DE NAVEGACIÓN
@@ -143,15 +150,19 @@ const Sidebar = () => {
             className={`glass-panel sidebar ${isCollapsed ? 'collapsed' : ''}`}
             style={{
                 width: isMobile ? '100%' : (isCollapsed ? '50px' : settings.sidebarWidth),
-                padding: 0, // Removed padding as requested
-                borderRadius: 0, // Flush look
+                height: isMobile ? '60px' : '100vh',
+                padding: 0,
+                borderRadius: 0,
                 borderLeft: 'none',
-                borderTop: 'none',
+                borderTop: isMobile ? '1px solid var(--glass-border)' : 'none',
                 borderBottom: 'none',
                 display: 'flex',
-                flexDirection: 'column',
-                background: isMobile ? '#0f0f0f' : undefined, // Solid background for mobile bottom bar
-                zIndex: 100 // Ensure it's on top
+                flexDirection: isMobile ? 'row' : 'column',
+                background: isMobile ? '#0f0f0f' : undefined,
+                position: isMobile ? 'fixed' : 'relative',
+                bottom: isMobile ? 0 : 'auto',
+                left: isMobile ? 0 : 'auto',
+                zIndex: 1000
             }}
         >
 
@@ -209,13 +220,38 @@ const Sidebar = () => {
                             boxShadow: '0 -5px 20px rgba(0,0,0,0.5)'
                         }}
                     >
+                        {/* Server Info Card */}
+                        <div style={{
+                            padding: '0.75rem',
+                            borderRadius: '8px',
+                            background: 'rgba(255,255,255,0.05)',
+                            border: '1px solid var(--glass-border)',
+                            marginBottom: '0.5rem',
+                            fontSize: '0.75rem'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                                <Wifi size={14} color={isLocalServerConnected ? 'var(--accent-green)' : 'var(--accent-red)'} />
+                                <span style={{ fontWeight: '600' }}>Servidor Local: {isLocalServerConnected ? 'Activo' : 'Offline'}</span>
+                            </div>
+                            {serverInfo && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: 0.8 }}>
+                                    <Globe size={14} />
+                                    <span>IP: {serverInfo.ip}:{serverInfo.port}</span>
+                                </div>
+                            )}
+                        </div>
+
                         {overflowItems.map(item => renderNavLink(item, true))}
                         {!isCollapsed && <div style={{ height: '1px', background: 'var(--glass-border)', margin: '0.5rem 0' }}></div>}
                         <button
                             className="glass-button"
-                            onClick={() => {
+                            onClick={async () => {
                                 setIsMobileMenuOpen(false);
-                                if (window.confirm('¿Cerrar sesión?')) {
+                                const ok = await confirm({
+                                    title: 'Cerrar Sesión',
+                                    message: '¿Estás seguro que deseas cerrar sesión?'
+                                });
+                                if (ok) {
                                     logout();
                                 }
                             }}
@@ -286,6 +322,22 @@ const Sidebar = () => {
                         }}
                         title="Cerrar Sesión"
                     >
+            {/* Desktop Server Info */}
+            {!isMobile && !isCollapsed && (
+                <div style={{
+                    padding: '0.75rem',
+                    fontSize: '0.7rem',
+                    borderTop: '1px solid var(--glass-border)',
+                    background: 'rgba(0,0,0,0.1)'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: isLocalServerConnected ? 'var(--accent-green)' : 'var(--accent-red)' }}></div>
+                        <span style={{ fontWeight: '600' }}>POS Server</span>
+                    </div>
+                    {serverInfo && <p style={{ margin: 0, opacity: 0.7 }}>{serverInfo.ip}:{serverInfo.port}</p>}
+                </div>
+            )}
+
             {/* Desktop About Section */}
             {!isMobile && !isCollapsed && (
                 <div style={{
@@ -294,10 +346,10 @@ const Sidebar = () => {
                     color: 'var(--text-secondary)',
                     textAlign: 'center',
                     borderTop: '1px solid var(--glass-border)',
-                    marginTop: 'auto',
+                    marginTop: isCollapsed ? '0' : 'auto',
                     opacity: 0.7
                 }}>
-                    <p style={{ margin: 0 }}>Construido usando las últimas tecnologías</p>
+                    <p style={{ margin: 0 }}>ERP La Auténtica v1.0</p>
                     <p style={{ fontWeight: '600', color: 'var(--accent-blue)', marginTop: '0.2rem' }}>Por Luvin Rafael Bustillos Diaz</p>
                 </div>
             )}

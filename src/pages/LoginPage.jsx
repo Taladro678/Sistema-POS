@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useDialog } from '../context/DialogContext';
 import '../styles/glassmorphism.css'; // Ensure we use the glass styles
 
 import { Settings } from 'lucide-react';
 
 export const LoginPage = () => {
     const { login } = useAuth();
+    const { alert } = useDialog();
     const navigate = useNavigate();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -16,10 +18,10 @@ export const LoginPage = () => {
     const [isConfigOpen, setIsConfigOpen] = useState(false);
     const [serverIp, setServerIp] = useState(localStorage.getItem('server_ip') || '');
 
-    const saveServerConfig = () => {
+    const saveServerConfig = async () => {
         localStorage.setItem('server_ip', serverIp);
         setIsConfigOpen(false);
-        alert('Configuración guardada');
+        await alert({ title: 'Configuración', message: 'Configuración guardada' });
     };
 
     const handleLogin = async (e) => {

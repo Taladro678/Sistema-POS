@@ -15,7 +15,7 @@ export default defineConfig({
         description: 'Sistema POS para La Auténtica',
         theme_color: '#0a0e27',
         background_color: '#0a0e27',
-        display: 'standalone',
+        display: 'fullscreen',
         orientation: 'landscape',
         icons: [
           {

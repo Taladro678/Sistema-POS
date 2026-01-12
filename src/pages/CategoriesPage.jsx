@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
+import { useDialog } from '../context/DialogContext';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import RestoreDefaultCategories from '../components/RestoreDefaultCategories';
@@ -7,6 +8,7 @@ import { Plus, Edit, Trash2, Tag, Hash, X } from 'lucide-react';
 
 export const CategoriesPage = () => {
     const { data, addItem, updateItem, deleteItem } = useData();
+    const { confirm, alert } = useDialog();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
     const [keywordInput, setKeywordInput] = useState('');
@@ -25,29 +27,29 @@ export const CategoriesPage = () => {
         setIsModalOpen(true);
     };
 
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         // Verificar si hay productos con esta categoría
         const productsWithCategory = (data.products || []).filter(p => p.category === id);
 
         if (productsWithCategory.length > 0) {
-            if (!window.confirm(
-                `⚠️ Esta categoría tiene ${productsWithCategory.length} producto(s) asignado(s).\n\n` +
-                `Al eliminarla, los productos quedarán sin categoría.\n\n¿Deseas continuar?`
-            )) {
-                return;
-            }
+            const ok = await confirm({
+                title: 'Eliminar Categoría',
+                message: `⚠️ Esta categoría tiene ${productsWithCategory.length} producto(s) asignado(s).\n\n` +
+                    `Al eliminarla, los productos quedarán sin categoría.\n\n¿Deseas continuar?`
+            });
+            if (!ok) return;
         }
 
         deleteItem('categories', id);
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!formData.label.trim()) {
-            return alert('El nombre de la categoría es obligatorio');
+            return await alert({ title: 'Campo requerido', message: 'El nombre de la categoría es obligatorio' });
         }
 
         if (formData.keywords.length === 0) {
-            return alert('Agrega al menos una palabra clave para las sugerencias inteligentes');
+            return await alert({ title: 'Acción requerida', message: 'Agrega al menos una palabra clave para las sugerencias inteligentes' });
         }
 
         const categoryData = {
@@ -62,7 +64,7 @@ export const CategoriesPage = () => {
             // Verificar que no exista una categoría con el mismo ID
             const exists = (data.categories || []).find(c => c.id === categoryData.id);
             if (exists) {
-                return alert('Ya existe una categoría con ese nombre');
+                return await alert({ title: 'Nombre duplicado', message: 'Ya existe una categoría con ese nombre' });
             }
             addItem('categories', categoryData);
         }
@@ -82,7 +84,7 @@ export const CategoriesPage = () => {
         if (!keyword) return;
 
         if (formData.keywords.includes(keyword)) {
-            alert('Esta palabra clave ya existe');
+            alert({ title: 'Duplicado', message: 'Esta palabra clave ya existe' });
             return;
         }
 

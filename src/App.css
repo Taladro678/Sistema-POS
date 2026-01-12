@@ -425,30 +425,13 @@
     bottom: 0;
     left: 0;
     width: 100% !important;
-    height: 45px;
-    /* Even smaller nav */
-    flex-direction: row;
-    z-index: 100;
-    padding: 0.2rem !important;
-    border-top: 1px solid var(--glass-border);
-    justify-content: space-around;
-  }
-
-  .sidebar-header,
-  .sidebar-user,
-  .sidebar button.glass-button:last-child {
-    display: none !important;
-  }
-
-  .sidebar nav {
-    flex-direction: row !important;
-    width: 100%;
-    justify-content: space-around;
+    height: 60px;
+    z-index: 1000;
   }
 
   .app-container {
     flex-direction: column;
-    padding-bottom: 45px;
+    padding-bottom: 60px;
   }
 
   .main-content {

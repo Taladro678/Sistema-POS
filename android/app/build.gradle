@@ -22,6 +22,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
 }
 
 repositories {
@@ -42,7 +46,16 @@ dependencies {
     implementation project(':capacitor-cordova-android-plugins')
 }
 
-apply from: 'capacitor.build.gradle'
+apply from: "../capacitor-cordova-android-plugins/cordova.variables.gradle"
+dependencies {
+
+
+}
+
+
+if (hasProperty('postBuildExtras')) {
+  postBuildExtras()
+}
 
 try {
     def servicesJSON = file('google-services.json')

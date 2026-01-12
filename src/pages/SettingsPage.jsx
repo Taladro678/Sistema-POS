@@ -1,26 +1,29 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useSettings } from '../context/SettingsContext';
 import { useData } from '../context/DataContext';
-import { Save, Download, Upload, Trash2, Users, Lock, FileSpreadsheet, Settings } from 'lucide-react';
+import { useDialog } from '../context/DialogContext';
+import { Save, Download, Upload, Trash2, Users, Lock, FileSpreadsheet, Settings, Volume2 } from 'lucide-react';
 import { read, utils } from 'xlsx';
 import { UsersPage } from './UsersPage';
+import { audioService } from '../services/audioService';
 
 export const SettingsPage = () => {
     const { settings, updateSettings } = useSettings();
-    const navigate = useNavigate();
     const { exportData, importData, connectDrive, isDriveConnected, syncStatus, clearAllData, data, updateData } = useData();
+    const { confirm, alert } = useDialog();
     const [formData, setFormData] = useState(settings);
     const [activeTab, setActiveTab] = useState('general');
+    const [audioEnabled, setAudioEnabled] = useState(audioService.isEnabled);
+    const [audioVolume, setAudioVolume] = useState(audioService.volume);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         updateSettings(formData);
-        alert('Configuración guardada exitosamente.');
+        await alert({ title: 'Éxito', message: 'Configuración guardada exitosamente.' });
     };
 
     return (
@@ -129,6 +132,71 @@ export const SettingsPage = () => {
                                 </div>
                             </div>
 
+                            {/* Audio Settings Section */}
+                            <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem', marginTop: '1rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                                    <Volume2 size={20} color="var(--accent-blue)" />
+                                    <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Notificaciones de Audio</h3>
+                                </div>
+
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                    <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Activar sonidos</label>
+                                    <button
+                                        className={`glass-button ${audioEnabled ? 'primary' : ''}`}
+                                        onClick={() => {
+                                            const newState = !audioEnabled;
+                                            setAudioEnabled(newState);
+                                            audioService.setEnabled(newState);
+                                        }}
+                                        style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                                    >
+                                        {audioEnabled ? '✓ Activado' : '✗ Desactivado'}
+                                    </button>
+                                </div>
+
+                                {audioEnabled && (
+                                    <>
+                                        <div style={{ marginBottom: '1rem' }}>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                                                Volumen: {Math.round(audioVolume * 100)}%
+                                            </label>
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="1"
+                                                step="0.1"
+                                                value={audioVolume}
+                                                onChange={(e) => {
+                                                    const newVolume = parseFloat(e.target.value);
+                                                    setAudioVolume(newVolume);
+                                                    audioService.setVolume(newVolume);
+                                                }}
+                                                style={{
+                                                    width: '100%',
+                                                    height: '6px',
+                                                    borderRadius: '3px',
+                                                    background: `linear-gradient(to right, var(--accent-blue) 0%, var(--accent-blue) ${audioVolume * 100}%, rgba(255,255,255,0.2) ${audioVolume * 100}%, rgba(255,255,255,0.2) 100%)`,
+                                                    outline: 'none',
+                                                    cursor: 'pointer'
+                                                }}
+                                            />
+                                        </div>
+
+                                        <button
+                                            className="glass-button accent"
+                                            onClick={() => audioService.testSound()}
+                                            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                                        >
+                                            🔊 Probar Sonido
+                                        </button>
+
+                                        <p style={{ fontSize: '0.75rem', marginTop: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                                            Los sonidos te alertarán cuando lleguen nuevos pedidos a cocina y cuando estén listos para servir.
+                                        </p>
+                                    </>
+                                )}
+                            </div>
+
                             <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem', marginTop: '0.5rem' }}>
                                 <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Sincronización en la Nube</h3>
 
@@ -182,9 +250,13 @@ export const SettingsPage = () => {
                                             type="file"
                                             accept=".json"
                                             style={{ display: 'none' }}
-                                            onChange={(e) => {
+                                            onChange={async (e) => {
                                                 if (e.target.files[0]) {
-                                                    if (window.confirm('¿Estás seguro? Esto reemplazará TODOS los datos actuales.')) {
+                                                    const ok = await confirm({
+                                                        title: 'Restaurar Copia',
+                                                        message: '¿Estás seguro? Esto reemplazará TODOS los datos actuales.'
+                                                    });
+                                                    if (ok) {
                                                         importData(e.target.files[0]);
                                                     }
                                                 }
@@ -289,18 +361,22 @@ export const SettingsPage = () => {
                                                     const newProducts = Array.from(productsMap.values());
 
                                                     if (newProducts.length > 0) {
-                                                        if (window.confirm(`Se encontraron ${newProducts.length} productos válidos.\n\nEjemplos:\n- ${newProducts[0].name} ($${newProducts[0].price})\n\n¿Desea REEMPLAZAR la lista actual con estos productos?`)) {
+                                                        const ok = await confirm({
+                                                            title: 'Importar Productos',
+                                                            message: `Se encontraron ${newProducts.length} productos válidos.\n\nEjemplos:\n- ${newProducts[0].name} ($${newProducts[0].price})\n\n¿Desea REEMPLAZAR la lista actual con estos productos?`
+                                                        });
+                                                        if (ok) {
                                                             // REPLACE logic as requested ("borra los productos que importe")
                                                             updateData('products', newProducts);
-                                                            alert(`${newProducts.length} productos importados exitosamente. La lista anterior ha sido reemplazada.`);
+                                                            await alert({ title: 'Éxito', message: `${newProducts.length} productos importados exitosamente. La lista anterior ha sido reemplazada.` });
                                                         }
                                                     } else {
-                                                        alert('No se encontraron productos válidos. Verifique que las columnas A (Nombre) y P (Precio) contengan datos.');
+                                                        await alert({ title: 'Aviso', message: 'No se encontraron productos válidos. Verifique que las columnas A (Nombre) y P (Precio) contengan datos.' });
                                                     }
 
                                                 } catch (error) {
                                                     console.error("Error importing excel:", error);
-                                                    alert('Error al procesar el archivo Excel.');
+                                                    await alert({ title: 'Error', message: 'Error al procesar el archivo Excel.' });
                                                 }
                                                 e.target.value = '';
                                             }}
@@ -371,10 +447,14 @@ export const SettingsPage = () => {
                             <button
                                 className="glass-button"
                                 style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', border: '1px solid var(--accent-red)', color: 'var(--accent-red)' }}
-                                onClick={() => {
-                                    if (window.confirm('ADVERTENCIA: ¿Estás seguro de que quieres BORRAR TODOS LOS DATOS? Esto eliminará empleados, proveedores, inventario y ventas. Esta acción no se puede deshacer.')) {
+                                onClick={async () => {
+                                    const ok = await confirm({
+                                        title: '⚠️ ZONA DE PELIGRO',
+                                        message: 'ADVERTENCIA: ¿Estás seguro de que quieres BORRAR TODOS LOS DATOS? Esto eliminará empleados, proveedores, inventario y ventas. Esta acción no se puede deshacer.'
+                                    });
+                                    if (ok) {
                                         clearAllData();
-                                        alert('Todos los datos han sido eliminados.');
+                                        await alert({ title: 'Reset de Fábrica', message: 'Todos los datos han sido eliminados.' });
                                     }
                                 }}
                             >

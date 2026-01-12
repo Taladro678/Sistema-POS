@@ -1,6 +1,6 @@
 import React from 'react';
 
-const ProductCard = ({ product, onAdd }) => {
+const ProductCard = ({ product, onAdd, priceDisplay }) => {
     // Helper to sanitize name for filenames
     // Replace non-alphanumeric chars with underscore, lowercase
     const safeName = React.useMemo(() => {
@@ -136,7 +136,7 @@ const ProductCard = ({ product, onAdd }) => {
                     {product.name}
                 </h3>
                 <p style={{ color: 'var(--accent-orange)', fontWeight: 'bold', fontSize: '0.9rem', marginTop: '0' }}>
-                    ${product.price.toFixed(2)}
+                    {priceDisplay || `$${product.price.toFixed(2)}`}
                 </p>
             </div>
         </div>

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
+import { useDialog } from '../context/DialogContext';
 import FaceDetector from '../components/FaceDetector';
 import { Clock, Camera, CheckCircle, XCircle, Calendar, Download } from 'lucide-react';
 import Modal from '../components/Modal';
 
 export const AttendancePage = () => {
     const { data, addItem } = useData();
+    const { alert } = useDialog();
     const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [isCameraActive, setIsCameraActive] = useState(false);
     const [faceDetected, setFaceDetected] = useState(false);
@@ -49,7 +51,7 @@ export const AttendancePage = () => {
             const photoBlob = await window.captureAttendancePhoto();
 
             if (!photoBlob) {
-                alert('No se pudo capturar la foto. Intenta de nuevo.');
+                await alert({ title: 'Error de Cámara', message: 'No se pudo capturar la foto. Intenta de nuevo.' });
                 setIsProcessing(false);
                 return;
             }
@@ -73,7 +75,7 @@ export const AttendancePage = () => {
             // Guardar en DataContext
             addItem('attendance', attendanceRecord);
 
-            alert(`✅ Entrada registrada para ${selectedEmployee.name}`);
+            await alert({ title: 'Asistencia Registrada', message: `✅ Entrada registrada para ${selectedEmployee.name}` });
 
             // Reset
             setIsCameraActive(false);
@@ -82,7 +84,7 @@ export const AttendancePage = () => {
 
         } catch (error) {
             console.error('Error al registrar entrada:', error);
-            alert('Error al registrar la entrada. Intenta de nuevo.');
+            await alert({ title: 'Error', message: 'Error al registrar la entrada. Intenta de nuevo.' });
         } finally {
             setIsProcessing(false);
         }
@@ -99,7 +101,7 @@ export const AttendancePage = () => {
             const photoBlob = await window.captureAttendancePhoto();
 
             if (!photoBlob) {
-                alert('No se pudo capturar la foto. Intenta de nuevo.');
+                await alert({ title: 'Error de Cámara', message: 'No se pudo capturar la foto. Intenta de nuevo.' });
                 setIsProcessing(false);
                 return;
             }
@@ -122,7 +124,7 @@ export const AttendancePage = () => {
             // Guardar en DataContext
             addItem('attendance', attendanceRecord);
 
-            alert(`✅ Salida registrada para ${selectedEmployee.name}`);
+            await alert({ title: 'Asistencia Registrada', message: `✅ Salida registrada para ${selectedEmployee.name}` });
 
             // Reset
             setIsCameraActive(false);
@@ -131,35 +133,13 @@ export const AttendancePage = () => {
 
         } catch (error) {
             console.error('Error al registrar salida:', error);
-            alert('Error al registrar la salida. Intenta de nuevo.');
+            await alert({ title: 'Error', message: 'Error al registrar la salida. Intenta de nuevo.' });
         } finally {
             setIsProcessing(false);
         }
     };
 
     // Calcular horas trabajadas para un empleado hoy
-    const calculateHoursToday = (employeeId) => {
-        const employeeRecords = todayRecords.filter(r => r.employeeId === employeeId);
-
-        let totalMinutes = 0;
-        let entryTime = null;
-
-        employeeRecords.forEach(record => {
-            if (record.type === 'entry') {
-                entryTime = new Date(record.timestamp);
-            } else if (record.type === 'exit' && entryTime) {
-                const exitTime = new Date(record.timestamp);
-                const diffMs = exitTime - entryTime;
-                totalMinutes += diffMs / (1000 * 60);
-                entryTime = null;
-            }
-        });
-
-        const hours = Math.floor(totalMinutes / 60);
-        const minutes = Math.floor(totalMinutes % 60);
-        return `${hours}h ${minutes}m`;
-    };
-
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', height: '100%' }}>
             {/* Header */}

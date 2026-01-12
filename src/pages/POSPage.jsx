@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useDialog } from '../context/DialogContext';
 import ProductCard from '../components/ProductCard';
 import CartSidebar from '../components/CartSidebar';
 import Modal from '../components/Modal';
@@ -23,13 +24,13 @@ export const POSPage = () => {
         addTip,
         addItem,
         updateItem,
-        sendOrderToProduction,
-        exchangeRate
+        sendOrderToProduction
     } = useData();
     const { currentUser } = useAuth();
     const { addToast } = useToast();
+    const { confirm, alert, prompt } = useDialog();
 
-    // -- Bridge con Servidor Interno (APK) --
+    /* // -- Bridge con Servidor Interno (APK) -- Deshabilitado temporalmente hasta que el plugin esté listo
     React.useEffect(() => {
         const initInternalServer = async () => {
             try {
@@ -38,9 +39,9 @@ export const POSPage = () => {
                     const listener = await Nodejs.addListener('message', (event) => {
                         console.log('📬 Mensaje de Servidor Interno:', event.value);
                     });
-
+                    
                     console.log('🔌 Bridge de Node.js inicializado');
-
+                    
                     return () => {
                         listener.remove();
                     };
@@ -52,6 +53,7 @@ export const POSPage = () => {
         };
         initInternalServer();
     }, []);
+    */
 
     // Local cart state for responsiveness
     const [cart, setCart] = useState(() => {
@@ -98,6 +100,7 @@ export const POSPage = () => {
     const [payments, setPayments] = useState([]);
     const [currentPaymentAmount, setCurrentPaymentAmount] = useState('');
     const [currentPaymentMethod, setCurrentPaymentMethod] = useState('');
+    const [paymentNote, setPaymentNote] = useState('');
     const [selectedCustomerId, setSelectedCustomerId] = useState(''); // For Credit Payments
 
     // Discount & Notes State
@@ -127,6 +130,19 @@ export const POSPage = () => {
     const [orderPriority, setOrderPriority] = useState('normal');
     // Takeaway State
     const [isTakeaway, setIsTakeaway] = useState(false);
+    // Production Modal State
+    const [isProductionModalOpen, setIsProductionModalOpen] = useState(false);
+
+    // Visual Currency State
+    const [displayCurrency, setDisplayCurrency] = useState('USD');
+
+    const formatPrice = (amount) => {
+        if (displayCurrency === 'BS') {
+            const rate = data.exchangeRate || 1;
+            return `Bs ${(amount * rate).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+        return `$ ${amount.toFixed(2)}`;
+    };
 
     const updateItemPriority = (index, priority) => {
         const newCart = [...cart];
@@ -188,34 +204,38 @@ export const POSPage = () => {
         }
     }, [orderId, data.heldOrders, tableId]);
 
-    const handleCancelCurrentOrder = () => {
+    const handleCancelCurrentOrder = async () => {
         if (!currentTable) return;
 
-        if (window.confirm(`⚠️ ¿Estás seguro de CANCELAR el pedido de la mesa ${currentTable.name}? \n\nEsta acción registrará el pedido como cancelado en el historial y liberará la mesa.`)) {
+        const ok = await confirm({
+            title: 'Cancelar Pedido',
+            message: `⚠️ ¿Estás seguro de CANCELAR el pedido de la mesa ${currentTable.name}? \n\nEsta acción registrará el pedido como cancelado en el historial y liberará la mesa.`
+        });
+
+        if (ok) {
             if (currentTable.currentOrderId) {
                 cancelHeldOrder(currentTable.currentOrderId);
-                alert('Pedido cancelado y mesa liberada.');
+                await alert({ title: 'Éxito', message: 'Pedido cancelado y mesa liberada.' });
                 navigate('/tables');
             } else {
                 updateItem('tables', currentTable.id, { currentOrder: [], status: 'available' });
                 setCart([]);
-                alert('Mesa liberada.');
+                await alert({ title: 'Éxito', message: 'Mesa liberada.' });
                 navigate('/tables');
             }
         }
     };
 
-    const handleHoldOrder = () => {
+    const handleHoldOrder = async () => {
         if (cart.length === 0) return;
 
-        const note = prompt("Nota para poner en espera (opcional):", orderNote);
+        const note = await prompt({
+            title: 'Poner en Espera',
+            message: 'Nota para poner en espera (opcional):',
+            defaultValue: orderNote
+        });
+
         if (note !== null) {
-            // Strict "En Espera" Logic: ONLY 'Hold' button sets isWaitList=true
-            // If editing, delete original?
-            // "Hold" usually usually implies "Save as Draft".
-            // If I was editing "Order 123", and I click Hold, should I update 123 or create new?
-            // User flow: "Edit order -> Hold" changes it to "En Espera" status?
-            // Let's assume yes.
             if (originalOrder && !originalOrder.tableId) {
                 deleteHeldOrder(originalOrder.id);
             }
@@ -225,7 +245,7 @@ export const POSPage = () => {
                 takeaway: isTakeaway,
                 priority: orderPriority,
                 customerId: selectedCustomerId,
-                createdBy: originalOrder?.createdBy || currentUser?.username || 'Cajero', // Preserve creator
+                createdBy: originalOrder?.createdBy || currentUser?.username || 'Cajero',
                 modifiedBy: originalOrder ? (currentUser?.username || 'Cajero') : null
             };
 
@@ -235,13 +255,17 @@ export const POSPage = () => {
             setIsCartOpen(false);
             setOrderNote('');
             setIsTakeaway(false);
-            alert("Orden puesta en espera.");
             addToast("Orden puesta en espera", 'info');
-            if (orderId) navigate('/'); // Clear URL
+            if (orderId) navigate('/');
         }
     };
 
     const handleSendToKitchen = () => {
+        if (cart.length === 0) return;
+        setIsProductionModalOpen(true);
+    };
+
+    const confirmSendToProduction = () => {
         if (cart.length === 0) return;
 
         // Resolve Customer Name
@@ -301,7 +325,7 @@ export const POSPage = () => {
             setIsCartOpen(false);
             setOrderNote('');
             setIsTakeaway(false);
-            alert("Orden enviada a barra/cocina correctamente.");
+            setIsProductionModalOpen(false);
             addToast("Orden enviada a barra/cocina", 'success');
             if (orderId) navigate('/'); // Clear URL
         }
@@ -309,11 +333,13 @@ export const POSPage = () => {
 
 
 
-    const handleRecallOrder = (order) => {
+    const handleRecallOrder = async (order) => {
         if (cart.length > 0) {
-            if (!window.confirm("Hay productos en el carrito actual. ¿Deseas reemplazarlos?")) {
-                return;
-            }
+            const ok = await confirm({
+                title: 'Reemplazar Carrito',
+                message: 'Hay productos en el carrito actual. ¿Deseas reemplazarlos?'
+            });
+            if (!ok) return;
         }
         setCart(order.items);
         // If it's a table order, we don't delete it from heldOrders, we just load it to edit.
@@ -327,17 +353,17 @@ export const POSPage = () => {
 
     const handleRestoreOrder = (order) => {
         restoreCancelledOrder(order.id);
-        alert('Orden restaurada a "En Espera".');
+        addToast('Orden restaurada a "En Espera"', 'info');
     };
 
     // ... (rest of the component)
 
-    const handleFinalizePayment = (overridePaymentMethod, overridePayments) => {
+    const handleFinalizePayment = async (overridePaymentMethod, overridePayments) => {
         // Allow passing method directly to avoid state sync issues
         const method = typeof overridePaymentMethod === 'string' ? overridePaymentMethod : selectedPaymentMethod;
 
         if (!method) {
-            alert('Por favor selecciona un método de pago');
+            await alert({ title: 'Falta Información', message: 'Por favor selecciona un método de pago' });
             return;
         }
 
@@ -355,7 +381,7 @@ export const POSPage = () => {
             // Actually, let's look for `selectedCustomerId` state.
 
             if (!selectedCustomerId) {
-                alert('Para ventas a crédito debe seleccionar un Cliente.');
+                await alert({ title: 'Cliente Requerido', message: 'Para ventas a crédito debe seleccionar un Cliente.' });
                 return;
             }
 
@@ -481,9 +507,13 @@ export const POSPage = () => {
         });
     };
 
-    const clearCart = () => {
+    const clearCart = async () => {
         if (cart.length === 0) return;
-        if (window.confirm('¿Estás seguro de que deseas vaciar el carrito?')) {
+        const ok = await confirm({
+            title: 'Vaciar Carrito',
+            message: '¿Estás seguro de que deseas vaciar el carrito?'
+        });
+        if (ok) {
             setCart([]);
             setOriginalOrder(null);
             setOrderNote('');
@@ -506,11 +536,15 @@ export const POSPage = () => {
         { id: 'bancaribe', label: 'Bancaribe', color: '#0054a6' },
         { id: 'banplus', label: 'Banplus', color: '#8dc63f' },
         { id: 'banesco', label: 'Banesco', color: '#209e33' },
-        { id: 'pago_movil', label: 'Pago Móvil', color: '#f5a623' },
+        { id: 'pm_banesco_ps', label: 'Pago movil Banesco PS', color: '#209e33' },
+        { id: 'pm_banesco_raquel', label: 'Pago Movil Banesco Raquel', color: '#209e33' },
+        { id: 'pm_bdv_ps', label: 'Pago Movil BDV PS', color: '#e74c3c' },
+        { id: 'pm_banplus', label: 'Pago Movil Banplus', color: '#8dc63f' },
         { id: 'zelle', label: 'Zelle', color: '#582c83' },
         { id: 'efectivo_bs', label: 'Efectivo Bs', color: '#7f8c8d' },
         { id: 'usd', label: 'USD ($)', color: '#27ae60' },
         { id: 'credito', label: 'Crédito (Fiado)', color: '#e74c3c' },
+        { id: 'punto', label: 'Punto de Venta', color: '#2980b9' },
     ];
 
     // Sales Report Calculations
@@ -532,20 +566,26 @@ export const POSPage = () => {
 
 
                 {/* Header Container */}
-                <div className="pos-header" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: '100%' }}>
+                <div className="pos-header" style={{
+                    display: 'flex',
+                    gap: isMobile ? '0.4rem' : '0.5rem',
+                    alignItems: 'center',
+                    width: '100%',
+                    padding: isMobile ? '0.5rem' : '0.5rem 1rem'
+                }}>
 
                     {/* Badge de Mesa */}
-                    {currentTable && (
+                    {currentTable && (!isMobile || !isSearchExpanded) && (
                         <div style={{
                             background: '#00d4ff',
                             color: '#000',
-                            padding: '0.3rem 0.6rem',
+                            padding: '0.2rem 0.5rem',
                             borderRadius: '6px',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '0.3rem',
+                            gap: '0.2rem',
                             fontWeight: '600',
-                            fontSize: '0.75rem',
+                            fontSize: '0.7rem',
                             flexShrink: 0
                         }}>
                             <Coffee size={12} color="#000" strokeWidth={2} />
@@ -555,27 +595,35 @@ export const POSPage = () => {
 
 
 
+
+
                     {/* Customer Selector */}
-                    <div style={{ position: 'relative', zIndex: 50 }}>
-                        <button
-                            className="glass-button"
-                            onClick={() => setIsClientModalOpen(true)}
-                            style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                        >
-                            <User size={16} />
-                            {selectedCustomerId
-                                ? (data.customers.find(c => c.id === selectedCustomerId)?.name || 'Cliente')
-                                : 'Cliente General'}
-                        </button>
-                        {selectedCustomerId && (
+                    {(!isMobile || !isSearchExpanded) && (
+                        <div style={{ position: 'relative', zIndex: 50 }}>
                             <button
-                                onClick={(e) => { e.stopPropagation(); setSelectedCustomerId(''); }}
-                                style={{ position: 'absolute', top: '-5px', right: '-5px', background: 'red', color: 'white', borderRadius: '50%', width: '16px', height: '16px', border: 'none', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                                className="glass-button"
+                                onClick={() => setIsClientModalOpen(true)}
+                                style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                             >
-                                <X size={10} />
+                                <User size={14} />
+                                {(!isMobile || selectedCustomerId) && (
+                                    <span style={{ maxWidth: isMobile ? '60px' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {selectedCustomerId
+                                            ? (data.customers.find(c => c.id === selectedCustomerId)?.name || 'Cliente')
+                                            : 'Cliente G.'}
+                                    </span>
+                                )}
                             </button>
-                        )}
-                    </div>
+                            {selectedCustomerId && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setSelectedCustomerId(''); }}
+                                    style={{ position: 'absolute', top: '-5px', right: '-5px', background: 'red', color: 'white', borderRadius: '50%', width: '16px', height: '16px', border: 'none', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                                >
+                                    <X size={10} />
+                                </button>
+                            )}
+                        </div>
+                    )}
 
                     {isClientModalOpen && (
                         <ClientSearchModal
@@ -590,8 +638,8 @@ export const POSPage = () => {
 
                         {/* Expandable Search */}
                         {isSearchExpanded ? (
-                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.5rem' }} className="glass-panel">
-                                <Search size={18} style={{ color: 'var(--text-secondary)', marginLeft: '0.5rem' }} />
+                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.4rem' }} className="glass-panel">
+                                <Search size={16} style={{ color: 'var(--text-secondary)', marginLeft: '0.4rem' }} />
                                 <input
                                     type="text"
                                     autoFocus
@@ -602,7 +650,8 @@ export const POSPage = () => {
                                         background: 'transparent',
                                         width: '100%',
                                         height: '100%',
-                                        padding: '0.25rem',
+                                        padding: '0.2rem',
+                                        fontSize: '0.85rem',
                                         outline: 'none',
                                         boxShadow: 'none'
                                     }}
@@ -612,36 +661,36 @@ export const POSPage = () => {
                                 />
                                 <button
                                     onClick={() => { setIsSearchExpanded(false); setSearchQuery(''); }}
-                                    style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', padding: '0 0.5rem', cursor: 'pointer' }}
+                                    style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', padding: '0 0.4rem', cursor: 'pointer' }}
                                 >
-                                    <X size={16} />
+                                    <X size={14} />
                                 </button>
                             </div>
                         ) : (
                             <button
                                 className="glass-button"
                                 onClick={() => setIsSearchExpanded(true)}
-                                style={{ padding: '0.5rem', flexShrink: 0, height: '40px', width: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                style={{ padding: '0.4rem', flexShrink: 0, height: '36px', width: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                 title="Buscar"
                             >
-                                <Search size={20} />
+                                <Search size={18} />
                             </button>
                         )}
 
                         {/* Categories List (Hidden if Search Expanded) */}
                         {!isSearchExpanded && (
                             <>
-                                <div className="no-scrollbar" style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', flex: 1, alignItems: 'center', paddingRight: '0.5rem', minWidth: 0 }}>
+                                <div className="no-scrollbar" style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', flex: 1, alignItems: 'center', paddingRight: '0.4rem', minWidth: 0 }}>
                                     <button
                                         className={`glass-button ${selectedCategory === 'all' ? 'primary' : ''}`}
                                         onClick={() => setSelectedCategory('all')}
                                         style={{
-                                            padding: '0.5rem 1.25rem',
-                                            fontSize: '0.9rem',
+                                            padding: isMobile ? '0.4rem 0.75rem' : '0.4rem 1rem',
+                                            fontSize: '0.8rem',
                                             whiteSpace: 'nowrap',
                                             flexShrink: 0,
-                                            height: '40px',
-                                            borderRadius: '20px', // Pill shape
+                                            height: '36px',
+                                            borderRadius: '18px',
                                             border: selectedCategory === 'all' ? '1px solid var(--accent-blue)' : '1px solid rgba(255,255,255,0.1)'
                                         }}
                                     >
@@ -652,13 +701,13 @@ export const POSPage = () => {
                                         className={`glass-button ${selectedCategory === 'mas_vendidos' ? 'primary' : ''}`}
                                         onClick={() => setSelectedCategory('mas_vendidos')}
                                         style={{
-                                            padding: '0.5rem 1.25rem',
-                                            fontSize: '0.9rem',
+                                            padding: isMobile ? '0.4rem 0.75rem' : '0.4rem 1rem',
+                                            fontSize: '0.8rem',
                                             whiteSpace: 'nowrap',
                                             flexShrink: 0,
                                             fontWeight: 'bold',
-                                            height: '40px',
-                                            borderRadius: '20px',
+                                            height: '36px',
+                                            borderRadius: '18px',
                                             border: selectedCategory === 'mas_vendidos' ? '1px solid var(--accent-blue)' : '1px solid rgba(255,255,255,0.1)'
                                         }}
                                     >
@@ -670,12 +719,12 @@ export const POSPage = () => {
                                             className={`glass-button ${selectedCategory === cat.id ? 'primary' : ''}`}
                                             onClick={() => setSelectedCategory(cat.id)}
                                             style={{
-                                                padding: '0.5rem 1.25rem',
-                                                fontSize: '0.9rem',
+                                                padding: isMobile ? '0.4rem 0.75rem' : '0.4rem 1rem',
+                                                fontSize: '0.8rem',
                                                 whiteSpace: 'nowrap',
                                                 flexShrink: 0,
-                                                height: '40px',
-                                                borderRadius: '20px',
+                                                height: '36px',
+                                                borderRadius: '18px',
                                                 border: selectedCategory === cat.id ? '1px solid var(--accent-blue)' : '1px solid rgba(255,255,255,0.1)'
                                             }}
                                         >
@@ -739,44 +788,27 @@ export const POSPage = () => {
                     </div>
 
                     {/* Right Side Buttons Group */}
-                    <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
                         {/* Cancel Table Order Button (Only for Tables) */}
-                        {currentTable && (
+                        {currentTable && !isMobile && (
                             <button
                                 className="glass-button"
                                 style={{
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    padding: '0.5rem',
-                                    height: '40px',
-                                    width: '40px',
+                                    padding: '0.4rem',
+                                    height: '36px',
+                                    width: '36px',
                                     borderColor: 'var(--accent-red)',
                                     color: 'var(--accent-red)'
                                 }}
                                 onClick={handleCancelCurrentOrder}
                                 title="Cancelar Pedido y Liberar Mesa"
                             >
-                                <Trash2 size={20} />
+                                <Trash2 size={16} />
                             </button>
                         )}
-
-                        {/* Reports Button - REMOVED AS PER USER REQUEST */}
-                        {/* <button
-                            className="glass-button"
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                padding: '0.5rem',
-                                height: '40px',
-                                width: '40px'
-                            }}
-                            onClick={() => setIsSalesModalOpen(true)}
-                            title="Reporte de Ventas"
-                        >
-                            <FileText size={20} />
-                        </button> */}
 
                         {/* Held Orders Button */}
                         <button
@@ -785,23 +817,23 @@ export const POSPage = () => {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                padding: '0.5rem',
-                                height: '40px',
-                                minWidth: '40px'
+                                padding: '0.4rem',
+                                height: '36px',
+                                minWidth: '36px'
                             }}
                             onClick={() => setIsHeldOrdersModalOpen(true)}
                             title="Ver Órdenes en Espera"
                         >
-                            <Clock size={20} />
+                            <Clock size={16} />
                             {heldOrders.filter(o => o.isWaitList).length > 0 && (
                                 <span style={{
-                                    marginLeft: '0.25rem',
+                                    marginLeft: '0.2rem',
                                     background: 'var(--accent-orange)',
                                     color: 'white',
                                     borderRadius: '50%',
-                                    fontSize: '0.75rem',
-                                    width: '18px',
-                                    height: '18px',
+                                    fontSize: '0.65rem',
+                                    width: '16px',
+                                    height: '16px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -818,27 +850,27 @@ export const POSPage = () => {
                                 className="glass-button accent"
                                 style={{
                                     display: 'flex',
-                                    gap: '0.5rem',
+                                    gap: '0.3rem',
                                     alignItems: 'center',
-                                    padding: '0.5rem 1rem',
+                                    padding: '0.4rem 0.6rem',
                                     whiteSpace: 'nowrap',
-                                    height: '40px'
+                                    height: '36px'
                                 }}
                                 onClick={() => setIsCartOpen(!isCartOpen)}
                             >
                                 <div style={{ position: 'relative', display: 'flex' }}>
-                                    <ShoppingBag size={20} />
+                                    <ShoppingBag size={16} />
                                     {cart.length > 0 && (
                                         <span style={{
                                             position: 'absolute',
-                                            top: '-8px',
-                                            right: '-8px',
+                                            top: '-6px',
+                                            right: '-6px',
                                             background: 'var(--accent-red)',
                                             color: 'white',
                                             borderRadius: '50%',
-                                            fontSize: '0.75rem',
-                                            width: '18px',
-                                            height: '18px',
+                                            fontSize: '0.6rem',
+                                            width: '14px',
+                                            height: '14px',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
@@ -849,32 +881,37 @@ export const POSPage = () => {
                                         </span>
                                     )}
                                 </div>
-                                <span style={{ fontWeight: 'bold', fontSize: '1rem' }}>${total.toFixed(2)}</span>
+                                <span style={{ fontWeight: 'bold', fontSize: '0.8rem' }}>{formatPrice(total)}</span>
                             </button>
                         )}
 
-                        {/* Exchange Rate Display (Always Visible) */}
-                        <div
-                            className="glass-panel"
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                padding: '0 1rem',
-                                height: '40px',
-                                background: 'rgba(0, 255, 0, 0.1)', // Subtle green tint
-                                border: '1px solid rgba(0, 255, 0, 0.2)',
-                                color: 'var(--accent-green)',
-                                whiteSpace: 'nowrap',
-                                display: isMobile && isSearchExpanded ? 'none' : 'flex' // Hide on mobile if search is expanded to save space
-                            }}
-                            title="Tasa de Cambio del Día"
-                        >
-                            <DollarSign size={18} />
-                            <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>
-                                {data.exchangeRate ? `${data.exchangeRate.toFixed(2)} Bs/$` : 'N/A'}
-                            </span>
-                        </div>
+                        {/* Visual Currency Toggle (Replacement) */}
+                        {(!isMobile || !isSearchExpanded) && (
+                            <button
+                                className="glass-button"
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.3rem',
+                                    padding: '0 0.6rem',
+                                    height: '36px',
+                                    background: displayCurrency === 'BS' ? 'rgba(0, 212, 255, 0.15)' : 'rgba(0, 255, 0, 0.1)',
+                                    border: displayCurrency === 'BS' ? '1px solid #00d4ff' : '1px solid rgba(0, 255, 0, 0.2)',
+                                    color: displayCurrency === 'BS' ? '#00d4ff' : 'var(--accent-green)',
+                                    whiteSpace: 'nowrap',
+                                    cursor: 'pointer',
+                                    minWidth: '65px',
+                                    justifyContent: 'center'
+                                }}
+                                onClick={() => setDisplayCurrency(prev => prev === 'USD' ? 'BS' : 'USD')}
+                                title={`Cambiar vista a ${displayCurrency === 'USD' ? 'Bolívares' : 'Dólares'}`}
+                            >
+                                {displayCurrency === 'USD' ? <DollarSign size={14} /> : <span style={{ fontWeight: 'bold', fontSize: '0.8rem' }}>Bs</span>}
+                                <span style={{ fontWeight: 'bold', fontSize: '0.75rem' }}>
+                                    {displayCurrency === 'USD' ? 'USD' : 'BS'}
+                                </span>
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -894,6 +931,7 @@ export const POSPage = () => {
                                 key={product.id}
                                 product={{ ...product, quantity }}
                                 onAdd={addToCart}
+                                priceDisplay={formatPrice(product.price)}
                             />
                         );
                     })}
@@ -937,12 +975,9 @@ export const POSPage = () => {
                         currentTable={currentTable}
                         onToggleExpand={() => setIsCartExpanded(!isCartExpanded)}
                         isExpanded={isCartExpanded}
-                        orderPriority={orderPriority}
-                        setOrderPriority={setOrderPriority}
-                        onUpdateItemPriority={updateItemPriority}
-                        isTakeaway={isTakeaway}
-                        setIsTakeaway={setIsTakeaway}
-                        onToggleItemTakeaway={toggleItemTakeaway}
+                        formatPrice={formatPrice}
+                        onUpdatePriority={updateItemPriority}
+                        onToggleTakeaway={toggleItemTakeaway}
                     />
                 </div>
             </div>
@@ -951,7 +986,24 @@ export const POSPage = () => {
             <Modal
                 isOpen={isPaymentModalOpen}
                 onClose={() => setIsPaymentModalOpen(false)}
-                title="Procesar Pago"
+                title={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span>Procesar Pago</span>
+                        {data.exchangeRate && (
+                            <div style={{
+                                background: 'rgba(0, 255, 0, 0.1)',
+                                border: '1px solid rgba(0, 255, 0, 0.3)',
+                                padding: '0.1rem 0.4rem',
+                                borderRadius: '4px',
+                                color: 'var(--accent-green)',
+                                fontSize: '0.75rem',
+                                fontWeight: 'bold'
+                            }}>
+                                Tasa: {data.exchangeRate.toFixed(2)}
+                            </div>
+                        )}
+                    </div>
+                }
             >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     {/* Totals & Remaining Compact Grid */}
@@ -983,11 +1035,11 @@ export const POSPage = () => {
                                 {discountType === 'percent' && (
                                     <button
                                         className="px-2 py-0.5 text-[10px] border border-blue-500/30 bg-blue-500/10 text-blue-400 rounded hover:bg-blue-500/20 transition-all"
-                                        onClick={() => {
+                                        onClick={async () => {
                                             if (data.defaultForeignCurrencyDiscountPercent) {
                                                 setDiscountValue(data.defaultForeignCurrencyDiscountPercent.toString());
                                             } else {
-                                                alert('No hay porcentaje configurado en Ajustes.');
+                                                await alert({ title: 'Configuración', message: 'No hay porcentaje configurado en Ajustes.' });
                                             }
                                         }}
                                         title="Aplicar Promo Divisa Configurada"
@@ -1040,7 +1092,16 @@ export const POSPage = () => {
                                     onChange={(e) => setCurrentPaymentAmount(e.target.value)}
                                 />
                             </div>
-                            <div className="col-span-6">
+                            <div className="col-span-12">
+                                <input
+                                    type="text"
+                                    className="vscode-input w-full h-10 text-xs"
+                                    placeholder="Nota/Billetes (Ej: 2x$10, 1x$5)"
+                                    value={paymentNote}
+                                    onChange={(e) => setPaymentNote(e.target.value)}
+                                />
+                            </div>
+                            <div className="col-span-10">
                                 <select
                                     value={currentPaymentMethod}
                                     onChange={(e) => setCurrentPaymentMethod(e.target.value)}
@@ -1061,18 +1122,20 @@ export const POSPage = () => {
                                         if (isNaN(amount) || amount <= 0) return;
 
                                         const selectedMethodObj = paymentMethods.find(m => m.label === currentPaymentMethod);
-                                        const isBsMethod = selectedMethodObj && ['pago_movil', 'bancaribe', 'banplus', 'banesco', 'efectivo_bs'].includes(selectedMethodObj.id);
+                                        const isBsMethod = selectedMethodObj && (['pago_movil', 'bancaribe', 'banplus', 'banesco', 'efectivo_bs', 'punto'].includes(selectedMethodObj.id) || selectedMethodObj.id.startsWith('pm_'));
 
                                         const newPayment = {
                                             id: Date.now(),
                                             method: currentPaymentMethod,
                                             amount: amount,
                                             currency: isBsMethod ? 'Bs' : 'USD',
-                                            rate: data.exchangeRate
+                                            rate: data.exchangeRate,
+                                            note: paymentNote
                                         };
                                         setPayments([...payments, newPayment]);
                                         setCurrentPaymentAmount('');
                                         setCurrentPaymentMethod('');
+                                        setPaymentNote('');
                                     }}
                                 >
                                     <Plus size={20} />
@@ -1119,33 +1182,36 @@ export const POSPage = () => {
                     )}
 
                     {/* Footer: Tip & Confirm */}
-                    <div className="mt-2 pt-5 border-t border-white/10 flex flex-col gap-4">
-                        <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-3">
-                                <label className="text-sm font-medium text-[var(--vscode-text-secondary)]">Propina:</label>
+                    <div className="mt-2 pt-4 border-t border-white/10 flex flex-col gap-4">
+                        <div className="flex justify-between items-center flex-wrap gap-y-3">
+                            <div className="flex items-center gap-2">
+                                <label className="text-xs font-medium text-[var(--vscode-text-secondary)]">Propina:</label>
                                 <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50">$</span>
+                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-white/40 text-xs">$</span>
                                     <input
                                         type="number"
-                                        className="vscode-input w-24 pl-7 h-9 text-sm"
+                                        className="vscode-input w-20 pl-5 h-8 text-xs font-bold"
                                         placeholder="0.00"
                                         value={tipAmount}
                                         onChange={(e) => setTipAmount(e.target.value)}
                                     />
                                 </div>
                             </div>
-                            <div className="text-right">
-                                <div className="text-xs text-[var(--vscode-text-secondary)]">Total a Pagar</div>
-                                <div className="text-2xl font-black text-white">${total.toFixed(2)}</div>
+                            <div className="text-right flex-shrink-0">
+                                <div className="text-[10px] uppercase tracking-wider text-[var(--vscode-text-secondary)] mb-0.5">Total a Pagar</div>
+                                <div className="text-xl md:text-2xl font-black text-white leading-none">${total.toFixed(2)}</div>
                             </div>
                         </div>
 
                         <button
-                            className="primary-button w-full py-4 text-lg font-bold shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] transition-all"
-                            onClick={() => {
+                            className="primary-button w-full py-3 text-base md:text-lg font-bold shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] transition-all"
+                            onClick={async () => {
                                 const totalPaid = payments.reduce((sum, p) => p.currency === 'USD' ? sum + p.amount : sum + (p.amount / p.rate), 0);
                                 if (totalPaid < total - 0.01) {
-                                    alert(`Falta por pagar: $${(total - totalPaid).toFixed(2)}`);
+                                    await alert({
+                                        title: 'Monto Incompleto',
+                                        message: `Falta por pagar: $${(total - totalPaid).toFixed(2)}`
+                                    });
                                     return;
                                 }
                                 const methodString = payments.map(p => `${p.method} (${p.currency === 'USD' ? '$' : 'Bs'}${p.amount})`).join(', ');
@@ -1155,6 +1221,103 @@ export const POSPage = () => {
                             Finalizar Venta
                         </button>
                     </div>
+                </div>
+            </Modal>
+
+            {/* Production Confirmation Modal */}
+            <Modal
+                isOpen={isProductionModalOpen}
+                onClose={() => setIsProductionModalOpen(false)}
+                title="Configurar Orden"
+            >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    {/* Option Selection */}
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Tipo de Servicio</label>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                            <button
+                                onClick={() => setIsTakeaway(false)}
+                                style={{
+                                    padding: '1rem',
+                                    borderRadius: '12px',
+                                    border: `2px solid ${!isTakeaway ? 'var(--accent-blue)' : 'rgba(255,255,255,0.1)'}`,
+                                    background: !isTakeaway ? 'rgba(0, 242, 255, 0.1)' : 'transparent',
+                                    color: !isTakeaway ? 'var(--accent-blue)' : 'var(--text-secondary)',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                <Coffee size={24} />
+                                <span style={{ fontWeight: 'bold' }}>COMER AQUÍ</span>
+                            </button>
+                            <button
+                                onClick={() => setIsTakeaway(true)}
+                                style={{
+                                    padding: '1rem',
+                                    borderRadius: '12px',
+                                    border: `2px solid ${isTakeaway ? '#818cf8' : 'rgba(255,255,255,0.1)'}`,
+                                    background: isTakeaway ? 'rgba(129, 140, 248, 0.1)' : 'transparent',
+                                    color: isTakeaway ? '#818cf8' : 'var(--text-secondary)',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                <ShoppingBag size={24} />
+                                <span style={{ fontWeight: 'bold' }}>PARA LLEVAR</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Priority Selection */}
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Prioridad de Preparación</label>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            {[
+                                { id: 'normal', label: 'NORMAL', color: '#94a3b8' },
+                                { id: 'priority', label: 'PRIORIDAD', color: '#f59e0b' },
+                                { id: 'high', label: 'ALTA / URGENTE', color: '#ef4444' }
+                            ].map(p => (
+                                <button
+                                    key={p.id}
+                                    onClick={() => setOrderPriority(p.id)}
+                                    style={{
+                                        flex: 1,
+                                        padding: '0.75rem 0.5rem',
+                                        borderRadius: '8px',
+                                        border: `1px solid ${orderPriority === p.id ? p.color : 'rgba(255,255,255,0.1)'}`,
+                                        background: orderPriority === p.id ? `${p.color}22` : 'transparent',
+                                        color: orderPriority === p.id ? p.color : 'var(--text-secondary)',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 'bold',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >
+                                    {p.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Summary */}
+                    <div className="glass-panel" style={{ padding: '1rem', background: 'rgba(0,0,0,0.3)', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                            Resumen: <span style={{ color: 'white', fontWeight: '600' }}>{isTakeaway ? 'PARA LLEVAR' : 'COMER AQUÍ'}</span> con prioridad <span style={{ color: 'white', fontWeight: '600' }}>{orderPriority.toUpperCase()}</span>.
+                        </p>
+                    </div>
+
+                    <button
+                        className="primary-button"
+                        style={{ padding: '1rem', fontSize: '1.1rem', fontWeight: 'bold', marginTop: '1rem' }}
+                        onClick={confirmSendToProduction}
+                    >
+                        CONFIRMAR Y ENVIAR A COCINA
+                    </button>
                 </div>
             </Modal>
 
@@ -1210,8 +1373,12 @@ export const POSPage = () => {
                                         </button>
                                         <button
                                             className="glass-button"
-                                            onClick={() => {
-                                                if (window.confirm('¿Cancelar esta orden? Se moverá a la papelera.')) {
+                                            onClick={async () => {
+                                                const ok = await confirm({
+                                                    title: 'Cancelar Orden',
+                                                    message: '¿Cancelar esta orden? Se moverá a la papelera.'
+                                                });
+                                                if (ok) {
                                                     cancelHeldOrder(order.id);
                                                 }
                                             }}
@@ -1256,8 +1423,12 @@ export const POSPage = () => {
                                         </button>
                                         <button
                                             className="glass-button"
-                                            onClick={() => {
-                                                if (window.confirm('¿Eliminar PERMANENTEMENTE esta orden? No se podrá recuperar.')) {
+                                            onClick={async () => {
+                                                const ok = await confirm({
+                                                    title: 'Eliminar Permanente',
+                                                    message: '¿Eliminar PERMANENTEMENTE esta orden? No se podrá recuperar.'
+                                                });
+                                                if (ok) {
                                                     permanentlyDeleteOrder(order.id);
                                                 }
                                             }}

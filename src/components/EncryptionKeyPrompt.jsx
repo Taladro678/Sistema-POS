@@ -8,8 +8,10 @@ const EncryptionKeyPrompt = ({ onUnlock }) => {
     useEffect(() => {
         // Try to load from localStorage to auto-login if previously saved
         const savedKey = localStorage.getItem('pos_encryption_key');
-        if (savedKey) {
-            setEncryptionKey(savedKey);
+        const isLocalMode = localStorage.getItem('pos_local_mode') === 'true';
+
+        if (savedKey || isLocalMode) {
+            if (savedKey) setEncryptionKey(savedKey);
             onUnlock();
         }
     }, [onUnlock]);
@@ -17,6 +19,7 @@ const EncryptionKeyPrompt = ({ onUnlock }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         if (key.trim().length > 0) {
+            localStorage.removeItem('pos_local_mode');
             if (remember) {
                 localStorage.setItem('pos_encryption_key', key);
             } else {
@@ -81,7 +84,12 @@ const EncryptionKeyPrompt = ({ onUnlock }) => {
 
                     <button
                         type="button"
-                        onClick={() => onUnlock()}
+                        onClick={() => {
+                            if (remember) {
+                                localStorage.setItem('pos_local_mode', 'true');
+                            }
+                            onUnlock();
+                        }}
                         className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-lg transition-colors border border-gray-300"
                     >
                         Ingresar en Modo Local
@@ -91,7 +99,7 @@ const EncryptionKeyPrompt = ({ onUnlock }) => {
                     </button>
 
                     <p className="text-xs text-gray-400 mt-4">
-                        * Si marcas "Recordar", no tendrás que ingresarla de nuevo en esta tablet.
+                        * Si marcas "Recordar", no tendrás que ingresarla de nuevo en este dispositivo.
                     </p>
                 </form>
             </div>

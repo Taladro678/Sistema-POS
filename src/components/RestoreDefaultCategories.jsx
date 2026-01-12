@@ -1,5 +1,6 @@
 import React from 'react';
 import { useData } from '../context/DataContext';
+import { useDialog } from '../context/DialogContext';
 
 /**
  * Componente de utilidad para restaurar categorías por defecto
@@ -7,6 +8,7 @@ import { useData } from '../context/DataContext';
  */
 const RestoreDefaultCategories = ({ compact = false }) => {
     const { data, updateData } = useData();
+    const { confirm, alert } = useDialog();
 
     // ... (same categories array) ...
     const defaultCategories = [
@@ -62,14 +64,12 @@ const RestoreDefaultCategories = ({ compact = false }) => {
         }
     ];
 
-    const handleRestore = () => {
-        if (!window.confirm(
-            '¿Restaurar categorías por defecto?\n\n' +
-            'Esto agregará las categorías que faltan sin eliminar las existentes.\n' +
-            'Si ya tienes una categoría con el mismo ID, se mantendrá tu versión.'
-        )) {
-            return;
-        }
+    const handleRestore = async () => {
+        const ok = await confirm({
+            title: 'Restaurar Categorías',
+            message: '¿Restaurar categorías por defecto?\n\nEsto agregará las categorías que faltan sin eliminar las existentes.'
+        });
+        if (!ok) return;
 
         const currentCategories = data.categories || [];
         const currentIds = new Set(currentCategories.map(c => c.id));
@@ -78,19 +78,17 @@ const RestoreDefaultCategories = ({ compact = false }) => {
         const newCategories = defaultCategories.filter(cat => !currentIds.has(cat.id));
 
         if (newCategories.length === 0) {
-            alert('✅ Ya tienes todas las categorías por defecto');
+            await alert({ title: 'Aviso', message: '✅ Ya tienes todas las categorías por defecto' });
             return;
         }
 
         const mergedCategories = [...currentCategories, ...newCategories];
         updateData('categories', mergedCategories);
 
-        alert(
-            `✅ Restauración completada\n\n` +
-            `Categorías agregadas: ${newCategories.length}\n` +
-            `Total de categorías: ${mergedCategories.length}\n\n` +
-            `Categorías nuevas:\n${newCategories.map(c => '• ' + c.label).join('\n')}`
-        );
+        await alert({
+            title: 'Restauración Completada',
+            message: `Categorías agregadas: ${newCategories.length}\nTotal de categorías: ${mergedCategories.length}`
+        });
     };
 
     const currentCount = data.categories?.length || 0;

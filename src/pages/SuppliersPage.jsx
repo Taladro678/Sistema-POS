@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
+import { useDialog } from '../context/DialogContext';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import { Plus, Phone, DollarSign, Edit, Trash2 } from 'lucide-react';
 
 export const SuppliersPage = () => {
     const { data, addItem, deleteItem, updateItem } = useData();
+    const { confirm, alert } = useDialog();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [photoFile, setPhotoFile] = useState(null);
@@ -45,8 +47,12 @@ export const SuppliersPage = () => {
         proof: null
     });
 
-    const handleDelete = (id) => {
-        if (window.confirm('¿Estás seguro de eliminar este proveedor?')) {
+    const handleDelete = async (id) => {
+        const ok = await confirm({
+            title: 'Eliminar Proveedor',
+            message: '¿Estás seguro de eliminar este proveedor?'
+        });
+        if (ok) {
             deleteItem('suppliers', id);
         }
     };
@@ -70,9 +76,9 @@ export const SuppliersPage = () => {
     };
 
     // Función para agregar producto al proveedor
-    const handleAddProduct = () => {
+    const handleAddProduct = async () => {
         if (!newProduct.name || !newProduct.costPrice || !newProduct.salePrice) {
-            return alert('Completa todos los campos del producto');
+            return await alert({ title: 'Datos Incompletos', message: 'Completa todos los campos del producto' });
         }
 
         const product = {
@@ -99,8 +105,8 @@ export const SuppliersPage = () => {
         });
     };
 
-    const handleSave = () => {
-        if (!formData.name) return alert('El nombre es obligatorio');
+    const handleSave = async () => {
+        if (!formData.name) return await alert({ title: 'Error', message: 'El nombre es obligatorio' });
 
         if (isEditing && editingId) {
             // Actualizar proveedor existente
@@ -140,12 +146,12 @@ export const SuppliersPage = () => {
     };
 
     const handleRegisterPayment = async () => {
-        if (paymentData.amount <= 0) return alert('El monto debe ser mayor a 0');
+        if (paymentData.amount <= 0) return await alert({ title: 'Error', message: 'El monto debe ser mayor a 0' });
 
         const supplier = data.suppliers.find(s => s.id === paymentData.supplierId);
         if (!supplier) return;
 
-        if (paymentData.amount > supplier.debt) return alert('El monto no puede ser mayor a la deuda actual');
+        if (paymentData.amount > supplier.debt) return await alert({ title: 'Error', message: 'El monto no puede ser mayor a la deuda actual' });
 
         let proofLink = 'N/A';
         if (photoFile) {

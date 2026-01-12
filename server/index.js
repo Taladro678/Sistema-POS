@@ -116,6 +116,13 @@ io.on('connection', (socket) => {
     // Send current FULL state on connection
     socket.emit('sync_update', appState);
 
+    // Send Server IP info for other devices to connect
+    socket.emit('server_info', {
+        ip: getLocalIp(),
+        port: PORT,
+        version: VERSION
+    });
+
     // --- GENERIC FULL SYNC (Primary Mechanism) ---
     // Clients send their full state (or partial updates) to be merged
     socket.on('full_state_update', (newState) => {

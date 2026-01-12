@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
+import { useDialog } from '../context/DialogContext';
 import { ChefHat, Clock, CheckCircle, AlertCircle, X } from 'lucide-react';
 import Modal from '../components/Modal';
+import { audioService } from '../services/audioService';
 
 /**
  * PÁGINA: KitchenPage - Pantalla de Cocina/Barra
@@ -17,6 +19,7 @@ import Modal from '../components/Modal';
 
 export const KitchenPage = () => {
     const { data, updateItem, deleteItem, addItem } = useData();
+    const { confirm } = useDialog();
     const [selectedStatus, setSelectedStatus] = useState('all');
     const [viewMode, setViewMode] = useState('active'); // 'active' | 'cancelled'
     const [selectedOrder, setSelectedOrder] = useState(null); // For modal
@@ -25,20 +28,11 @@ export const KitchenPage = () => {
     const kitchenOrders = useMemo(() => data.kitchenOrders || [], [data.kitchenOrders]);
     const cancelledKitchenOrders = useMemo(() => data.cancelledKitchenOrders || [], [data.cancelledKitchenOrders]);
 
-    const playNotificationSound = () => {
-        try {
-            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGGe87OmfTQwRUKfk772hxJXPj+tR4m0TQYd7u44E');
-            audio.play().catch(e => console.log('No se pudo reproducir sonido:', e));
-        } catch (e) {
-            console.log('Error al reproducir sonido:', e);
-        }
-    };
-
     // Sonido de notificación cuando llega orden nueva
     useEffect(() => {
         if (kitchenOrders.length > lastOrderCountRef.current && lastOrderCountRef.current > 0) {
-            // Nueva orden recibida
-            playNotificationSound();
+            // Nueva orden recibida - reproducir sonido
+            audioService.playNewOrderSound();
         }
         lastOrderCountRef.current = kitchenOrders.length;
     }, [kitchenOrders.length]);
@@ -62,6 +56,9 @@ export const KitchenPage = () => {
             }
             // Remove from kitchen
             deleteItem('kitchenOrders', orderId);
+
+            // Reproducir sonido de éxito
+            audioService.playSuccessSound();
         } else {
             // For other status changes (pending -> in-progress)
             updateItem('kitchenOrders', orderId, {
@@ -113,24 +110,36 @@ export const KitchenPage = () => {
         }
     };
 
-    const handleCancelOrder = (orderId) => {
+    const handleCancelOrder = async (orderId) => {
         const order = kitchenOrders.find(o => o.id === orderId);
-        if (order && window.confirm('¿Cancelar esta orden de cocina?')) {
-            const cancelledOrder = {
-                ...order,
-                cancelledAt: new Date().toISOString()
-            };
-            addItem('cancelledKitchenOrders', cancelledOrder);
-            deleteItem('kitchenOrders', orderId);
+        if (order) {
+            const ok = await confirm({
+                title: 'Cancelar Orden',
+                message: '¿Cancelar esta orden de cocina?'
+            });
+            if (ok) {
+                const cancelledOrder = {
+                    ...order,
+                    cancelledAt: new Date().toISOString()
+                };
+                addItem('cancelledKitchenOrders', cancelledOrder);
+                deleteItem('kitchenOrders', orderId);
+            }
         }
     };
 
-    const handleRestoreOrder = (orderId) => {
+    const handleRestoreOrder = async (orderId) => {
         const order = cancelledKitchenOrders.find(o => o.id === orderId);
-        if (order && window.confirm('¿Restaurar esta orden a cocina?')) {
-            const { cancelledAt: _cancelledAt, ...restoredOrder } = order;
-            addItem('kitchenOrders', restoredOrder);
-            deleteItem('cancelledKitchenOrders', orderId);
+        if (order) {
+            const ok = await confirm({
+                title: 'Restaurar Orden',
+                message: '¿Restaurar esta orden a cocina?'
+            });
+            if (ok) {
+                const { cancelledAt: _cancelledAt, ...restoredOrder } = order;
+                addItem('kitchenOrders', restoredOrder);
+                deleteItem('cancelledKitchenOrders', orderId);
+            }
         }
     };
 
@@ -554,9 +563,13 @@ export const KitchenPage = () => {
                             {selectedOrder.tableName !== 'Llevar' && viewMode === 'active' && (
                                 <button
                                     className="glass-button"
-                                    onClick={(e) => {
+                                    onClick={async (e) => {
                                         e.stopPropagation();
-                                        if (window.confirm('¿Marcar orden "Para Llevar"?')) {
+                                        const ok = await confirm({
+                                            title: 'Marcar para Llevar',
+                                            message: '¿Marcar orden "Para Llevar"?'
+                                        });
+                                        if (ok) {
                                             handleMarkAsTakeaway(selectedOrder.id);
                                         }
                                     }}

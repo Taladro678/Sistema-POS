@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
+import { useDialog } from '../context/DialogContext';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import { Plus, AlertTriangle, CheckCircle, Camera, Trash2, X } from 'lucide-react';
@@ -18,6 +19,7 @@ import { Plus, AlertTriangle, CheckCircle, Camera, Trash2, X } from 'lucide-reac
 
 export const InventoryPage = () => {
     const { data, addItem, deleteItem, updateItem, uploadToDrive } = useData();
+    const { confirm, alert } = useDialog();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [photoFile, setPhotoFile] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -42,16 +44,20 @@ export const InventoryPage = () => {
         hasIVA: false
     });
 
-    const handleDelete = (id) => {
-        if (window.confirm('¿Estás seguro de eliminar este ítem?')) {
+    const handleDelete = async (id) => {
+        const ok = await confirm({
+            title: 'Eliminar ítem',
+            message: '¿Estás seguro de eliminar este ítem?'
+        });
+        if (ok) {
             deleteItem('inventory', id);
         }
     };
 
     // Agregar producto a la lista de entrada
-    const handleAddItem = () => {
+    const handleAddItem = async () => {
         if (!newItem.name || !newItem.quantity || !newItem.costPrice) {
-            return alert('Completa nombre, cantidad y precio');
+            return await alert({ title: 'Datos incompletos', message: 'Completa nombre, cantidad y precio' });
         }
 
         const item = {
@@ -101,15 +107,15 @@ export const InventoryPage = () => {
     const handleSaveEntry = async () => {
         // Validaciones
         if (!entryData.supplierId) {
-            return alert('Debes seleccionar un proveedor');
+            return await alert({ title: 'Error', message: 'Debes seleccionar un proveedor' });
         }
 
         if (entryItems.length === 0) {
-            return alert('Debes agregar al menos un producto');
+            return await alert({ title: 'Error', message: 'Debes agregar al menos un producto' });
         }
 
         if (!photoFile) {
-            return alert('⚠️ La foto de la factura es OBLIGATORIA');
+            return await alert({ title: 'Foto requerida', message: '⚠️ La foto de la factura es OBLIGATORIA' });
         }
 
         // Subir foto
@@ -118,7 +124,7 @@ export const InventoryPage = () => {
         setIsUploading(false);
 
         if (!result || !result.webViewLink) {
-            return alert('Error al subir la foto. Intenta de nuevo.');
+            return await alert({ title: 'Error de carga', message: 'Error al subir la foto. Intenta de nuevo.' });
         }
 
         const photoLink = result.webViewLink;
@@ -184,7 +190,7 @@ export const InventoryPage = () => {
         setEntryItems([]);
         setPhotoFile(null);
 
-        alert('✅ Entrada registrada exitosamente');
+        await alert({ title: 'Éxito', message: '✅ Entrada registrada exitosamente' });
     };
 
     const columns = [

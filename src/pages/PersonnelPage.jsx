@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
+import { useDialog } from '../context/DialogContext';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import { UserPlus, FileText, DollarSign, Trash2, Gift } from 'lucide-react';
 
 export const PersonnelPage = () => {
     const { data, addItem, deleteItem, distributeTips, updateItem } = useData();
+    const { confirm, alert } = useDialog();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isTipsModalOpen, setIsTipsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
@@ -18,8 +20,12 @@ export const PersonnelPage = () => {
         paymentFrequency: 'Mensual'
     });
 
-    const handleDelete = (id) => {
-        if (window.confirm('¿Estás seguro de eliminar a este empleado? Esta acción no se puede deshacer.')) {
+    const handleDelete = async (id) => {
+        const ok = await confirm({
+            title: 'Eliminar Empleado',
+            message: '¿Estás seguro de eliminar a este empleado? Esta acción no se puede deshacer.'
+        });
+        if (ok) {
             deleteItem('personnel', id);
         }
     };
@@ -33,8 +39,8 @@ export const PersonnelPage = () => {
         setIsModalOpen(true);
     };
 
-    const handleSave = () => {
-        if (!formData.name) return alert('El nombre es obligatorio');
+    const handleSave = async () => {
+        if (!formData.name) return await alert({ title: 'Error', message: 'El nombre es obligatorio' });
 
         const employeeData = { ...formData, salary: parseFloat(formData.salary) || 0 };
 
@@ -135,9 +141,11 @@ export const PersonnelPage = () => {
             } else {
                 // If upload failed but we proceed, or if we want to block. 
                 // For now let's alert and return if upload was expected but failed.
-                if (!window.confirm('No se pudo subir el comprobante. ¿Deseas registrar el pago sin comprobante?')) {
-                    return;
-                }
+                const ok = await confirm({
+                    title: 'Error de comprobante',
+                    message: 'No se pudo subir el comprobante. ¿Deseas registrar el pago sin comprobante?'
+                });
+                if (!ok) return;
             }
         }
 
@@ -147,7 +155,10 @@ export const PersonnelPage = () => {
         // For now, we update the employee record
         updateItem('personnel', selectedEmployee.id, { lastPayment: today });
 
-        alert(`Pago registrado para ${selectedEmployee.name}. Comprobante: ${receiptLink !== 'N/A' ? 'Subido a Drive' : 'No adjuntado'}`);
+        await alert({
+            title: 'Pago Registrado',
+            message: `Pago registrado para ${selectedEmployee.name}. Comprobante: ${receiptLink !== 'N/A' ? 'Subido a Drive' : 'No adjuntado'}`
+        });
         setIsPaymentModalOpen(false);
     };
 
@@ -324,6 +335,7 @@ export const PersonnelPage = () => {
 
 // Extracted Component for Tip Management to handle internal tab state
 const TipManagementModalContent = ({ data, distributeTips, onClose }) => {
+    const { confirm, alert } = useDialog();
     const [activeTab, setActiveTab] = useState('current'); // 'current' or 'history'
     const [expandedHistoryId, setExpandedHistoryId] = useState(null);
 
@@ -416,11 +428,15 @@ const TipManagementModalContent = ({ data, distributeTips, onClose }) => {
                     <button
                         className="glass-button accent"
                         style={{ padding: '1rem', marginTop: '1rem' }}
-                        onClick={() => {
-                            if (window.confirm('¿Estás seguro de distribuir las propinas? Se guardará una copia en el Historial.')) {
+                        onClick={async () => {
+                            const ok = await confirm({
+                                title: 'Distribuir Propinas',
+                                message: '¿Estás seguro de distribuir las propinas? Se guardará una copia en el Historial.'
+                            });
+                            if (ok) {
                                 distributeTips();
                                 onClose();
-                                alert('Propinas distribuidas y archivadas en el Historial.');
+                                await alert({ title: 'Éxito', message: 'Propinas distribuidas y archivadas en el Historial.' });
                             }
                         }}
                         disabled={(data.tips || 0) === 0}

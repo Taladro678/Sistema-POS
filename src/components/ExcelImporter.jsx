@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
+import { useDialog } from '../context/DialogContext';
 import { Upload, FileSpreadsheet, Loader } from 'lucide-react';
 
 /**
@@ -10,6 +11,7 @@ import { Upload, FileSpreadsheet, Loader } from 'lucide-react';
  */
 const ExcelImporter = (props) => {
     const { onDataLoaded, buttonText = "Importar Excel", templateName = "datos" } = props;
+    const { alert } = useDialog();
     const fileInputRef = useRef(null);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -30,8 +32,8 @@ const ExcelImporter = (props) => {
             // Clean input to allow re-uploading same file fix
             e.target.value = '';
         } catch (error) {
-            console.error("Error importando excel:", error);
-            alert(`Error al leer el archivo excel: ${error.message}`);
+            console.error(`Error importando ${templateName}:`, error);
+            await alert({ title: `Error Importando ${templateName}`, message: `Error al leer el archivo excel: ${error.message}` });
         } finally {
             setIsLoading(false);
         }

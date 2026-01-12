@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
+import { useDialog } from '../context/DialogContext';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import ExcelImporter from '../components/ExcelImporter';
@@ -9,6 +10,7 @@ import { CategoriesPage } from './CategoriesPage';
 
 export const ProductsPage = () => {
     const { data, addItem, updateItem, deleteItem, updateData } = useData();
+    const { confirm, alert } = useDialog();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [photoFile, setPhotoFile] = useState(null);
@@ -47,22 +49,34 @@ export const ProductsPage = () => {
         setIsModalOpen(true);
     };
 
-    const handleDelete = (id) => {
-        if (window.confirm('¿Estás seguro de eliminar este producto? Se borrará del POS inmediatamente.')) {
+    const handleDelete = async (id) => {
+        const ok = await confirm({
+            title: 'Eliminar Producto',
+            message: '¿Estás seguro de eliminar este producto? Se borrará del POS inmediatamente.'
+        });
+        if (ok) {
             deleteItem('products', id);
         }
     };
 
-    const handleDeleteAll = () => {
-        if (window.confirm('⚠️ PELIGRO: ¿Estás seguro de que quieres BORRAR TODOS los productos?\n\nEsta acción eliminará todo el inventario de productos permanentemente y no se puede deshacer.')) {
-            if (window.confirm('Confirmación final: ¿Realmente deseas vaciar la lista de productos?')) {
+    const handleDeleteAll = async () => {
+        const ok = await confirm({
+            title: '⚠️ PELIGRO: Borrar Todo',
+            message: '¿Estás seguro de que quieres BORRAR TODOS los productos?\n\nEsta acción eliminará todo el inventario de productos permanentemente y no se puede deshacer.'
+        });
+        if (ok) {
+            const finalOk = await confirm({
+                title: 'Confirmación Final',
+                message: '¿Realmente deseas vaciar la lista de productos?'
+            });
+            if (finalOk) {
                 updateData('products', []);
             }
         }
     };
 
     const handleSave = async () => {
-        if (!formData.name || !formData.price) return alert('Nombre y Precio son obligatorios');
+        if (!formData.name || !formData.price) return await alert({ title: 'Campos requeridos', message: 'Nombre y Precio son obligatorios' });
 
         let imageLink = formData.image;
 
@@ -74,9 +88,11 @@ export const ProductsPage = () => {
             if (result && result.webViewLink) {
                 imageLink = result.webViewLink;
             } else {
-                if (!window.confirm('No se pudo subir la foto. ¿Deseas guardar sin actualizar la foto?')) {
-                    return;
-                }
+                const ok = await confirm({
+                    title: 'Error de carga',
+                    message: 'No se pudo subir la foto. ¿Deseas guardar sin actualizar la foto?'
+                });
+                if (!ok) return;
             }
         }
 
@@ -130,6 +146,88 @@ export const ProductsPage = () => {
         });
         setPhotoFile(null);
         setSuggestedCategory(null);
+    };
+
+    const handleImportData = async (excelData) => {
+        let successCount = 0;
+        let autoCategorized = 0;
+        console.log("Raw Excel Data:", excelData.slice(0, 5));
+
+        for (const row of excelData) {
+            let rawSymbol = row['A'];
+            let rawName = row['B'];
+            let rawCost = row['K'];
+            let rawPrice = row['N'];
+
+            if (!rawName && rawSymbol && String(rawSymbol).length > 3) {
+                rawName = rawSymbol;
+            }
+
+            if (!rawName) continue;
+
+            let strName = String(rawName).trim();
+            if (strName === 'Nombre' || strName === 'NOMBRE') continue;
+
+            const skipKeywords = ['Periodo Mensual', 'Existencia Inicial', 'Ordenes de', 'Facturas Ventas', 'Notas de', 'Recep. de', 'Existencia Final', 'Total'];
+            if (skipKeywords.some(kw => strName.includes(kw))) continue;
+            if (/^\d+$/.test(strName)) continue;
+
+            let cleanName = strName.replace(/^[+\-*]\s*/, '').trim();
+            if (!cleanName) continue;
+
+            const parseCurrency = (val) => {
+                if (typeof val === 'number') return val;
+                if (typeof val === 'string') {
+                    let cleanVal = val.replace(/[^\d,.-]/g, '');
+                    cleanVal = cleanVal.replace(',', '.');
+                    return parseFloat(cleanVal) || 0;
+                }
+                return 0;
+            };
+
+            let price = parseCurrency(rawPrice);
+            if (price === 0 && row['O']) price = parseCurrency(row['O']);
+            const cost = parseCurrency(rawCost);
+
+            let category = '';
+            if (data.categories && data.categories.length > 0) {
+                const suggestion = suggestCategory(cleanName, data.categories);
+                if (suggestion && suggestion.confidence !== 'low') {
+                    category = suggestion.id;
+                    autoCategorized++;
+                }
+            }
+
+            addItem('products', {
+                name: cleanName,
+                price: price,
+                costPrice: cost,
+                stock: 0,
+                category: category,
+                image: '',
+                showInPOS: true
+            });
+            successCount++;
+        }
+
+        setShowImportModal(false);
+
+        if (successCount === 0) {
+            const firstRow = excelData.find(r => r['B'] && String(r['B']).length > 3) || excelData[0];
+            await alert({
+                title: 'Importación Fallida',
+                message: `⚠️ No se importaron productos.\n\n` +
+                    `Depuración (Fila Ejemplo): ${JSON.stringify(firstRow)}\n\n` +
+                    `El sistema buscó el nombre en la Columna B y el precio en la Columna N.`
+            });
+        } else {
+            await alert({
+                title: 'Importación Exitosa',
+                message: `✅ Importación completada\n\n` +
+                    `Productos procesados: ${successCount} \n` +
+                    `Categorizados automáticamente: ${autoCategorized}`
+            });
+        }
     };
 
     const filteredProducts = (data.products || []).filter(p =>
@@ -691,113 +789,7 @@ export const ProductsPage = () => {
                                 buttonText="Seleccionar Archivo Excel"
                                 templateName="productos"
                                 sheetToJsonOptions={{ header: "A", defval: "" }} // Usar letras de columna (A, B, C...)
-                                onDataLoaded={(excelData) => {
-                                    let successCount = 0;
-                                    let autoCategorized = 0;
-
-                                    // Debug: Mostrar las primeras filas para entender qué está leyendo
-                                    console.log("Raw Excel Data:", excelData.slice(0, 5));
-
-                                    excelData.forEach(row => {
-                                        // Mapeo Confirmado por Debug Script:
-                                        // A: Símbolo (+, -, *)
-                                        // B: Nombre del Producto
-                                        // K: Costo
-                                        // N: Precio
-
-                                        let rawSymbol = row['A'];
-                                        let rawName = row['B'];
-                                        let rawCost = row['K'];
-                                        let rawPrice = row['N'];
-
-                                        // Fallback: Si B está vacío, quizás el nombre está en A (si no hay símbolo)
-                                        if (!rawName && rawSymbol && String(rawSymbol).length > 3) {
-                                            rawName = rawSymbol;
-                                        }
-
-                                        // Validaciones y Limpieza
-                                        if (!rawName) return;
-
-                                        let strName = String(rawName).trim();
-
-                                        // Ignorar fila de encabezados si se leyó como datos
-                                        if (strName === 'Nombre' || strName === 'NOMBRE') return;
-
-                                        // Filtrar filas basura del reporte
-                                        const skipKeywords = ['Periodo Mensual', 'Existencia Inicial', 'Ordenes de', 'Facturas Ventas', 'Notas de', 'Recep. de', 'Existencia Final', 'Total'];
-                                        if (skipKeywords.some(kw => strName.includes(kw))) return;
-
-                                        // Filtrar filas que son solo números
-                                        if (/^\d+$/.test(strName)) return;
-
-                                        // Limpiar el nombre (quitar +, -, * al inicio)
-                                        let cleanName = strName.replace(/^[\+\-\*]\s*/, '').trim();
-
-                                        if (!cleanName) return;
-
-                                        // Parsear Moneda
-                                        const parseCurrency = (val) => {
-                                            if (typeof val === 'number') return val;
-                                            if (typeof val === 'string') {
-                                                let cleanVal = val.replace(/[^\d,.-]/g, '');
-                                                cleanVal = cleanVal.replace(',', '.');
-                                                return parseFloat(cleanVal) || 0;
-                                            }
-                                            return 0;
-                                        };
-
-                                        // Intentar leer precio de N, si es 0 probar O (por si acaso)
-                                        let price = parseCurrency(rawPrice);
-                                        if (price === 0 && row['O']) {
-                                            price = parseCurrency(row['O']);
-                                        }
-
-                                        const cost = parseCurrency(rawCost);
-
-                                        // Categorización
-                                        let category = ''; // No hay columna de categoría en el reporte visualizado
-                                        if (data.categories && data.categories.length > 0) {
-                                            const suggestion = suggestCategory(cleanName, data.categories);
-                                            if (suggestion && suggestion.confidence !== 'low') {
-                                                category = suggestion.id;
-                                                autoCategorized++;
-                                            } else {
-                                                category = ''; // Dejar vacío si no hay sugerencia clara
-                                            }
-                                        }
-
-                                        // Crear Producto
-                                        const newProduct = {
-                                            name: cleanName,
-                                            price: price,
-                                            costPrice: cost,
-                                            stock: 0,
-                                            category: category,
-                                            image: '',
-                                            showInPOS: true
-                                        };
-
-                                        addItem('products', newProduct);
-                                        successCount++;
-                                    });
-
-                                    setShowImportModal(false);
-
-                                    if (successCount === 0) {
-                                        const firstRow = excelData.find(r => r['B'] && String(r['B']).length > 3) || excelData[0];
-                                        alert(
-                                            `⚠️ No se importaron productos.\n\n` +
-                                            `Depuración (Fila Ejemplo): ${JSON.stringify(firstRow)}\n\n` +
-                                            `El sistema buscó el nombre en la Columna B y el precio en la Columna N.`
-                                        );
-                                    } else {
-                                        alert(
-                                            `✅ Importación completada\n\n` +
-                                            `Productos procesados: ${successCount} \n` +
-                                            `Categorizados automáticamente: ${autoCategorized}`
-                                        );
-                                    }
-                                }}
+                                onDataLoaded={handleImportData}
                             />
                         </div>
                     </Modal>

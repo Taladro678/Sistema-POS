@@ -1,6 +1,4 @@
 const cordova = require('cordova-bridge');
-const { fork } = require('child_process');
-const path = require('path');
 
 /**
  * NATIVE BRIDGE ENTRY POINT
@@ -12,16 +10,18 @@ cordova.channel.on('message', (msg) => {
 
 console.log('🚀 Iniciando Servidor POS Interno...');
 
-// Fork the existing server/index.js (adapted for Android)
-try {
-    // Set environment flag
-    process.env.NODE_PLATFORM = 'android';
+// Load the ESM server using dynamic import
+(async () => {
+    try {
+        // Set environment flag
+        process.env.NODE_PLATFORM = 'android';
 
-    // Require the actual server logic
-    require('./server/index.js');
+        // Dynamic import for ESM compatibility
+        await import('../server/index.js');
 
-    cordova.channel.send('Servidor iniciado correctamente desde APK');
-} catch (e) {
-    console.error('❌ Error fatal iniciando servidor interno:', e);
-    cordova.channel.send('Error iniciando servidor: ' + e.message);
-}
+        cordova.channel.send('Servidor iniciado correctamente desde APK');
+    } catch (e) {
+        console.error('❌ Error fatal iniciando servidor interno:', e);
+        cordova.channel.send('Error iniciando servidor: ' + e.message);
+    }
+})();

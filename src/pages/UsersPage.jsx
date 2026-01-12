@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
+import { useDialog } from '../context/DialogContext';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import { UserPlus, Shield, Trash2, Key, Edit } from 'lucide-react';
 
 export const UsersPage = () => {
     const { data, addItem, deleteItem, updateItem } = useData();
+    const { confirm, alert } = useDialog();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
 
@@ -16,8 +18,12 @@ export const UsersPage = () => {
         permissions: []
     });
 
-    const handleDelete = (id) => {
-        if (window.confirm('¿Estás seguro de eliminar este usuario? Perderá el acceso al sistema.')) {
+    const handleDelete = async (id) => {
+        const ok = await confirm({
+            title: 'Eliminar Usuario',
+            message: '¿Estás seguro de eliminar este usuario? Perderá el acceso al sistema.'
+        });
+        if (ok) {
             deleteItem('users', id);
         }
     };
@@ -33,13 +39,13 @@ export const UsersPage = () => {
         setIsModalOpen(true);
     };
 
-    const handleSave = () => {
-        if (!formData.name) return alert('El nombre es obligatorio');
-        if (!formData.pin || formData.pin.length < 4) return alert('El PIN debe tener al menos 4 dígitos');
+    const handleSave = async () => {
+        if (!formData.name) return await alert({ title: 'Error', message: 'El nombre es obligatorio' });
+        if (!formData.pin || formData.pin.length < 4) return await alert({ title: 'Error', message: 'El PIN debe tener al menos 4 dígitos' });
 
         // Check for duplicate PIN (exclude current user if editing)
         const pinExists = data.users?.some(u => u.pin === formData.pin && u.id !== editingId);
-        if (pinExists) return alert('Este PIN ya está en uso por otro usuario.');
+        if (pinExists) return await alert({ title: 'Error', message: 'Este PIN ya está en uso por otro usuario.' });
 
         if (editingId) {
             updateItem('users', editingId, formData);

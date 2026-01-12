@@ -5,6 +5,7 @@ import './styles/glassmorphism.css'
 import './styles/responsive.css'
 import App from './App.jsx'
 import { ToastProvider } from './context/ToastContext'
+import { DialogProvider } from './context/DialogContext'
 
 console.log('Main.jsx is running');
 try {
@@ -18,7 +19,9 @@ try {
   createRoot(rootElement).render(
     <StrictMode>
       <ToastProvider>
-        <App />
+        <DialogProvider>
+          <App />
+        </DialogProvider>
       </ToastProvider>
     </StrictMode>,
   )

@@ -612,6 +612,54 @@ textarea {
   /* lighter input bg focus */
 }
 
+/* VS Code Theme Utility Classes */
+.vscode-input {
+  background: var(--vscode-input) !important;
+  border: 1px solid var(--vscode-border) !important;
+  color: var(--vscode-text-bright) !important;
+  border-radius: 4px !important;
+  padding: 4px 8px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.vscode-input:focus {
+  border-color: var(--vscode-highlight) !important;
+}
+
+.vscode-select {
+  background: var(--vscode-input) !important;
+  border: 1px solid var(--vscode-border) !important;
+  color: var(--vscode-text-bright) !important;
+  border-radius: 4px !important;
+  padding: 4px 8px;
+  outline: none;
+}
+
+.primary-button {
+  background: var(--vscode-highlight) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 4px !important;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.primary-button:hover {
+  background: #006ebc !important;
+  filter: brightness(1.1);
+}
+
+.primary-button:active {
+  transform: translateY(1px);
+}
+
+.primary-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .glass-button {
   background: #333333;
   /* button face */

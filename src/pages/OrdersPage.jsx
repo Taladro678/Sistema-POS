@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
+import { useDialog } from '../context/DialogContext';
 import { Users, Coffee, CheckCircle, Clock, Edit2, Plus, Trash2, LayoutGrid, History, ShoppingBag, Flag } from 'lucide-react';
 import Modal from '../components/Modal';
 
 export const OrdersPage = () => {
     const { data, updateItem, addItem, deleteItem, cancelHeldOrder } = useData();
+    const { confirm } = useDialog();
     const navigate = useNavigate();
     const tables = data.tables || [];
 
@@ -38,15 +40,19 @@ export const OrdersPage = () => {
         setTableArea(table.area || 'Restaurante');
     };
 
-    const handleCancelOrder = (e, table) => {
+    const handleCancelOrder = async (e, table) => {
         e.stopPropagation();
         if (table.status !== 'occupied') return;
 
-        if (window.confirm(`¿Estás seguro de CANCELAR el pedido de la ${table.name}? Esta acción no se puede deshacer y liberará la mesa.`)) {
+        const ok = await confirm({
+            title: 'Cancelar Pedido',
+            message: `¿Estás seguro de CANCELAR el pedido de la ${table.name}? Esta acción no se puede deshacer y liberará la mesa.`
+        });
+
+        if (ok) {
             if (table.currentOrderId) {
                 cancelHeldOrder(table.currentOrderId);
             } else {
-                // Should not happen, but fallback to force free
                 updateItem('tables', table.id, { status: 'available', currentOrderId: null });
             }
         }
@@ -62,9 +68,13 @@ export const OrdersPage = () => {
         }
     };
 
-    const handleDeleteTable = () => {
+    const handleDeleteTable = async () => {
         if (editingTable) {
-            if (window.confirm(`¿Estás seguro de eliminar "${editingTable.name}"?`)) {
+            const ok = await confirm({
+                title: 'Eliminar Mesa',
+                message: `¿Estás seguro de eliminar "${editingTable.name}"?`
+            });
+            if (ok) {
                 deleteItem('tables', editingTable.id);
                 setEditingTable(null);
             }
@@ -367,9 +377,13 @@ export const OrdersPage = () => {
                                             </button>
                                         )}
                                         <button
-                                            onClick={(e) => {
+                                            onClick={async (e) => {
                                                 e.stopPropagation();
-                                                if (window.confirm('¿Cancelar este pedido?')) {
+                                                const ok = await confirm({
+                                                    title: 'Cancelar Pedido',
+                                                    message: '¿Cancelar este pedido?'
+                                                });
+                                                if (ok) {
                                                     cancelHeldOrder(order.id);
                                                 }
                                             }}
@@ -465,27 +479,33 @@ export const OrdersPage = () => {
 
 const TrashModal = ({ isOpen, onClose }) => {
     const { data, restoreCancelledOrder, permanentlyDeleteOrder, updateItem } = useData();
+    const { confirm, alert } = useDialog();
 
     // Filter ONLY cancelled orders that belong to a table
     const tableCancelledOrders = (data.cancelledOrders || [])
         .filter(order => order.tableId)
         .sort((a, b) => new Date(b.cancelledAt) - new Date(a.cancelledAt));
 
-    const handleRestore = (order) => {
+    const handleRestore = async (order) => {
         // Find if the table is currently available
         const currentTable = data.tables.find(t => t.id === order.tableId);
 
         if (!currentTable) {
-            alert('La mesa original ya no existe.');
+            await alert({ title: 'Error', message: 'La mesa original ya no existe.' });
             return;
         }
 
         if (currentTable.status !== 'available') {
-            alert(`No se puede restaurar: La mesa "${currentTable.name}" está ocupada actualmente.`);
+            await alert({ title: 'Aviso', message: `No se puede restaurar: La mesa "${currentTable.name}" está ocupada actualmente.` });
             return;
         }
 
-        if (window.confirm(`¿Restaurar pedido de ${currentTable.name}?`)) {
+        const ok = await confirm({
+            title: 'Restaurar Pedido',
+            message: `¿Restaurar pedido de ${currentTable.name}?`
+        });
+
+        if (ok) {
             // Restore order
             restoreCancelledOrder(order.id);
             // Re-occupy the table
@@ -498,8 +518,12 @@ const TrashModal = ({ isOpen, onClose }) => {
         }
     };
 
-    const handleDelete = (orderId) => {
-        if (window.confirm('¿Eliminar permanentemente este registro?')) {
+    const handleDelete = async (orderId) => {
+        const ok = await confirm({
+            title: 'Eliminar Permanente',
+            message: '¿Eliminar permanentemente este registro?'
+        });
+        if (ok) {
             permanentlyDeleteOrder(orderId);
         }
     }
@@ -581,10 +605,16 @@ const TrashModal = ({ isOpen, onClose }) => {
 
 const AssignTableModal = ({ isOpen, onClose, order }) => {
     const { data, updateItem } = useData();
+    const { confirm } = useDialog();
     const availableTables = (data.tables || []).filter(t => t.status === 'available');
 
-    const handleAssign = (table) => {
-        if (window.confirm(`¿Asignar este pedido a la ${table.name}?`)) {
+    const handleAssign = async (table) => {
+        const ok = await confirm({
+            title: 'Asignar Mesa',
+            message: `¿Asignar este pedido a la ${table.name}?`
+        });
+
+        if (ok) {
             // 1. Update the order in heldOrders
             updateItem('heldOrders', order.id, {
                 tableId: table.id,

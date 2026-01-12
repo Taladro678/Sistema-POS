@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { X, Save, AlertTriangle } from 'lucide-react';
 import { useData } from '../context/DataContext';
+import { useDialog } from '../context/DialogContext';
 
 /**
  * Modal para actualización masiva de precio de costo y stock de productos
  */
 const BulkUpdateModal = ({ isOpen, onClose, products }) => {
     const { updateItem } = useData();
+    const { alert } = useDialog();
     const [editedProducts, setEditedProducts] = useState(
         products.map(p => ({
             id: p.id,
@@ -26,7 +28,7 @@ const BulkUpdateModal = ({ isOpen, onClose, products }) => {
         );
     };
 
-    const handleSaveAll = () => {
+    const handleSaveAll = async () => {
         setIsSaving(true);
 
         // Actualizar cada producto
@@ -40,7 +42,10 @@ const BulkUpdateModal = ({ isOpen, onClose, products }) => {
         });
 
         setIsSaving(false);
-        alert(`✅ Se actualizaron ${editedProducts.length} productos correctamente`);
+        await alert({
+            title: 'Actualización Exitosa',
+            message: `✅ Se actualizaron ${editedProducts.length} productos correctamente`
+        });
         onClose();
     };
 

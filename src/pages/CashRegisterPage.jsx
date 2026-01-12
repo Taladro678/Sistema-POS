@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useData } from '../context/DataContext';
+import { useDialog } from '../context/DialogContext';
 import {
     DollarSign, Save, RefreshCw, Calculator, TrendingUp, AlertCircle,
     CheckCircle, Edit2, X, Calendar, ArrowUpRight, ArrowDownRight,
@@ -60,6 +61,7 @@ const PaymentRow = ({ label, amount, color }) => (
 
 export const CashRegisterPage = () => {
     const { data, updateData, updateExchangeRate } = useData();
+    const { confirm, alert } = useDialog();
     const { exchangeRate, cashRegister, sales } = data || {};
     const safeSales = useMemo(() => Array.isArray(sales) ? sales : [], [sales]);
 
@@ -189,41 +191,70 @@ export const CashRegisterPage = () => {
         return safeSales.filter(s => new Date(s.date).toDateString() === today);
     }, [safeSales]);
 
-    const salesByMethod = dailySales.reduce((acc, sale) => {
-        acc[sale.paymentMethod] = (acc[sale.paymentMethod] || 0) + sale.total;
-        return acc;
-    }, {});
+    // Unified reduction logic for all breakdowns
+    const { methods, totalCashBs, totalCashUsd } = useMemo(() => {
+        const result = {
+            methods: {},
+            totalCashBs: 0,
+            totalCashUsd: 0
+        };
 
-    const banplus = salesByMethod['Banplus'] || 0;
-    const pagoMovil = salesByMethod['Pago Móvil'] || 0;
-    const bancaribe = salesByMethod['Bancaribe'] || 0;
-    const banesco = salesByMethod['Banesco'] || 0;
-    const zelle = salesByMethod['Zelle'] || 0;
-    const cashBs = salesByMethod['Efectivo Bs'] || 0;
-    const cashUsd = salesByMethod['USD ($)'] || 0;
+        dailySales.forEach(sale => {
+            if (sale.payments && Array.isArray(sale.payments)) {
+                sale.payments.forEach(p => {
+                    const label = p.method;
+                    const usdValue = p.currency === 'Bs' ? p.amount / (p.rate || exchangeRate) : p.amount;
+                    result.methods[label] = (result.methods[label] || 0) + usdValue;
+
+                    if (p.currency === 'Bs') {
+                        if (label === 'Efectivo Bs') result.totalCashBs += p.amount;
+                    } else {
+                        if (label === 'USD ($)' || label === 'usd') result.totalCashUsd += p.amount;
+                    }
+                });
+            } else {
+                // Fallback for old sales
+                const label = sale.paymentMethod || 'Otros';
+                result.methods[label] = (result.methods[label] || 0) + sale.total;
+                if (label.includes('Bs') || label.includes('Pago Móvil') || ['Banplus', 'Bancaribe', 'Banesco'].includes(label)) {
+                    const bsAmt = (sale.total * exchangeRate);
+                    if (label === 'Efectivo Bs') result.totalCashBs += bsAmt;
+                } else {
+                    if (label === 'USD ($)' || label === 'usd') result.totalCashUsd += sale.total;
+                }
+            }
+        });
+        return result;
+    }, [dailySales, exchangeRate]);
+
+    const banks = (methods['Banplus'] || 0) + (methods['Bancaribe'] || 0) + (methods['Banesco'] || 0) + (methods['Punto de Venta'] || 0) + (methods['Punto'] || 0);
+    const pms = (methods['Pago movil Banesco PS'] || 0) + (methods['Pago Movil Banesco Raquel'] || 0) + (methods['Pago Movil BDV PS'] || 0) + (methods['Pago Movil Banplus'] || 0) + (methods['Pago Móvil'] || 0);
+    const zelle = methods['Zelle'] || 0;
+    const cashBsUsdEq = methods['Efectivo Bs'] || 0;
+    const cashUsd = methods['USD ($)'] || methods['usd'] || 0;
 
     const pieData = useMemo(() => {
-        const raw = [
-            { name: 'Punto', value: banplus + bancaribe + banesco, color: '#3b82f6' },
-            { name: 'Pago Móvil', value: pagoMovil, color: '#60a5fa' },
+        const chartData = [
+            { name: 'Bancos/Punto', value: banks, color: '#3b82f6' },
+            { name: 'Pago Móvil', value: pms, color: '#60a5fa' },
             { name: 'Zelle', value: zelle, color: '#a78bfa' },
             { name: 'Efectivo $', value: cashUsd, color: '#22c55e' },
-            { name: 'Efectivo Bs', value: cashBs / exchangeRate, color: '#4ade80' },
+            { name: 'Efectivo Bs', value: cashBsUsdEq, color: '#4ade80' },
         ].filter(d => d.value > 0);
 
-        return raw.length > 0 ? raw : [{ name: 'Sin Ventas', value: 1, color: 'rgba(255,255,255,0.05)' }];
-    }, [banplus, bancaribe, banesco, pagoMovil, zelle, cashUsd, cashBs, exchangeRate]);
+        return chartData.length > 0 ? chartData : [{ name: 'Sin Ventas', value: 1, color: 'rgba(255,255,255,0.05)' }];
+    }, [banks, pms, zelle, cashUsd, cashBsUsdEq]);
 
     const totalDailySalesUsd = dailySales.reduce((acc, s) => acc + s.total, 0);
 
-    const expectedCashBs = openingBs + (cashBs * exchangeRate) - withdrawalsBs;
-    const expectedCashUsd = openingUsd + cashUsd - withdrawalsUsd;
+    const expectedCashBs = openingBs + totalCashBs - withdrawalsBs;
+    const expectedCashUsd = openingUsd + totalCashUsd - withdrawalsUsd;
 
     const diffBs = countedCashBs - expectedCashBs;
     const diffUsd = countedCashUsd - expectedCashUsd;
 
     // Handlers
-    const handleSaveOpening = () => {
+    const handleSaveOpening = async () => {
         updateData('cashRegister', {
             ...cashRegister,
             openingBalanceBs: parseFloat(openingBs) || 0,
@@ -231,21 +262,25 @@ export const CashRegisterPage = () => {
             isOpen: true,
             openingTime: cashRegister.isOpen ? cashRegister.openingTime : new Date().toISOString()
         });
-        alert('Fondo de apertura guardado.');
+        await alert({ title: 'Éxito', message: 'Fondo de apertura guardado.' });
     };
 
-    const handleSaveWithdrawals = () => {
+    const handleSaveWithdrawals = async () => {
         updateData('cashRegister', {
             ...cashRegister,
             withdrawalsBs: parseFloat(withdrawalsBs) || 0,
             withdrawalsUsd: parseFloat(withdrawalsUsd) || 0,
             withdrawalComment: withdrawalComment
         });
-        alert('Movimientos guardados.');
+        await alert({ title: 'Éxito', message: 'Movimientos guardados.' });
     };
 
-    const handleCloseRegister = () => {
-        if (!window.confirm('¿Estás seguro de cerrar la caja? Esto finalizará el turno actual.')) return;
+    const handleCloseRegister = async () => {
+        const ok = await confirm({
+            title: 'Cerrar Caja',
+            message: '¿Estás seguro de cerrar la caja? Esto finalizará el turno actual.'
+        });
+        if (!ok) return;
         updateData('cashRegister', {
             ...cashRegister,
             closingBalanceBs: parseFloat(countedCashBs) || 0,
@@ -254,7 +289,7 @@ export const CashRegisterPage = () => {
             status: 'closed',
             isOpen: false
         });
-        alert('Caja cerrada exitosamente.');
+        await alert({ title: 'Éxito', message: 'Caja cerrada exitosamente.' });
     };
 
     const handleUpdateRate = () => {
@@ -430,11 +465,11 @@ export const CashRegisterPage = () => {
                         <div className="bg-white/5 rounded-lg p-3 border border-white/5">
                             <div className="flex justify-between items-center mb-1">
                                 <span className="text-[10px] text-gray-400 uppercase font-bold">Ventas Efectivo</span>
-                                <span className="text-green-400 font-bold text-sm">+${(cashUsd + (cashBs / exchangeRate)).toFixed(2)}</span>
+                                <span className="text-green-400 font-bold text-sm">+${(totalCashUsd + (totalCashBs / exchangeRate)).toFixed(2)}</span>
                             </div>
                             <div className="flex justify-end gap-3 text-[10px] text-gray-500">
-                                <span>Bs {(cashBs * exchangeRate).toFixed(2)}</span>
-                                <span>$ {cashUsd.toFixed(2)}</span>
+                                <span>Bs {totalCashBs.toFixed(2)}</span>
+                                <span>$ {totalCashUsd.toFixed(2)}</span>
                             </div>
                         </div>
 
@@ -669,8 +704,8 @@ export const CashRegisterPage = () => {
                             <div>
                                 <div className="text-[10px] text-blue-400 font-bold mb-2 uppercase tracking-wider">Métodos Digitales</div>
                                 <div className="space-y-1.5">
-                                    <PaymentRow label="Punto" amount={banplus + bancaribe + banesco} color="#3b82f6" />
-                                    <PaymentRow label="Pago Móvil" amount={pagoMovil} color="#60a5fa" />
+                                    <PaymentRow label="Bancos/Punto" amount={banks} color="#3b82f6" />
+                                    <PaymentRow label="Pago Móvil" amount={pms} color="#60a5fa" />
                                     <PaymentRow label="Zelle" amount={zelle} color="#a78bfa" />
                                 </div>
                             </div>
@@ -678,7 +713,7 @@ export const CashRegisterPage = () => {
                                 <div className="text-[10px] text-green-400 font-bold mb-2 uppercase tracking-wider">Efectivo</div>
                                 <div className="space-y-1.5">
                                     <PaymentRow label="Dólares ($)" amount={cashUsd} color="#22c55e" />
-                                    <PaymentRow label="Bolívares (Bs)" amount={cashBs / exchangeRate} color="#4ade80" />
+                                    <PaymentRow label="Bolívares (Bs)" amount={cashBsUsdEq} color="#4ade80" />
                                 </div>
                             </div>
                         </div>

@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
+import { useDialog } from '../context/DialogContext';
 import { UserCircle, Plus, Edit, Trash2, Phone, Mail, MapPin, CreditCard, BarChart2 } from 'lucide-react';
 import Modal from '../components/Modal';
 import ExcelImporter from '../components/ExcelImporter';
 
 export const CustomersPage = () => {
     const { data, addItem, updateItem, deleteItem } = useData();
+    const { confirm, alert } = useDialog();
     const navigate = useNavigate();
     const customers = data.customers || [];
 
@@ -46,8 +48,12 @@ export const CustomersPage = () => {
         setIsModalOpen(true);
     };
 
-    const handleDelete = (id) => {
-        if (window.confirm('¿Eliminar este cliente?')) {
+    const handleDelete = async (id) => {
+        const ok = await confirm({
+            title: 'Eliminar Cliente',
+            message: '¿Estás seguro de eliminar este cliente?'
+        });
+        if (ok) {
             deleteItem('customers', id);
         }
     };
@@ -60,7 +66,7 @@ export const CustomersPage = () => {
 
     const handleImport = async (data) => {
         if (!data || data.length === 0) {
-            alert("El archivo no contiene datos.");
+            await alert({ title: 'Importación', message: "El archivo no contiene datos." });
             return;
         }
 
@@ -95,7 +101,10 @@ export const CustomersPage = () => {
             importedCount++;
         }
 
-        alert(`Importación completada.\n✅ Importados: ${importedCount}\n⚠️ Omitidos (sin nombre): ${errorCount}`);
+        await alert({
+            title: 'Importación Completada',
+            message: `✅ Importados: ${importedCount}\n⚠️ Omitidos (sin nombre): ${errorCount}`
+        });
     };
 
     return (
