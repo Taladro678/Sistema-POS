@@ -9,7 +9,7 @@ import Modal from '../components/Modal';
 import { ShoppingBag, X, Search, ChevronDown, Clock, FileText, DollarSign, Calendar, Coffee, UserPlus, User, Trash2, AlertTriangle, Plus } from 'lucide-react';
 
 import ClientSearchModal from '../components/ClientSearchModal';
-import { Nodejs } from '@ahovakimyan/capacitor-nodejs';
+// import { Nodejs } from '@ahovakimyan/capacitor-nodejs';
 
 
 export const POSPage = () => {
@@ -34,15 +34,18 @@ export const POSPage = () => {
         const initInternalServer = async () => {
             try {
                 // Escuchar mensajes del servidor interno
-                const listener = await Nodejs.addListener('message', (event) => {
-                    console.log('📬 Mensaje de Servidor Interno:', event.value);
-                });
+                if (typeof Nodejs !== 'undefined' && Nodejs.addListener) {
+                    const listener = await Nodejs.addListener('message', (event) => {
+                        console.log('📬 Mensaje de Servidor Interno:', event.value);
+                    });
 
-                console.log('🔌 Bridge de Node.js inicializado');
+                    console.log('🔌 Bridge de Node.js inicializado');
 
-                return () => {
-                    listener.remove();
-                };
+                    return () => {
+                        listener.remove();
+                    };
+                }
+
             } catch (err) {
                 console.warn('⚠️ No se pudo inicializar el bridge nativo (probablemente ejecutando en navegador)');
             }
