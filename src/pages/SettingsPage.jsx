@@ -491,6 +491,51 @@ export const SettingsPage = () => {
                             </button>
                         </div>
 
+                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem', marginTop: '0.5rem' }}>
+                            <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <RefreshCw size={20} color="var(--accent-blue)" /> Actualizaciones del Sistema
+                            </h3>
+                            <div className="glass-panel" style={{ padding: '1rem', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                                    Mantén tu sistema actualizado con las últimas mejoras en seguridad, UI y funciones de cocina en tiempo real.
+                                </p>
+                                <button
+                                    className="glass-button primary"
+                                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem' }}
+                                    onClick={async () => {
+                                        try {
+                                            const btn = document.activeElement;
+                                            btn.style.opacity = '0.5';
+                                            btn.disabled = true;
+                                            btn.innerHTML = 'Buscando actualizaciones...';
+
+                                            const response = await fetch('/api/check-update');
+                                            const result = await response.json();
+
+                                            if (result.updated) {
+                                                await alert({
+                                                    title: '¡Actualización Aplicada!',
+                                                    message: `Se ha descargado e instalado la versión ${result.newVersion}.\n\nEl servidor se reiniciará automáticamente en unos segundos para aplicar los cambios.`
+                                                });
+                                                // After alert, just wait for server to crash and hope service restarts it
+                                            } else if (result.error) {
+                                                await alert({ title: 'Aviso', message: 'No se pudo conectar con el servidor de actualizaciones. Revisa tu conexión a internet.' });
+                                            } else {
+                                                await alert({ title: 'Sistema al día', message: 'Ya tienes la versión más reciente instalada.' });
+                                            }
+                                        } catch (err) {
+                                            await alert({ title: 'Error', message: 'Hubo un error al buscar actualizaciones.' });
+                                        } finally {
+                                            window.location.reload();
+                                        }
+                                    }}
+                                >
+                                    <RefreshCw size={18} />
+                                    Buscar Actualizaciones Ahora
+                                </button>
+                            </div>
+                        </div>
+
                         <div style={{
                             borderTop: '1px solid rgba(255,255,255,0.1)',
                             paddingTop: '1.5rem',
@@ -507,7 +552,7 @@ export const SettingsPage = () => {
                                 por <span style={{ color: 'var(--accent-blue)', fontWeight: 'bold' }}>Luvin Rafael Bustillos Diaz</span>
                             </p>
                             <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-                                Versión 2.1.0 • 2026
+                                Versión 2.1.2 • Enero 2026
                             </p>
                         </div>
 

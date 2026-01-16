@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 import { checkForUpdates } from './updater.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const VERSION = '2.1.1'; // Versión base del APK
+const VERSION = '2.1.2'; // Versión base del APK
 
 // Solo activar auto-update si se detecta entorno Android (o se fuerza por config)
 const isAndroid = process.env.NODE_PLATFORM === 'android';
@@ -219,6 +219,23 @@ io.on('connection', (socket) => {
 });
 
 // API Routes (Optional fallback)
+app.get('/api/check-update', async (req, res) => {
+    try {
+        console.log('🔍 Manual update check requested...');
+        const result = await checkForUpdates(VERSION);
+        res.json(result);
+
+        // If update was applied and we are on Android, restart after delay
+        if (result.updated && isAndroid) {
+            console.log('♻️ Update applied manually. Restarting in 2s...');
+            setTimeout(() => process.exit(0), 2000);
+        }
+    } catch (error) {
+        console.error('❌ Error in manual update check:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.post('/api/sync', (req, res) => {
     // const { clientData } = req.body;
     // Logic to merge...

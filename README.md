@@ -229,4 +229,4 @@ Para soporte técnico o consultas, contactar al desarrollador.
 ---
 
 **Última actualización**: Enero 2026
-**Versión**: 2.1.1
+**Versión**: 2.1.2

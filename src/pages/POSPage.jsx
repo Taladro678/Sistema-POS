@@ -1052,6 +1052,7 @@ export const POSPage = () => {
             <Modal
                 isOpen={isPaymentModalOpen}
                 onClose={() => setIsPaymentModalOpen(false)}
+                fullscreen={isMobile}
                 title={
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         <span>Procesar Pago</span>

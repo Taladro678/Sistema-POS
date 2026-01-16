@@ -21,14 +21,15 @@ const Modal = ({ isOpen, onClose, title, children, fullscreen = false }) => {
         }}>
             <div className="glass-panel" style={{
                 width: '100%',
-                maxWidth: fullscreen ? '100%' : '400px',
-                height: fullscreen ? '95vh' : 'auto',
-                maxHeight: fullscreen ? '95vh' : '90vh',
+                maxWidth: fullscreen ? '100%' : '440px',
+                height: fullscreen ? '100%' : 'auto',
+                maxHeight: fullscreen ? '100%' : '90vh',
                 display: 'flex',
                 flexDirection: 'column',
                 background: 'var(--bg-dark)',
-                border: '1px solid var(--accent-blue)',
-                boxShadow: '0 0 20px rgba(0, 242, 255, 0.2)'
+                border: fullscreen ? 'none' : '1px solid var(--accent-blue)',
+                boxShadow: '0 0 20px rgba(0, 242, 255, 0.2)',
+                borderRadius: fullscreen ? '0' : '16px'
             }}>
                 <div style={{
                     display: 'flex',
