@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 import { checkForUpdates } from './updater.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const VERSION = '2.1.2'; // Versión base del APK
+const VERSION = '2.1.3'; // Versión base del APK
 
 // Solo activar auto-update si se detecta entorno Android (o se fuerza por config)
 const isAndroid = process.env.NODE_PLATFORM === 'android';
@@ -24,10 +24,7 @@ const server = createServer(app);
 const distPath = process.env.FRONTEND_DIST_PATH || path.join(__dirname, '../dist');
 app.use(express.static(distPath));
 
-// Handle React Routing (return index.html for all non-API routes)
-app.get('*', (req, res) => {
-    res.sendFile(path.join(distPath, 'index.html'));
-});
+
 
 // Get Local IP
 const getLocalIp = () => {
@@ -249,13 +246,29 @@ if (isAndroid) {
         checkForUpdates(VERSION).then(result => {
             if (result.updated) {
                 console.log('🔄 Actualización aplicada. Reiniciando Servidor...');
-                // Exit process to force restart by Android Service (NodeServerService)
-                // Assuming the Java layer is configured to restart on crash/exit
-                process.exit(0);
+                console.log(`📦 Nueva versión: ${result.newVersion}`);
+
+                // Multiple aggressive restart attempts
+                setTimeout(() => {
+                    console.log('♻️ FORZANDO REINICIO INMEDIATO...');
+                    process.exit(0);
+                }, 500);
+
+                // Fallback: throw error to crash if exit doesn't work
+                setTimeout(() => {
+                    throw new Error('RESTART_REQUIRED');
+                }, 1000);
             }
+        }).catch(err => {
+            console.error('❌ Error durante auto-update:', err);
         });
     }, 5000);
 }
+
+// Handle React Routing (return index.html for all non-API routes)
+app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+});
 
 server.listen(PORT, '0.0.0.0', () => {
     const ip = getLocalIp();

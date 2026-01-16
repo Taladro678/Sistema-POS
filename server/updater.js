@@ -24,7 +24,7 @@ export const checkForUpdates = async (currentVersion = '0.0.0') => {
         if (latestVersion !== currentVersion) {
             console.log(`✨ Nueva versión encontrada: ${latestVersion}. Descargando...`);
             await downloadAndExtract(downloadUrl);
-            return { updated: true, version: latestVersion };
+            return { updated: true, newVersion: latestVersion };
         }
 
         console.log('✅ El sistema ya está actualizado.');

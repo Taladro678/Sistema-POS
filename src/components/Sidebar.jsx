@@ -390,7 +390,7 @@ const Sidebar = () => {
                     marginTop: isCollapsed ? '0' : 'auto',
                     opacity: 0.7
                 }}>
-                    <p style={{ margin: 0 }}>ERP La Auténtica v2.1.2</p>
+                    <p style={{ margin: 0 }}>ERP La Auténtica v2.1.3</p>
                     <p style={{ fontWeight: '600', color: 'var(--accent-blue)', marginTop: '0.2rem' }}>Por Luvin Rafael Bustillos Diaz</p>
                 </div>
             )}
