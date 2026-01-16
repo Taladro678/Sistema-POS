@@ -31,6 +31,12 @@ echo "[3/4] Configurando estructura para nodejs-mobile-cordova..."
 
 # Configurar assets para el plugin (IMPORTANTE: carpeta específica que busca el plugin)
 NODEJS_ASSETS_DIR="android/app/src/main/assets/nodejs-mobile-cordova-assets"
+
+# COPIA CRÍTICA DEL FRONTEND PARA QUE NODE LO SIRVA
+echo "   Copiando frontend build (dist) a nodejs-project/dist..."
+rm -rf nodejs-project/dist
+cp -r dist nodejs-project/dist
+
 mkdir -p "$NODEJS_ASSETS_DIR"
 
 # Copiar proyecto Node para que sea accesible por el plugin

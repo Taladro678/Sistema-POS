@@ -167,6 +167,30 @@ const Sidebar = () => {
                 zIndex: 1000
             }}
         >
+            {/* Alerta de Seguridad Crítica */}
+            {!isMobile && !isCollapsed && currentUser?.role === 'admin' && (currentUser.pin === '123' || currentUser.pin === '0000') && (
+                <div style={{
+                    padding: '0.75rem',
+                    background: 'rgba(255, 68, 68, 0.2)',
+                    borderBottom: '1px solid rgba(255, 68, 68, 0.5)',
+                    color: '#ff6b6b',
+                    fontSize: '0.75rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.4rem',
+                    animation: 'pulse 2s infinite'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'bold' }}>
+                        <Info size={16} />
+                        ALERTA DE SEGURIDAD
+                    </div>
+                    <p style={{ margin: 0, opacity: 0.9 }}>
+                        Estás usando el PIN por defecto (<b>{currentUser.pin}</b>).
+                        Cualquiera puede borrar los datos.
+                        <b> Cambia el PIN en Gestión de Usuarios.</b>
+                    </p>
+                </div>
+            )}
 
 
             {/* Toggle Button at the top - REMOVED and moved to bottom */}

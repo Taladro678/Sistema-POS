@@ -77,9 +77,11 @@ export const UsersPage = () => {
                     }}>
                     {
                         row.role === 'kitchen' ? 'Cocina' :
-                            row.role === 'admin' ? 'Admin' :
-                                row.role === 'manager' ? 'Gerente' :
-                                    'Cajero/Mesero'
+                            row.role === 'bar' ? 'Barra' :
+                                row.role === 'waiter' ? 'Mesero' :
+                                    row.role === 'admin' ? 'Admin' :
+                                        row.role === 'manager' ? 'Gerente' :
+                                            'Cajero'
                     }
                 </span>
             )
@@ -174,8 +176,10 @@ export const UsersPage = () => {
                         >
                             <option value="admin">Administrador (Acceso Total)</option>
                             <option value="manager">Gerente (Inventario + Ventas)</option>
-                            <option value="cashier">Cajero (Solo Ventas)</option>
-                            <option value="kitchen">Pantalla de Cocina (Solo Comandas)</option>
+                            <option value="cashier">Cajero (Ventas)</option>
+                            <option value="waiter">Mesero (Tomar Pedidos)</option>
+                            <option value="kitchen">Cocina (Pantalla de Cocina)</option>
+                            <option value="bar">Barra (Pantalla de Barra)</option>
                         </select>
                     </div>
 

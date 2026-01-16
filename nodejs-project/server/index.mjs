@@ -27,7 +27,10 @@ app.use(express.json());
 const server = createServer(app);
 
 // Serve Static Files (Frontend)
+// En Android, 'dist' estará en ../dist relativo a este archivo (server/index.mjs)
+// porque copiamos todo 'dist' dentro de 'nodejs-project/dist' antes de compilar.
 const distPath = process.env.FRONTEND_DIST_PATH || path.join(__dirname, '../dist');
+console.log('🔹 server/index.mjs: Sirviendo frontend desde:', distPath);
 app.use(express.static(distPath));
 
 // Handle React Routing (return index.html for all non-API routes)
@@ -58,16 +61,23 @@ const io = new Server(server, {
 const PORT = 3001;
 
 // In-Memory State (Centralized Source of Truth)
+const defaultUsers = [
+    { id: 'u1', name: 'Administrador', role: 'admin', pin: '123' },
+    { id: 'u2', name: 'Cajero', role: 'cashier', pin: '123' },
+    { id: 'u3', name: 'Cocina', role: 'kitchen', pin: '123' },
+    { id: 'u4', name: 'Barra', role: 'bar', pin: '123' },
+    { id: 'u5', name: 'Mesero', role: 'waiter', pin: '123' }
+];
+
 let appState = {
     // Core Data
     inventory: [],
     products: [],
     suppliers: [],
     personnel: [],
-    users: [],
+    users: defaultUsers,
     categories: [],
     customers: [],
-
     // Transactional Data
     sales: [],
     heldOrders: [],
@@ -85,7 +95,6 @@ let appState = {
     cashRegister: {},
     defaultForeignCurrencyDiscountPercent: 0,
 
-    // Metadata
     lastModified: new Date().toISOString()
 };
 
@@ -96,12 +105,20 @@ if (fs.existsSync(DB_FILE)) {
     try {
         const data = fs.readFileSync(DB_FILE, 'utf8');
         const loadedState = JSON.parse(data);
-        // Merge loaded state with default structure to ensure all fields exist
         appState = { ...appState, ...loadedState };
+
+        // Si el archivo cargado no tenia usuarios (vacio), inyectar los defaults
+        if (!appState.users || appState.users.length === 0) {
+            appState.users = defaultUsers;
+        }
+
         console.log('📂 Estado restaurado desde server_db.json');
     } catch (e) {
         console.error('⚠️ Error cargando base de datos local:', e);
     }
+} else {
+    // Si no existe el archivo, nos aseguramos de que los defaults esten ahi
+    appState.users = defaultUsers;
 }
 
 // Save State Helper
