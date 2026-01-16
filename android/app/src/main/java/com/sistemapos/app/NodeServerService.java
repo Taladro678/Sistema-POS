@@ -9,6 +9,7 @@ import android.content.pm.ServiceInfo;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.util.Log;
 import androidx.core.app.NotificationCompat;
 
@@ -22,10 +23,18 @@ public class NodeServerService extends Service {
     private static final String CHANNEL_ID = "NodeServerChannel";
     private static final int NOTIFICATION_ID = 1001;
 
+    private PowerManager.WakeLock wakeLock;
+
     @Override
     public void onCreate() {
         super.onCreate();
         Log.d(TAG, "NodeServerService onCreate");
+
+        // Adquirir WakeLock para mantener la CPU encendida
+        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "SistemaPOS:NodeServerLock");
+        wakeLock.acquire();
+
         createNotificationChannel();
     }
 
@@ -47,6 +56,9 @@ public class NodeServerService extends Service {
     public void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "NodeServerService onDestroy");
+        if (wakeLock != null && wakeLock.isHeld()) {
+            wakeLock.release();
+        }
     }
 
     @Override

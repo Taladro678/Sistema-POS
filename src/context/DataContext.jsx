@@ -14,7 +14,15 @@ export const DataProvider = ({ children }) => {
     const loadData = (key, fallback) => {
         try {
             const saved = localStorage.getItem(key);
-            return saved !== null ? JSON.parse(saved) : fallback;
+            if (saved !== null) {
+                const parsed = JSON.parse(saved);
+                // Si está vacío y el fallback tiene datos (ej: nuevos usuarios Default), usar fallback
+                if (Array.isArray(parsed) && parsed.length === 0 && Array.isArray(fallback) && fallback.length > 0) {
+                    return fallback;
+                }
+                return parsed;
+            }
+            return fallback;
         } catch (e) {
             console.error(`❌ Error loading ${key}:`, e);
             return fallback;
@@ -28,11 +36,19 @@ export const DataProvider = ({ children }) => {
         { id: 'dulces', label: 'Dulces', keywords: ['postre', 'dulce', 'helado', 'torta'] }
     ];
 
+    const defaultUsers = [
+        { id: 'u1', name: 'Administrador', role: 'admin', pin: '123' },
+        { id: 'u2', name: 'Cajero', role: 'cashier', pin: '123' },
+        { id: 'u3', name: 'Cocina', role: 'kitchen', pin: '123' },
+        { id: 'u4', name: 'Barra', role: 'bar', pin: '123' }, // Nota: Rol 'bar' debe ser soportado en UI
+        { id: 'u5', name: 'Mesero', role: 'waiter', pin: '123' }
+    ];
+
     const [data, setData] = useState({
         inventory: loadData('inventory', []),
         suppliers: loadData('suppliers', []),
         personnel: loadData('personnel', []),
-        users: loadData('users', []),
+        users: loadData('users', defaultUsers),
         products: loadData('products', []),
         categories: loadData('categories', defaultCategories),
         sales: loadData('sales', []),
