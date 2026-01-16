@@ -41,11 +41,9 @@ export const UsersPage = () => {
 
     const handleSave = async () => {
         if (!formData.name) return await alert({ title: 'Error', message: 'El nombre es obligatorio' });
-        if (!formData.pin || formData.pin.length < 4) return await alert({ title: 'Error', message: 'El PIN debe tener al menos 4 dígitos' });
+        if (!formData.pin) return await alert({ title: 'Error', message: 'El PIN es obligatorio' });
 
-        // Check for duplicate PIN (exclude current user if editing)
-        const pinExists = data.users?.some(u => u.pin === formData.pin && u.id !== editingId);
-        if (pinExists) return await alert({ title: 'Error', message: 'Este PIN ya está en uso por otro usuario.' });
+        // Restrictions removed as requested
 
         if (editingId) {
             updateItem('users', editingId, formData);
