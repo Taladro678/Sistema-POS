@@ -228,5 +228,5 @@ Para soporte técnico o consultas, contactar al desarrollador.
 
 ---
 
-**Última actualización**: Diciembre 2025
-**Versión**: 2.0.0
+**Última actualización**: Enero 2026
+**Versión**: 2.1.0

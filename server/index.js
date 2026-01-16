@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 import { checkForUpdates } from './updater.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const VERSION = '1.1.0'; // Versión base del APK
+const VERSION = '2.1.0'; // Versión base del APK
 
 // Solo activar auto-update si se detecta entorno Android (o se fuerza por config)
 const isAndroid = process.env.NODE_PLATFORM === 'android';
