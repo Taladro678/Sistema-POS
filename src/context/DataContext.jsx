@@ -30,10 +30,11 @@ export const DataProvider = ({ children }) => {
     };
 
     const defaultCategories = [
-        { id: 'bebidas', label: 'Bebidas', keywords: ['bebida', 'refresco', 'jugo', 'agua', 'cerveza', 'licor'] },
-        { id: 'comida', label: 'Comida', keywords: ['hamburguesa', 'pizza', 'pollo', 'carne', 'papas'] },
-        { id: 'sopas', label: 'Sopas', keywords: ['sopa', 'caldo', 'crema'] },
-        { id: 'dulces', label: 'Dulces', keywords: ['postre', 'dulce', 'helado', 'torta'] }
+        { id: 'quesos', label: 'Quesos', department: 'Quesera', keywords: ['queso', 'quesera', 'cuajada', 'llanero', 'mozzarella'] },
+        { id: 'bebidas', label: 'Bebidas', department: 'Restaurante', keywords: ['bebida', 'refresco', 'jugo', 'agua', 'cerveza', 'licor'] },
+        { id: 'comida', label: 'Comida', department: 'Restaurante', keywords: ['hamburguesa', 'pizza', 'pollo', 'carne', 'papas', 'COCHINO', 'CARNE'] },
+        { id: 'sopas', label: 'Sopas', department: 'Restaurante', keywords: ['sopa', 'caldo', 'crema'] },
+        { id: 'dulces', label: 'Dulces', department: 'Restaurante', keywords: ['postre', 'dulce', 'helado', 'torta'] }
     ];
 
     const defaultUsers = [
@@ -57,8 +58,12 @@ export const DataProvider = ({ children }) => {
         tips: loadData('tips', 0),
         tipHistory: loadData('tipHistory', []),
         tipDistributions: loadData('tipDistributions', []),
-        tables: loadData('tables', Array.from({ length: 10 }, (_, i) => ({
-            id: i + 1, name: `Mesa ${i + 1}`, status: 'available', area: 'Restaurante'
+        tables: loadData('tables', Array.from({ length: 12 }, (_, i) => ({
+            id: i + 1,
+            name: i < 10 ? `Mesa ${i + 1}` : (i === 10 ? 'Quesera' : 'Barra'),
+            status: 'available',
+            area: i < 10 ? 'Restaurante' : (i === 10 ? 'Quesera' : 'Restaurante'),
+            department: i < 10 ? 'Restaurante' : (i === 10 ? 'Quesera' : 'Restaurante')
         }))),
         customers: loadData('customers', []),
         kitchenOrders: loadData('kitchenOrders', []),
@@ -75,6 +80,7 @@ export const DataProvider = ({ children }) => {
         expenses: loadData('expenses', []),
         debts: loadData('debts', []),
         accountsReceivable: loadData('accountsReceivable', []),
+        cashRegisterHistory: loadData('cashRegisterHistory', []),
         defaultForeignCurrencyDiscountPercent: loadData('defaultForeignCurrencyDiscountPercent', 0),
         lastModified: new Date().toISOString(),
         serverInfo: null
@@ -113,9 +119,13 @@ export const DataProvider = ({ children }) => {
         const unsubscribe = localSyncService.subscribe((type, payload) => {
             if (type === 'connection_status') setIsLocalServerConnected(payload);
             if (type === 'sync_update') {
-                if (payload.products?.length > 0 || !data.products?.length) {
+                const serverTime = new Date(payload.lastModified || 0).getTime();
+                const localTime = new Date(data.lastModified || 0).getTime();
+
+                if (serverTime > localTime) {
                     setData(prev => ({ ...prev, ...payload }));
-                } else {
+                } else if (localTime > serverTime) {
+                    // Si lo local es mas nuevo, forzar al servidor a actualizarse
                     localSyncService.sendFullStateUpdate(data);
                 }
             }
@@ -228,7 +238,13 @@ export const DataProvider = ({ children }) => {
             inventory: [], suppliers: [], personnel: [], users: [], products: [],
             categories: defaultCategories, sales: [], heldOrders: [], cancelledOrders: [],
             tips: 0, tipHistory: [], tipDistributions: [],
-            tables: Array.from({ length: 10 }, (_, i) => ({ id: i + 1, name: `Mesa ${i + 1}`, status: 'available', area: 'Restaurante' })),
+            tables: Array.from({ length: 12 }, (_, i) => ({
+                id: i + 1,
+                name: i < 10 ? `Mesa ${i + 1}` : (i === 10 ? 'Quesera' : 'Barra'),
+                status: 'available',
+                area: i < 10 ? 'Restaurante' : (i === 10 ? 'Quesera' : 'Restaurante'),
+                department: i < 10 ? 'Restaurante' : (i === 10 ? 'Quesera' : 'Restaurante')
+            })),
             customers: [], kitchenOrders: [], barOrders: [], cancelledKitchenOrders: [],
             cancelledBarOrders: [], pendingPayment: [], inventoryEntries: [],
             exchangeRate: 60, rateHistory: [], cashRegister: { isOpen: false, status: 'closed' },

@@ -20,6 +20,13 @@ export const ProductsPage = () => {
     const [isSearchActive, setIsSearchActive] = useState(false);
     const [activeTab, setActiveTab] = useState('products'); // 'products' or 'categories'
 
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     const [formData, setFormData] = useState({
         name: '',
         price: '',
@@ -151,7 +158,6 @@ export const ProductsPage = () => {
     const handleImportData = async (excelData) => {
         let successCount = 0;
         let autoCategorized = 0;
-        console.log("Raw Excel Data:", excelData.slice(0, 5));
 
         for (const row of excelData) {
             let rawSymbol = row['A'];
@@ -198,15 +204,24 @@ export const ProductsPage = () => {
                 }
             }
 
-            addItem('products', {
+            // Duplicate Handling: Check if product already exists by name
+            const existingProduct = (data.products || []).find(p => p.name.toLowerCase() === cleanName.toLowerCase());
+
+            const productData = {
                 name: cleanName,
                 price: price,
                 costPrice: cost,
-                stock: 0,
-                category: category,
-                image: '',
+                stock: existingProduct ? existingProduct.stock : 0,
+                category: category || (existingProduct ? existingProduct.category : ''),
+                image: existingProduct ? existingProduct.image : '',
                 showInPOS: true
-            });
+            };
+
+            if (existingProduct) {
+                updateItem('products', existingProduct.id, productData);
+            } else {
+                addItem('products', productData);
+            }
             successCount++;
         }
 
@@ -363,27 +378,36 @@ export const ProductsPage = () => {
     );
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', height: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '0.75rem' : '1.5rem', height: '100%' }}>
             {/* Ultra Compact Header Toolbar */}
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+            <div style={{
+                display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
+                gap: '0.75rem',
+                alignItems: isMobile ? 'stretch' : 'center',
+                justifyContent: 'space-between',
+                marginBottom: '0.5rem'
+            }}>
                 {/* Left: Tabs as Segmented Control */}
-                <div className="glass-panel" style={{ padding: '0.25rem', display: 'flex', flexDirection: 'row', gap: '0.25rem', borderRadius: '10px', background: 'rgba(0,0,0,0.2)' }}>
-                    <button
-                        className={`glass-button ${activeTab === 'products' ? 'primary' : ''}`}
-                        onClick={() => setActiveTab('products')}
-                        style={{ padding: '0.4rem 1rem', fontSize: '0.9rem', borderRadius: '8px', height: '32px' }}
-                    >
-                        <Package size={16} style={{ marginRight: '0.5rem' }} />
-                        Productos
-                    </button>
-                    <button
-                        className={`glass-button ${activeTab === 'categories' ? 'primary' : ''}`}
-                        onClick={() => setActiveTab('categories')}
-                        style={{ padding: '0.4rem 1rem', fontSize: '0.9rem', borderRadius: '8px', height: '32px' }}
-                    >
-                        <Sparkles size={16} style={{ marginRight: '0.5rem' }} />
-                        Categorías
-                    </button>
+                <div style={{ display: 'flex', justifyContent: isMobile ? 'center' : 'flex-start' }}>
+                    <div className="glass-panel" style={{ padding: '0.25rem', display: 'flex', flexDirection: 'row', gap: '0.25rem', borderRadius: '10px', background: 'rgba(0,0,0,0.2)' }}>
+                        <button
+                            className={`glass-button ${activeTab === 'products' ? 'primary' : ''}`}
+                            onClick={() => setActiveTab('products')}
+                            style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem', borderRadius: '8px', height: '32px' }}
+                        >
+                            <Package size={14} style={{ marginRight: '0.4rem' }} />
+                            Prod.
+                        </button>
+                        <button
+                            className={`glass-button ${activeTab === 'categories' ? 'primary' : ''}`}
+                            onClick={() => setActiveTab('categories')}
+                            style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem', borderRadius: '8px', height: '32px' }}
+                        >
+                            <Sparkles size={14} style={{ marginRight: '0.4rem' }} />
+                            Cat.
+                        </button>
+                    </div>
                 </div>
 
                 {/* Center: Stats OR Search Bar */}
@@ -419,7 +443,7 @@ export const ProductsPage = () => {
                                     <X size={14} />
                                 </button>
                             </div>
-                        ) : (
+                        ) : !isMobile ? (
                             <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <span>Total:</span>
@@ -433,53 +457,54 @@ export const ProductsPage = () => {
                                     </span>
                                 </div>
                             </div>
-                        )}
+                        ) : null}
                     </div>
                 )}
 
                 {/* Right: Actions */}
                 {activeTab === 'products' && (
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        {!isSearchActive && (
+                    <div style={{ display: 'flex', gap: '0.4rem', justifyContent: isMobile ? 'space-between' : 'flex-end' }}>
+                        {isMobile && !isSearchActive && (
+                            <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                <span style={{ color: 'white' }}>{data.products?.length || 0}</span> Prod.
+                            </div>
+                        )}
+                        <div style={{ display: 'flex', gap: '0.4rem' }}>
+                            {!isSearchActive && (
+                                <button
+                                    className="glass-button"
+                                    style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem', height: '32px' }}
+                                    onClick={() => setIsSearchActive(true)}
+                                    title="Buscar"
+                                >
+                                    <Search size={16} />
+                                </button>
+                            )}
+                            <button
+                                className="glass-button primary"
+                                style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', height: '32px' }}
+                                onClick={() => { resetForm(); setIsModalOpen(true); }}
+                            >
+                                <Plus size={16} style={{ marginRight: isMobile ? 0 : '0.4rem' }} />
+                                {!isMobile && 'Nuevo Producto'}
+                            </button>
                             <button
                                 className="glass-button"
-                                style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', height: '32px' }}
-                                onClick={() => setIsSearchActive(true)}
-                                title="Buscar"
+                                style={{ padding: '0.4rem 0.6rem', height: '32px' }}
+                                onClick={() => setShowImportModal(true)}
+                                title="Importar Excel"
                             >
-                                <Search size={16} />
+                                <Upload size={16} />
                             </button>
-                        )}
-                        <button
-                            className="glass-button"
-                            style={{
-                                padding: '0.4rem 0.8rem',
-                                fontSize: '0.85rem',
-                                height: '32px',
-                                color: '#ff4444',
-                                borderColor: 'rgba(255, 68, 68, 0.3)'
-                            }}
-                            onClick={handleDeleteAll}
-                            title="Borrar Todos los Productos"
-                        >
-                            <Trash2 size={16} />
-                        </button>
-                        <button
-                            className="glass-button"
-                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', height: '32px' }}
-                            onClick={() => setShowImportModal(true)}
-                            title="Importar Excel"
-                        >
-                            <FileSpreadsheet size={16} />
-                        </button>
-                        <button
-                            className="glass-button primary"
-                            style={{ padding: '0.4rem 1rem', fontSize: '0.9rem', height: '32px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                            onClick={() => { resetForm(); setIsModalOpen(true); }}
-                        >
-                            <Plus size={16} />
-                            Nuevo
-                        </button>
+                            <button
+                                className="glass-button"
+                                onClick={handleDeleteAll}
+                                title="Borrar Todo"
+                                style={{ padding: '0.4rem 0.6rem', height: '32px', color: 'var(--accent-red)' }}
+                            >
+                                <Trash2 size={16} />
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>
@@ -545,7 +570,8 @@ export const ProductsPage = () => {
 
                                 {/* Margin Calculation Display */}
                                 {formData.costPrice && formData.price && parseFloat(formData.costPrice) > 0 && (
-                                    <div className="glass-panel" style={{ gridColumn: '1 / -1',
+                                    <div className="glass-panel" style={{
+                                        gridColumn: '1 / -1',
                                         padding: '0.75rem',
                                         background: 'rgba(0, 255, 0, 0.05)',
                                         border: '1px solid rgba(0, 255, 0, 0.2)'

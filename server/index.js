@@ -98,12 +98,19 @@ if (fs.existsSync(DB_FILE)) {
     }
 }
 
-// Save State Helper
+// Save State Helper (Atomic)
 const saveState = () => {
     try {
-        fs.writeFileSync(DB_FILE, JSON.stringify(appState, null, 2));
+        const tempFile = `${DB_FILE}.tmp`;
+        const jsonData = JSON.stringify(appState, null, 2);
+
+        // Write to temp file first
+        fs.writeFileSync(tempFile, jsonData);
+
+        // Rename temp file to actual file (Atomic operation)
+        fs.renameSync(tempFile, DB_FILE);
     } catch (e) {
-        console.error('❌ Error guardando estado:', e);
+        console.error('❌ Error guardando estado (Atomic):', e);
     }
 };
 
@@ -121,25 +128,40 @@ io.on('connection', (socket) => {
     });
 
     // --- GENERIC FULL SYNC (Primary Mechanism) ---
-    // Clients send their full state (or partial updates) to be merged
     socket.on('full_state_update', (newState) => {
         console.log('🔄 Recibida actualización de estado desde cliente');
 
-        // Merge Strategy: Overwrite server state with client state for matching keys
-        // This assumes the client sending the update has the "latest" truth
-        // In a more complex system, we would use timestamps per field/record
+        let hasChanges = false;
+
+        // Critical arrays to protect against accidental wipe
+        const criticalKeys = ['inventory', 'products', 'categories', 'sales', 'users', 'personnel', 'customers', 'kitchenOrders', 'heldOrders', 'tables'];
 
         Object.keys(newState).forEach(key => {
-            if (newState[key] !== undefined) {
+            if (newState[key] === undefined) return;
+
+            // PROTECTION: Do not overwrite existing server data with empty arrays from client
+            // unless the server data is also empty or it's an intentional clear (hard to distinguish, so err on safety)
+            if (criticalKeys.includes(key) && Array.isArray(newState[key]) && newState[key].length === 0) {
+                if (Array.isArray(appState[key]) && appState[key].length > 0) {
+                    console.warn(`🛡️ RECHAZADO overwrite de '${key}' con array vacío. Conservando ${appState[key].length} registros del servidor.`);
+                    return;
+                }
+            }
+
+            // Simple Deep Compare to avoid writing if nothing changed
+            if (JSON.stringify(appState[key]) !== JSON.stringify(newState[key])) {
                 appState[key] = newState[key];
+                hasChanges = true;
             }
         });
 
-        appState.lastModified = new Date().toISOString();
-        saveState(); // Persist to disk
+        if (hasChanges) {
+            appState.lastModified = new Date().toISOString();
+            saveState(); // Persist to disk safely
 
-        // Broadcast the UPDATED state to all OTHER clients
-        socket.broadcast.emit('sync_update', appState);
+            // Broadcast the UPDATED state to all OTHER clients
+            socket.broadcast.emit('sync_update', appState);
+        }
     });
 
     // --- LEGACY/SPECIFIC EVENTS (Kept for compatibility or specific triggers) ---
@@ -199,12 +221,17 @@ app.post('/api/sync', (req, res) => {
 
 // Initial Update Check
 if (isAndroid) {
-    checkForUpdates(VERSION).then(result => {
-        if (result.updated) {
-            console.log('🔄 Actualización aplicada. Reiniciando pronto...');
-            // En entorno real de nodejs-mobile, aquí dispararíamos un reinicio local
-        }
-    });
+    // Check for updates 5 seconds after startup to allow stabilization
+    setTimeout(() => {
+        checkForUpdates(VERSION).then(result => {
+            if (result.updated) {
+                console.log('🔄 Actualización aplicada. Reiniciando Servidor...');
+                // Exit process to force restart by Android Service (NodeServerService)
+                // Assuming the Java layer is configured to restart on crash/exit
+                process.exit(0);
+            }
+        });
+    }, 5000);
 }
 
 server.listen(PORT, '0.0.0.0', () => {

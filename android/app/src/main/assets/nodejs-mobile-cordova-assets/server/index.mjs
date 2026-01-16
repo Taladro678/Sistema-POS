@@ -146,23 +146,31 @@ io.on('connection', (socket) => {
     // --- GENERIC FULL SYNC (Primary Mechanism) ---
     // Clients send their full state (or partial updates) to be merged
     socket.on('full_state_update', (newState) => {
+        // Log basic info
         console.log('🔄 Recibida actualización de estado desde cliente');
 
-        // Merge Strategy: Overwrite server state with client state for matching keys
-        // This assumes the client sending the update has the "latest" truth
-        // In a more complex system, we would use timestamps per field/record
+        // Merge Strategy: Only accept updates if the incoming timestamp is NEWER
+        // This prevents old versions of the state from overwriting new data
+        const incomingTime = new Date(newState.lastModified || 0).getTime();
+        const serverTime = new Date(appState.lastModified || 0).getTime();
 
-        Object.keys(newState).forEach(key => {
-            if (newState[key] !== undefined) {
-                appState[key] = newState[key];
-            }
-        });
+        if (incomingTime > serverTime) {
+            console.log('   ✅ El estado recibido es más reciente. Actualizando...');
+            Object.keys(newState).forEach(key => {
+                if (newState[key] !== undefined) {
+                    appState[key] = newState[key];
+                }
+            });
+            appState.lastModified = newState.lastModified;
+            saveState(); // Persist to disk
 
-        appState.lastModified = new Date().toISOString();
-        saveState(); // Persist to disk
-
-        // Broadcast the UPDATED state to all OTHER clients
-        socket.broadcast.emit('sync_update', appState);
+            // Broadcast the UPDATED state to all OTHER clients
+            socket.broadcast.emit('sync_update', appState);
+        } else {
+            console.log('   ⚠️ El estado recibido es antiguo o igual. Rechazado.');
+            // Enviar el estado del servidor de vuelta al cliente para que se sincronice con el mas nuevo
+            socket.emit('sync_update', appState);
+        }
     });
 
     // --- LEGACY/SPECIFIC EVENTS (Kept for compatibility or specific triggers) ---

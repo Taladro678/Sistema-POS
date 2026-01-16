@@ -24,6 +24,7 @@ public class NodeServerService extends Service {
     private static final int NOTIFICATION_ID = 1001;
 
     private PowerManager.WakeLock wakeLock;
+    private android.net.wifi.WifiManager.WifiLock wifiLock;
 
     @Override
     public void onCreate() {
@@ -33,7 +34,18 @@ public class NodeServerService extends Service {
         // Adquirir WakeLock para mantener la CPU encendida
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "SistemaPOS:NodeServerLock");
+        wakeLock.setReferenceCounted(false);
         wakeLock.acquire();
+
+        // Adquirir WifiLock para mantener el socket activo
+        android.net.wifi.WifiManager wifiManager = (android.net.wifi.WifiManager) getApplicationContext()
+                .getSystemService(android.content.Context.WIFI_SERVICE);
+        if (wifiManager != null) {
+            wifiLock = wifiManager.createWifiLock(android.net.wifi.WifiManager.WIFI_MODE_FULL_HIGH_PERF,
+                    "SistemaPOS:WifiLock");
+            wifiLock.setReferenceCounted(false);
+            wifiLock.acquire();
+        }
 
         createNotificationChannel();
     }
@@ -58,6 +70,9 @@ public class NodeServerService extends Service {
         Log.d(TAG, "NodeServerService onDestroy");
         if (wakeLock != null && wakeLock.isHeld()) {
             wakeLock.release();
+        }
+        if (wifiLock != null && wifiLock.isHeld()) {
+            wifiLock.release();
         }
     }
 

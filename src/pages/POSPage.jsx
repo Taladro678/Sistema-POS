@@ -98,6 +98,7 @@ export const POSPage = () => {
 
     // Split Payment State
     const [payments, setPayments] = useState([]);
+    const [selectedDepartment, setSelectedDepartment] = useState('Restaurante');
     const [currentPaymentAmount, setCurrentPaymentAmount] = useState('');
     const [currentPaymentMethod, setCurrentPaymentMethod] = useState('');
     const [paymentNote, setPaymentNote] = useState('');
@@ -139,7 +140,7 @@ export const POSPage = () => {
     const formatPrice = (amount) => {
         if (displayCurrency === 'BS') {
             const rate = data.exchangeRate || 1;
-            return `Bs ${(amount * rate).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            return `Bs. ${(amount * rate).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         }
         return `$ ${amount.toFixed(2)}`;
     };
@@ -394,6 +395,20 @@ export const POSPage = () => {
             }
         }
 
+        // Calculate Department Totals (Restaurante vs Quesera)
+        const categories = data.categories || [];
+        const departmentTotals = { 'Restaurante': 0, 'Quesera': 0 };
+
+        cart.forEach(item => {
+            const cat = categories.find(c => c.id === item.category);
+            const dept = cat?.department || 'Restaurante';
+            if (departmentTotals[dept] !== undefined) {
+                departmentTotals[dept] += (item.price * item.quantity);
+            } else {
+                departmentTotals[dept] = (item.price * item.quantity);
+            }
+        });
+
         const newSale = {
             id: window.crypto.randomUUID(),
             items: cart,
@@ -411,6 +426,8 @@ export const POSPage = () => {
             cashier: 'Cajero 1',
             tableId: currentTable ? currentTable.id : null,
             tableName: currentTable ? currentTable.name : null,
+            department: currentTable?.department || selectedDepartment, // Use manual selector if no table
+            departmentTotals: departmentTotals, // Store the detailed breakdown
             payments: Array.isArray(overridePayments) ? overridePayments : payments
         };
 
@@ -533,9 +550,9 @@ export const POSPage = () => {
     };
 
     const paymentMethods = [
-        { id: 'bancaribe', label: 'Bancaribe', color: '#0054a6' },
-        { id: 'banplus', label: 'Banplus', color: '#8dc63f' },
-        { id: 'banesco', label: 'Banesco', color: '#209e33' },
+        { id: 'bancaribe', label: 'Bancaribe (Punto)', color: '#0054a6' },
+        { id: 'banplus', label: 'Banplus (Punto)', color: '#8dc63f' },
+        { id: 'banesco', label: 'Banesco (Punto)', color: '#209e33' },
         { id: 'pm_banesco_ps', label: 'Pago movil Banesco PS', color: '#209e33' },
         { id: 'pm_banesco_raquel', label: 'Pago Movil Banesco Raquel', color: '#209e33' },
         { id: 'pm_bdv_ps', label: 'Pago Movil BDV PS', color: '#e74c3c' },
@@ -544,7 +561,7 @@ export const POSPage = () => {
         { id: 'efectivo_bs', label: 'Efectivo Bs', color: '#7f8c8d' },
         { id: 'usd', label: 'USD ($)', color: '#27ae60' },
         { id: 'credito', label: 'Crédito (Fiado)', color: '#e74c3c' },
-        { id: 'punto', label: 'Punto de Venta', color: '#2980b9' },
+        { id: 'punto', label: 'Otro Punto', color: '#2980b9' },
     ];
 
     // Sales Report Calculations
@@ -568,28 +585,68 @@ export const POSPage = () => {
                 {/* Header Container */}
                 <div className="pos-header" style={{
                     display: 'flex',
-                    gap: isMobile ? '0.4rem' : '0.5rem',
+                    flexWrap: 'wrap',
+                    gap: isMobile ? '0.25rem' : '0.5rem',
                     alignItems: 'center',
                     width: '100%',
-                    padding: isMobile ? '0.5rem' : '0.5rem 1rem'
+                    padding: isMobile ? '0.25rem' : '0.5rem 1rem',
+                    position: 'relative'
                 }}>
 
-                    {/* Badge de Mesa */}
+                    {/* Badge de Mesa - Ultra Compact on Mobile */}
                     {currentTable && (!isMobile || !isSearchExpanded) && (
                         <div style={{
                             background: '#00d4ff',
                             color: '#000',
-                            padding: '0.2rem 0.5rem',
-                            borderRadius: '6px',
+                            padding: '0.15rem 0.4rem',
+                            borderRadius: '4px',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '0.2rem',
                             fontWeight: '600',
-                            fontSize: '0.7rem',
+                            fontSize: '0.65rem',
                             flexShrink: 0
                         }}>
-                            <Coffee size={12} color="#000" strokeWidth={2} />
+                            <Coffee size={10} color="#000" strokeWidth={2} />
                             {currentTable.name}
+                        </div>
+                    )}
+
+                    {/* Department Selector for Para Llevar */}
+                    {!currentTable && (!isMobile || !isSearchExpanded) && (
+                        <div style={{ display: 'flex', gap: '2px', background: 'rgba(255,255,255,0.05)', padding: '2px', borderRadius: '4px' }}>
+                            <button
+                                onClick={() => setSelectedDepartment('Restaurante')}
+                                style={{
+                                    padding: '0.2rem 0.6rem',
+                                    fontSize: '0.65rem',
+                                    border: 'none',
+                                    borderRadius: '3px',
+                                    cursor: 'pointer',
+                                    background: selectedDepartment === 'Restaurante' ? 'var(--accent-blue)' : 'transparent',
+                                    color: selectedDepartment === 'Restaurante' ? '#000' : 'var(--text-secondary)',
+                                    fontWeight: 'bold',
+                                    transition: 'all'
+                                }}
+                            >
+                                REST.
+                            </button>
+                            <button
+                                onClick={() => setSelectedDepartment('Quesera')}
+                                style={{
+                                    padding: '0.2rem 0.6rem',
+                                    fontSize: '0.65rem',
+                                    border: 'none',
+                                    borderRadius: '3px',
+                                    cursor: 'pointer',
+                                    background: selectedDepartment === 'Quesera' ? '#f1c40f' : 'transparent',
+                                    color: selectedDepartment === 'Quesera' ? '#000' : 'var(--text-secondary)',
+                                    fontWeight: 'bold',
+                                    transition: 'all'
+                                }}
+                            >
+                                QUES.
+                            </button>
                         </div>
                     )}
 
@@ -597,22 +654,20 @@ export const POSPage = () => {
 
 
 
-                    {/* Customer Selector */}
+                    {/* Customer Selector - Compact on Mobile */}
                     {(!isMobile || !isSearchExpanded) && (
                         <div style={{ position: 'relative', zIndex: 50 }}>
                             <button
                                 className="glass-button"
                                 onClick={() => setIsClientModalOpen(true)}
-                                style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.3rem', height: '32px' }}
                             >
-                                <User size={14} />
-                                {(!isMobile || selectedCustomerId) && (
-                                    <span style={{ maxWidth: isMobile ? '60px' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                        {selectedCustomerId
-                                            ? (data.customers.find(c => c.id === selectedCustomerId)?.name || 'Cliente')
-                                            : 'Cliente G.'}
-                                    </span>
-                                )}
+                                <User size={12} />
+                                <span style={{ maxWidth: isMobile ? '50px' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {selectedCustomerId
+                                        ? (data.customers.find(c => c.id === selectedCustomerId)?.name || 'Cliente')
+                                        : 'Cliente G.'}
+                                </span>
                             </button>
                             {selectedCustomerId && (
                                 <button
@@ -633,13 +688,13 @@ export const POSPage = () => {
                         />
                     )}
 
-                    {/* Integrated Search & Categories (Flex 1 to take available space) */}
-                    <div style={{ display: 'flex', flex: 1, gap: '0.5rem', alignItems: 'center', position: 'relative', minWidth: 0 }}>
+                    {/* Integrated Search & Categories (Pushes to next line on mobile if no space) */}
+                    <div style={{ display: 'flex', flex: isMobile ? '1 1 100%' : 1, order: isMobile ? 2 : 0, gap: '0.25rem', alignItems: 'center', position: 'static', minWidth: 0, marginTop: isMobile ? '0.1rem' : 0 }}>
 
                         {/* Expandable Search */}
                         {isSearchExpanded ? (
-                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.4rem' }} className="glass-panel">
-                                <Search size={16} style={{ color: 'var(--text-secondary)', marginLeft: '0.4rem' }} />
+                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.3rem', position: 'relative', zIndex: 70 }} className="glass-panel">
+                                <Search size={14} style={{ color: 'var(--text-secondary)', marginLeft: '0.4rem' }} />
                                 <input
                                     type="text"
                                     autoFocus
@@ -670,27 +725,27 @@ export const POSPage = () => {
                             <button
                                 className="glass-button"
                                 onClick={() => setIsSearchExpanded(true)}
-                                style={{ padding: '0.4rem', flexShrink: 0, height: '36px', width: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                style={{ padding: '0', flexShrink: 0, height: '32px', width: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                 title="Buscar"
                             >
-                                <Search size={18} />
+                                <Search size={16} />
                             </button>
                         )}
 
-                        {/* Categories List (Hidden if Search Expanded) */}
+                        {/* Categories List (Scrollable) */}
                         {!isSearchExpanded && (
                             <>
-                                <div className="no-scrollbar" style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', flex: 1, alignItems: 'center', paddingRight: '0.4rem', minWidth: 0 }}>
+                                <div className="no-scrollbar" style={{ display: 'flex', gap: '0.25rem', overflowX: 'auto', flex: 1, alignItems: 'center', paddingRight: '0.25rem', minWidth: 0 }}>
                                     <button
                                         className={`glass-button ${selectedCategory === 'all' ? 'primary' : ''}`}
                                         onClick={() => setSelectedCategory('all')}
                                         style={{
-                                            padding: isMobile ? '0.4rem 0.75rem' : '0.4rem 1rem',
-                                            fontSize: '0.8rem',
+                                            padding: '0 0.6rem',
+                                            fontSize: '0.7rem',
                                             whiteSpace: 'nowrap',
                                             flexShrink: 0,
-                                            height: '36px',
-                                            borderRadius: '18px',
+                                            height: '28px',
+                                            borderRadius: '14px',
                                             border: selectedCategory === 'all' ? '1px solid var(--accent-blue)' : '1px solid rgba(255,255,255,0.1)'
                                         }}
                                     >
@@ -701,17 +756,16 @@ export const POSPage = () => {
                                         className={`glass-button ${selectedCategory === 'mas_vendidos' ? 'primary' : ''}`}
                                         onClick={() => setSelectedCategory('mas_vendidos')}
                                         style={{
-                                            padding: isMobile ? '0.4rem 0.75rem' : '0.4rem 1rem',
-                                            fontSize: '0.8rem',
+                                            padding: '0 0.6rem',
+                                            fontSize: '0.7rem',
                                             whiteSpace: 'nowrap',
                                             flexShrink: 0,
-                                            fontWeight: 'bold',
-                                            height: '36px',
-                                            borderRadius: '18px',
+                                            height: '28px',
+                                            borderRadius: '14px',
                                             border: selectedCategory === 'mas_vendidos' ? '1px solid var(--accent-blue)' : '1px solid rgba(255,255,255,0.1)'
                                         }}
                                     >
-                                        ⭐ Top
+                                        Top
                                     </button>
                                     {displayCategories.map(cat => (
                                         <button
@@ -719,12 +773,12 @@ export const POSPage = () => {
                                             className={`glass-button ${selectedCategory === cat.id ? 'primary' : ''}`}
                                             onClick={() => setSelectedCategory(cat.id)}
                                             style={{
-                                                padding: isMobile ? '0.4rem 0.75rem' : '0.4rem 1rem',
-                                                fontSize: '0.8rem',
+                                                padding: '0 0.6rem',
+                                                fontSize: '0.7rem',
                                                 whiteSpace: 'nowrap',
                                                 flexShrink: 0,
-                                                height: '36px',
-                                                borderRadius: '18px',
+                                                height: '28px',
+                                                borderRadius: '14px',
                                                 border: selectedCategory === cat.id ? '1px solid var(--accent-blue)' : '1px solid rgba(255,255,255,0.1)'
                                             }}
                                         >
@@ -736,40 +790,40 @@ export const POSPage = () => {
                                 {/* Deploy Categories Button */}
                                 <button
                                     className="glass-button"
-                                    style={{ padding: '0.5rem', flexShrink: 0, height: '40px', width: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    style={{ padding: '0', flexShrink: 0, height: '28px', width: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                     onClick={() => setShowAllCategories(!showAllCategories)}
-                                    title="Ver todas las categorías"
+                                    title="Ver todas"
                                 >
-                                    <ChevronDown size={20} style={{ transform: showAllCategories ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+                                    <ChevronDown size={14} style={{ transform: showAllCategories ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
                                 </button>
                             </>
                         )}
 
-                        {/* Expanded Categories Panel (Overlay) */}
+                        {/* Expanded Categories Panel (Fixed on mobile!) */}
                         {showAllCategories && (
                             <div className="glass-panel" style={{
-                                position: 'absolute',
-                                top: '100%',
-                                left: 0,
-                                right: 0,
-                                zIndex: 60,
+                                position: isMobile ? 'fixed' : 'absolute',
+                                top: isMobile ? '135px' : '55px',
+                                left: '8px',
+                                right: '8px',
+                                zIndex: 100,
                                 padding: '1rem',
                                 display: 'grid',
                                 gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
-                                gap: '0.75rem',
-                                marginTop: '0.5rem',
-                                background: 'black',
-                                border: '1px solid var(--accent-blue)',
-                                boxShadow: '0 10px 25px rgba(0,0,0,0.8)'
+                                gap: '0.5rem',
+                                background: '#121212',
+                                border: '2px solid var(--accent-blue)',
+                                boxShadow: '0 20px 50px rgba(0,0,0,0.9)',
+                                borderRadius: '12px'
                             }}>
-                                <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                    <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Categorías</span>
-                                    <button onClick={() => setShowAllCategories(false)} style={{ background: 'none', border: 'none', color: 'white' }}><X size={16} /></button>
+                                <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                                    <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'var(--accent-blue)' }}>Categorías</span>
+                                    <button onClick={() => setShowAllCategories(false)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '0.3rem', borderRadius: '50%', display: 'flex' }}><X size={16} /></button>
                                 </div>
                                 <button
                                     className={`glass-button ${selectedCategory === 'all' ? 'primary' : ''}`}
                                     onClick={() => { setSelectedCategory('all'); setShowAllCategories(false); }}
-                                    style={{ justifyContent: 'center' }}
+                                    style={{ justifyContent: 'center', padding: '0.5rem', fontSize: '0.8rem' }}
                                 >
                                     Todos
                                 </button>
@@ -778,7 +832,7 @@ export const POSPage = () => {
                                         key={cat.id}
                                         className={`glass-button ${selectedCategory === cat.id ? 'primary' : ''}`}
                                         onClick={() => { setSelectedCategory(cat.id); setShowAllCategories(false); }}
-                                        style={{ justifyContent: 'center' }}
+                                        style={{ justifyContent: 'center', padding: '0.5rem', fontSize: '0.8rem' }}
                                     >
                                         {cat.label}
                                     </button>
@@ -787,8 +841,8 @@ export const POSPage = () => {
                         )}
                     </div>
 
-                    {/* Right Side Buttons Group */}
-                    <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+                    {/* Right Side Buttons Group - Pushes to end */}
+                    <div style={{ display: 'flex', gap: '0.25rem', flexShrink: 0, marginLeft: 'auto' }}>
                         {/* Cancel Table Order Button (Only for Tables) */}
                         {currentTable && !isMobile && (
                             <button
@@ -797,9 +851,9 @@ export const POSPage = () => {
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    padding: '0.4rem',
-                                    height: '36px',
-                                    width: '36px',
+                                    padding: '0.25rem',
+                                    height: '32px',
+                                    width: '32px',
                                     borderColor: 'var(--accent-red)',
                                     color: 'var(--accent-red)'
                                 }}
@@ -817,23 +871,23 @@ export const POSPage = () => {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                padding: '0.4rem',
-                                height: '36px',
-                                minWidth: '36px'
+                                padding: '0.25rem',
+                                height: '32px',
+                                minWidth: '32px'
                             }}
                             onClick={() => setIsHeldOrdersModalOpen(true)}
                             title="Ver Órdenes en Espera"
                         >
-                            <Clock size={16} />
+                            <Clock size={14} />
                             {heldOrders.filter(o => o.isWaitList).length > 0 && (
                                 <span style={{
-                                    marginLeft: '0.2rem',
+                                    marginLeft: '1px',
                                     background: 'var(--accent-orange)',
                                     color: 'white',
                                     borderRadius: '50%',
-                                    fontSize: '0.65rem',
-                                    width: '16px',
-                                    height: '16px',
+                                    fontSize: '0.6rem',
+                                    width: '14px',
+                                    height: '14px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -850,27 +904,27 @@ export const POSPage = () => {
                                 className="glass-button accent"
                                 style={{
                                     display: 'flex',
-                                    gap: '0.3rem',
+                                    gap: '0.2rem',
                                     alignItems: 'center',
-                                    padding: '0.4rem 0.6rem',
+                                    padding: '0.2rem 0.4rem',
                                     whiteSpace: 'nowrap',
-                                    height: '36px'
+                                    height: '32px'
                                 }}
                                 onClick={() => setIsCartOpen(!isCartOpen)}
                             >
                                 <div style={{ position: 'relative', display: 'flex' }}>
-                                    <ShoppingBag size={16} />
+                                    <ShoppingBag size={14} />
                                     {cart.length > 0 && (
                                         <span style={{
                                             position: 'absolute',
-                                            top: '-6px',
-                                            right: '-6px',
+                                            top: '-4px',
+                                            right: '-4px',
                                             background: 'var(--accent-red)',
                                             color: 'white',
                                             borderRadius: '50%',
-                                            fontSize: '0.6rem',
-                                            width: '14px',
-                                            height: '14px',
+                                            fontSize: '0.5rem',
+                                            width: '12px',
+                                            height: '12px',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
@@ -881,34 +935,34 @@ export const POSPage = () => {
                                         </span>
                                     )}
                                 </div>
-                                <span style={{ fontWeight: 'bold', fontSize: '0.8rem' }}>{formatPrice(total)}</span>
+                                <span style={{ fontWeight: 'bold', fontSize: '0.7rem' }}>{formatPrice(total)}</span>
                             </button>
                         )}
 
                         {/* Visual Currency Toggle (Replacement) */}
                         {(!isMobile || !isSearchExpanded) && (
                             <button
-                                className="glass-button"
+                                className={`glass-button ${displayCurrency === 'BS' ? 'primary' : ''}`}
                                 style={{
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '0.3rem',
-                                    padding: '0 0.6rem',
-                                    height: '36px',
+                                    gap: '0.2rem',
+                                    padding: '0 0.4rem',
+                                    height: '32px',
                                     background: displayCurrency === 'BS' ? 'rgba(0, 212, 255, 0.15)' : 'rgba(0, 255, 0, 0.1)',
                                     border: displayCurrency === 'BS' ? '1px solid #00d4ff' : '1px solid rgba(0, 255, 0, 0.2)',
                                     color: displayCurrency === 'BS' ? '#00d4ff' : 'var(--accent-green)',
                                     whiteSpace: 'nowrap',
                                     cursor: 'pointer',
-                                    minWidth: '65px',
+                                    minWidth: '50px',
                                     justifyContent: 'center'
                                 }}
                                 onClick={() => setDisplayCurrency(prev => prev === 'USD' ? 'BS' : 'USD')}
                                 title={`Cambiar vista a ${displayCurrency === 'USD' ? 'Bolívares' : 'Dólares'}`}
                             >
-                                {displayCurrency === 'USD' ? <DollarSign size={14} /> : <span style={{ fontWeight: 'bold', fontSize: '0.8rem' }}>Bs</span>}
-                                <span style={{ fontWeight: 'bold', fontSize: '0.75rem' }}>
-                                    {displayCurrency === 'USD' ? 'USD' : 'BS'}
+                                {displayCurrency === 'USD' ? <DollarSign size={12} /> : null}
+                                <span style={{ fontWeight: 'bold', fontSize: '0.7rem' }}>
+                                    {displayCurrency === 'BS' ? 'BS.' : 'USD'}
                                 </span>
                             </button>
                         )}
@@ -1512,21 +1566,23 @@ export const POSPage = () => {
             </Modal>
 
             {/* Overlay for mobile */}
-            {isCartOpen && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: 'rgba(0,0,0,0.5)',
-                        zIndex: 40,
-                        backdropFilter: 'blur(4px)'
-                    }}
-                    onClick={() => setIsCartOpen(false)}
-                />
-            )}
-        </div>
+            {
+                isCartOpen && (
+                    <div
+                        style={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: 'rgba(0,0,0,0.5)',
+                            zIndex: 40,
+                            backdropFilter: 'blur(4px)'
+                        }}
+                        onClick={() => setIsCartOpen(false)}
+                    />
+                )
+            }
+        </div >
     );
 };

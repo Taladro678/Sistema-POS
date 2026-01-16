@@ -10,6 +10,13 @@ export const UsersPage = () => {
     const { confirm, alert } = useDialog();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+    React.useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -26,6 +33,16 @@ export const UsersPage = () => {
         if (ok) {
             deleteItem('users', id);
         }
+    };
+
+    const resetForm = () => {
+        setEditingId(null);
+        setFormData({
+            name: '',
+            role: 'cashier',
+            pin: '',
+            permissions: []
+        });
     };
 
     const handleEdit = (user) => {
@@ -52,13 +69,7 @@ export const UsersPage = () => {
         }
 
         setIsModalOpen(false);
-        setEditingId(null);
-        setFormData({
-            name: '',
-            role: 'cashier',
-            pin: '',
-            permissions: []
-        });
+        resetForm();
     };
 
     const columns = [
@@ -115,19 +126,35 @@ export const UsersPage = () => {
     );
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', height: '100%' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h1 style={{ fontSize: '2rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Shield size={32} />
-                    Gestión de Usuarios (Acceso)
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', height: '100%', width: '100%' }}>
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '1rem'
+            }}>
+                <h1 style={{ fontSize: isMobile ? '1.25rem' : '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                    <Shield size={isMobile ? 22 : 28} />
+                    {isMobile ? 'Usuarios' : 'Gestión de Usuarios'}
                 </h1>
                 <button
                     className="glass-button primary"
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                    onClick={() => setIsModalOpen(true)}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        whiteSpace: 'nowrap',
+                        padding: isMobile ? '0.4rem 0.8rem' : '0.6rem 1.2rem',
+                        fontSize: isMobile ? '0.85rem' : '1rem'
+                    }}
+                    onClick={() => {
+                        resetForm();
+                        setIsModalOpen(true);
+                    }}
                 >
-                    <UserPlus size={20} />
-                    Nuevo Usuario
+                    <UserPlus size={isMobile ? 16 : 20} />
+                    Nuevo
                 </button>
             </div>
 

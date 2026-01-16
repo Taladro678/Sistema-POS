@@ -1,0 +1,137 @@
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/DataTable.jsx:            {/* Mobile Card View */}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/DataTable.jsx:            <div className="mobile-cards" style={{ display: 'none', flexDirection: 'column', gap: '1rem' }}>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/DataTable.jsx:                    .mobile-cards { display: flex !important; }
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx: * - En MOBILE: Barra inferior fija con overflow menu (botón de 3 puntos)
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx: * - Responsive: Cambia automáticamente entre desktop y mobile según el ancho de pantalla
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx: * - Overflow Menu Mobile: Los elementos que no caben se muestran en un menú popup
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:    const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:    const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:    // Listener para detectar cambios de tamaño de pantalla y actualizar isMobile
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:        if (isMobile && !isCollapsed) {
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:    }, [isMobile, isCollapsed, toggleSidebar]);
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:     * LÓGICA DE OVERFLOW EN MOBILE
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:    const mobileVisibleCount = 5; // Número de items visibles en la barra inferior
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:    const mainItems = isMobile ? navItems.slice(0, mobileVisibleCount) : navItems;
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:    const overflowItems = isMobile ? navItems.slice(mobileVisibleCount) : [];
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:     * ESTILOS MOBILE:
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:            onClick={() => isOverflow && setIsMobileMenuOpen(false)} // Cierra el menú popup al hacer click
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:              ${isOverflow ? 'mobile-overflow-item' : ''}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:            style={isMobile ? {
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:                // ESTILOS MOBILE
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:            <item.icon size={isMobile ? 18 : 20} />
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:            {(!isCollapsed || isMobile) && <span className="sidebar-label" style={{ fontSize: '0.85rem', display: isMobile && !isOverflow ? 'none' : 'block' }}>{item.label}</span>}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:                width: isMobile ? '100%' : (isCollapsed ? '50px' : settings.sidebarWidth),
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:                height: isMobile ? '50px' : '100vh',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:                borderTop: isMobile ? '1px solid var(--glass-border)' : 'none',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:                flexDirection: isMobile ? 'row' : 'column',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:                background: isMobile ? 'rgba(15, 15, 15, 0.95)' : undefined,
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:                backdropFilter: isMobile ? 'blur(10px)' : undefined,
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:                position: isMobile ? 'fixed' : 'relative',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:                bottom: isMobile ? 0 : 'auto',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:                left: isMobile ? 0 : 'auto',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:            {!isMobile && !isCollapsed && currentUser?.role === 'admin' && (currentUser.pin === '123' || currentUser.pin === '0000') && (
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:            {/* {!isMobile && (
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:            {/* Mobile Overflow Menu (Popup) */}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:            {isMobile && isMobileMenuOpen && (
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:                        onClick={() => setIsMobileMenuOpen(false)}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:                                setIsMobileMenuOpen(false);
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:            <nav className="no-scrollbar" style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 0 : '0.25rem', overflowY: 'auto', flex: 1 }}>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:                {/* Mobile "More" Button */}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:                {isMobile && overflowItems.length > 0 && (
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:                        className={`glass-button ${isMobileMenuOpen ? 'active' : ''}`}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:                        style={isMobile ? {
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:            {/* {!isMobile && (
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:            {!isMobile && !isCollapsed && (
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:            {!isMobile && !isCollapsed && (
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/components/Sidebar.jsx:            {!isMobile && (
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ProductsPage.jsx:    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ProductsPage.jsx:        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ProductsPage.jsx:        <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '0.75rem' : '1.5rem', height: '100%' }}>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ProductsPage.jsx:                flexDirection: isMobile ? 'column' : 'row',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ProductsPage.jsx:                alignItems: isMobile ? 'stretch' : 'center',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ProductsPage.jsx:                <div style={{ display: 'flex', justifyContent: isMobile ? 'center' : 'flex-start' }}>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ProductsPage.jsx:                        ) : !isMobile ? (
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ProductsPage.jsx:                    <div style={{ display: 'flex', gap: '0.4rem', justifyContent: isMobile ? 'space-between' : 'flex-end' }}>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ProductsPage.jsx:                        {isMobile && !isSearchActive && (
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ProductsPage.jsx:                                <Plus size={16} style={{ marginRight: isMobile ? 0 : '0.4rem' }} />
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ProductsPage.jsx:                                {!isMobile && 'Nuevo Producto'}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:            padding: isMobile ? '0.5rem' : '1rem',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                flexDirection: isMobile ? 'column' : 'row',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                alignItems: isMobile ? 'stretch' : 'center',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                    <h1 style={{ margin: 0, fontSize: isMobile ? '1.25rem' : '1.5rem', fontWeight: '900', color: '#fff', letterSpacing: '-0.5px' }}>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 2fr) repeat(2, 1fr)', gap: '0.75rem' }}>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                    <h2 style={{ margin: '0.25rem 0 0 0', fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 'bold', color: '#fff' }}>${financials.departmentTotals['Restaurante'].toFixed(2)}</h2>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                    <h2 style={{ margin: '0.25rem 0 0 0', fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 'bold', color: '#fff' }}>${(financials.departmentTotals['Quesera'] || 0).toFixed(2)}</h2>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                    <h2 style={{ margin: '0.25rem 0 0 0', fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 'bold', color: '#fff' }}>${financials.totalConverted.toFixed(2)}</h2>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                    <h2 style={{ margin: '0.25rem 0 0 0', fontSize: isMobile ? '1rem' : '1.2rem', fontWeight: 'bold', color: '#27ae60' }}>${financials.totalUSD.toFixed(2)}</h2>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                    <h2 style={{ margin: '0.25rem 0 0 0', fontSize: isMobile ? '1rem' : '1.2rem', fontWeight: 'bold', color: '#3498db' }}>Bs {financials.totalBs.toLocaleString()}</h2>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                flexDirection: isMobile ? 'column' : 'row',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                overflowY: isMobile ? 'visible' : 'hidden'
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1, minHeight: isMobile ? 'auto' : 0 }}>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                    <div className="glass-panel" style={{ padding: '1rem', height: isMobile ? '250px' : '200px', flexShrink: 0 }}>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                    <div className="glass-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: isMobile ? '400px' : 'auto', maxHeight: isMobile ? '500px' : 'none' }}>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: isMobile ? '0.75rem' : '0.8rem' }}>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                                        {!isMobile && <th style={{ padding: '0.75rem 1rem', fontWeight: 'bold' }}>MÉTODO</th>}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                                        {!isMobile && <th style={{ padding: '0.75rem 1rem', fontWeight: 'bold' }}>CAJERO</th>}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                                                {isMobile && <div style={{ fontSize: '0.65rem', color: '#ccc', fontWeight: 'normal' }}>{sale.payments ? sale.payments.map(p => mapMethodLabel(p.method).split(' ')[0]).join(', ') : mapMethodLabel(sale.paymentMethod).split(' ')[0]}</div>}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                                            {!isMobile && <td style={{ padding: '0.75rem 1rem', color: '#ccc' }}>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                                            {!isMobile && <td style={{ padding: '0.75rem 1rem', color: 'var(--text-secondary)' }}>{sale.cashier || 'Cajero 1'}</td>}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                    width: isMobile ? '100%' : '350px',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                    minHeight: isMobile ? 'auto' : 0
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                    <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, overflowY: isMobile ? 'visible' : 'auto' }}>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                                        label={({ name, percent }) => isMobile ? `${(percent * 100).toFixed(0)}%` : `${name.split(' ')[0]} ${(percent * 100).toFixed(0)}%`}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/ReportsPage.jsx:                        <div style={{ marginTop: isMobile ? '1rem' : 'auto', paddingTop: '1rem', borderTop: '2px dashed rgba(255,255,255,0.05)' }}>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/CashRegisterPage.jsx:    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/CashRegisterPage.jsx:        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/CashRegisterPage.jsx:                        <div className="bg-blue-600 p-1.5 rounded-lg"><Calculator className="text-white" size={isMobile ? 20 : 24} /></div>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/CashRegisterPage.jsx:                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: isMobile ? '100%' : 'auto' }}>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/CashRegisterPage.jsx:                        {!isMobile && <span>Historial</span>}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/OrdersPage.jsx:    const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/OrdersPage.jsx:        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/OrdersPage.jsx:        <div style={{ padding: isMobile ? '1rem' : '1.5rem', height: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/OrdersPage.jsx:                flexDirection: isMobile ? 'column' : 'row',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/OrdersPage.jsx:                alignItems: isMobile ? 'stretch' : 'center',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/OrdersPage.jsx:                    <h1 style={{ margin: 0, fontSize: isMobile ? '1.25rem' : '1.75rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/OrdersPage.jsx:                        <Coffee className="text-orange-400" size={isMobile ? 24 : 32} />
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/OrdersPage.jsx:                        {isMobile ? 'Mesas y Pedidos' : 'Gestión de Pedidos'}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/OrdersPage.jsx:                                padding: isMobile ? '0.2rem 0.6rem' : '0.5rem 1rem',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/OrdersPage.jsx:                                fontSize: isMobile ? '0.8rem' : '0.9rem',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/OrdersPage.jsx:                {/* Status Legend - Optimized for Mobile */}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/OrdersPage.jsx:                    justifyContent: isMobile ? 'center' : 'flex-end',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/OrdersPage.jsx:                                <h3 style={{ margin: '0 0 0.25rem 0', fontSize: isMobile ? '1.25rem' : '1.5rem', fontWeight: 'bold', color: 'white' }}>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/POSPage.jsx:    // Mobile Detection
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/POSPage.jsx:    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/POSPage.jsx:        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/POSPage.jsx:                    gap: isMobile ? '0.25rem' : '0.5rem',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/POSPage.jsx:                    padding: isMobile ? '0.25rem' : '0.5rem 1rem',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/POSPage.jsx:                    {/* Badge de Mesa - Ultra Compact on Mobile */}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/POSPage.jsx:                    {currentTable && (!isMobile || !isSearchExpanded) && (
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/POSPage.jsx:                    {/* Customer Selector - Compact on Mobile */}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/POSPage.jsx:                    {(!isMobile || !isSearchExpanded) && (
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/POSPage.jsx:                                <span style={{ maxWidth: isMobile ? '50px' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/POSPage.jsx:                    {/* Integrated Search & Categories (Pushes to next line on mobile if no space) */}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/POSPage.jsx:                    <div style={{ display: 'flex', flex: isMobile ? '1 1 100%' : 1, order: isMobile ? 2 : 0, gap: '0.25rem', alignItems: 'center', position: 'static', minWidth: 0, marginTop: isMobile ? '0.1rem' : 0 }}>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/POSPage.jsx:                        {/* Expanded Categories Panel (Fixed on mobile!) */}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/POSPage.jsx:                                position: isMobile ? 'fixed' : 'absolute',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/POSPage.jsx:                                top: isMobile ? '135px' : '55px',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/POSPage.jsx:                        {currentTable && !isMobile && (
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/POSPage.jsx:                        {/* Cart Toggle (Mobile) */}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/POSPage.jsx:                        {isMobile && (
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/POSPage.jsx:                        {(!isMobile || !isSearchExpanded) && (
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/POSPage.jsx:                    {/* Close Button for Mobile */}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/POSPage.jsx:            {/* Overlay for mobile */}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/UsersPage.jsx:    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/UsersPage.jsx:        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/UsersPage.jsx:                <h1 style={{ fontSize: isMobile ? '1.25rem' : '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/UsersPage.jsx:                    <Shield size={isMobile ? 22 : 28} />
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/UsersPage.jsx:                    {isMobile ? 'Usuarios' : 'Gestión de Usuarios'}
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/UsersPage.jsx:                        padding: isMobile ? '0.4rem 0.8rem' : '0.6rem 1.2rem',
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/UsersPage.jsx:                        fontSize: isMobile ? '0.85rem' : '1rem'
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/pages/UsersPage.jsx:                    <UserPlus size={isMobile ? 16 : 20} />
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/styles/responsive.css:/* Mobile / Narrow Window (max-width: 768px) */
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/App.css:/* Mobile Cart Drawer */
+/home/luvin/.gemini/antigravity/scratch/Sistema-POS/src/App.css:    /* Keep row on mobile if possible */

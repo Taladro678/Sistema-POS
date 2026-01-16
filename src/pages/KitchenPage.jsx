@@ -70,14 +70,19 @@ export const KitchenPage = () => {
     };
 
     const getTimeElapsed = (timestamp) => {
+        if (!timestamp) return 'Recién llegada';
+
         const now = new Date();
         const orderTime = new Date(timestamp);
+
+        if (isNaN(orderTime.getTime())) return 'Recién llegada';
+
         const diffMs = now - orderTime;
         const diffMins = Math.floor(diffMs / 60000);
 
         if (diffMins < 1) return 'Recién llegada';
-        if (diffMins === 1) return '1 minuto';
-        if (diffMins < 60) return `${diffMins} minutos`;
+        if (diffMins === 1) return '1 min';
+        if (diffMins < 60) return `${diffMins} min`;
 
         const diffHours = Math.floor(diffMins / 60);
         const remainingMins = diffMins % 60;
@@ -193,46 +198,53 @@ export const KitchenPage = () => {
                     )}
                 </div>
 
-                {/* View Mode Tabs */}
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {/* Scrollable Filters Container */}
+                <div className="no-scrollbar" style={{
+                    display: 'flex',
+                    gap: '0.75rem',
+                    overflowX: 'auto',
+                    width: '100%',
+                    paddingBottom: '0.5rem',
+                    whiteSpace: 'nowrap',
+                    alignItems: 'center'
+                }}>
                     <button
                         className={`glass-button ${viewMode === 'active' ? 'primary' : ''}`}
                         onClick={() => setViewMode('active')}
-                        style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}
+                        style={{ fontSize: '0.85rem', padding: '0.4rem 1rem', flexShrink: 0 }}
                     >
                         Activas ({kitchenOrders.length})
                     </button>
                     <button
                         className={`glass-button ${viewMode === 'cancelled' ? 'primary' : ''}`}
                         onClick={() => setViewMode('cancelled')}
-                        style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}
+                        style={{ fontSize: '0.85rem', padding: '0.4rem 1rem', flexShrink: 0 }}
                     >
                         Canceladas ({cancelledKitchenOrders.length})
                     </button>
-                </div>
 
-                {/* Filtros */}
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', width: '100%' }}>
+                    <div style={{ width: '1px', background: 'rgba(255,255,255,0.2)', height: '20px', margin: '0 0.5rem' }}></div>
+
                     <button
                         className={`glass-button ${selectedStatus === 'all' ? 'primary' : ''}`}
                         onClick={() => setSelectedStatus('all')}
-                        style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}
+                        style={{ fontSize: '0.85rem', padding: '0.4rem 1rem', flexShrink: 0 }}
                     >
-                        Todas ({viewMode === 'active' ? kitchenOrders.length : cancelledKitchenOrders.length})
+                        Todas
                     </button>
                     <button
                         className={`glass-button ${selectedStatus === 'pending' ? 'accent' : ''}`}
                         onClick={() => setSelectedStatus('pending')}
-                        style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', borderColor: 'var(--accent-orange)' }}
+                        style={{ fontSize: '0.85rem', padding: '0.4rem 1rem', borderColor: 'var(--accent-orange)', flexShrink: 0 }}
                     >
                         Pendientes ({viewMode === 'active' ? kitchenOrders.filter(o => o.status === 'pending').length : 0})
                     </button>
                     <button
                         className={`glass-button ${selectedStatus === 'in-progress' ? 'accent' : ''}`}
                         onClick={() => setSelectedStatus('in-progress')}
-                        style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', borderColor: 'var(--accent-blue)' }}
+                        style={{ fontSize: '0.85rem', padding: '0.4rem 1rem', borderColor: 'var(--accent-blue)', flexShrink: 0 }}
                     >
-                        En Preparación ({viewMode === 'active' ? kitchenOrders.filter(o => o.status === 'in-progress').length : 0})
+                        En Prep. ({viewMode === 'active' ? kitchenOrders.filter(o => o.status === 'in-progress').length : 0})
                     </button>
                 </div>
             </div>
@@ -253,7 +265,7 @@ export const KitchenPage = () => {
                     overflowX: 'hidden',
                     paddingRight: '0.5rem',
                     width: '100%',
-                    paddingBottom: '3rem'
+                    paddingBottom: '6rem' // Increased padding for bottom nav
                 }}>
                     {filteredOrders.map(order => {
                         const priorityInfo = getPriorityData(order.priority);

@@ -3,13 +3,15 @@ import { useData } from '../context/DataContext';
 import { useDialog } from '../context/DialogContext';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
-import { UserPlus, FileText, DollarSign, Trash2, Gift } from 'lucide-react';
+import ExcelImporter from '../components/ExcelImporter';
+import { UserPlus, FileText, DollarSign, Trash2, Gift, Upload } from 'lucide-react';
 
 export const PersonnelPage = () => {
     const { data, addItem, deleteItem, distributeTips, updateItem } = useData();
     const { confirm, alert } = useDialog();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isTipsModalOpen, setIsTipsModalOpen] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
@@ -162,11 +164,75 @@ export const PersonnelPage = () => {
         setIsPaymentModalOpen(false);
     };
 
+    const handleImportPayroll = async (excelData) => {
+        // Logic to parse "S PERSONAL" format
+        // Columns based on inspection:
+        // 0: Name, 3: Daily Rate, 4: Days Worked, 5: Total $, 9: Tips, 10: Deductions, 11: Status
+
+        let updatedCount = 0;
+        let newCount = 0;
+
+        for (const row of excelData) {
+            const rawName = row['A'] || row['0']; // Try both keys depending on parser
+            if (!rawName || rawName === 'EMPLEADOS') continue;
+
+            const name = String(rawName).trim();
+            const daysWorked = parseInt(row['E'] || row['4']) || 0;
+            const dailyRate = parseFloat(row['D'] || row['3']) || 0;
+            const totalSalary = parseFloat(row['F'] || row['5']) || 0;
+            const status = row['L'] || row['11'] || 'Pendiente';
+
+            if (!name || name.length < 3) continue;
+
+            const existingEmp = data.personnel.find(e => e.name.toLowerCase() === name.toLowerCase());
+
+            if (existingEmp) {
+                // Update existing
+                updateItem('personnel', existingEmp.id, {
+                    ...existingEmp,
+                    salary: totalSalary > 0 ? totalSalary : existingEmp.salary, // Update salary if present in sheet
+                    paymentFrequency: 'Semanal', // Assumed from sheet structure
+                    lastPayment: status === 'PAGADO' ? new Date().toLocaleDateString() : existingEmp.lastPayment
+                });
+                updatedCount++;
+            } else {
+                // Create new (optional, maybe ask user?)
+                // For now, let's skip creating new ones automatically to avoid garbage, 
+                // or create them if it looks like a real person.
+                if (totalSalary > 0) {
+                    addItem('personnel', {
+                        name: name,
+                        status: 'Activo',
+                        salary: totalSalary,
+                        paymentFrequency: 'Semanal',
+                        lastPayment: status === 'PAGADO' ? new Date().toLocaleDateString() : 'N/A',
+                        phone: '',
+                    });
+                    newCount++;
+                }
+            }
+        }
+
+        setShowImportModal(false);
+        await alert({
+            title: 'Importación Completada',
+            message: `Se actualizaron ${updatedCount} empleados y se crearon ${newCount} nuevos.`
+        });
+    };
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', height: '100%' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h1 style={{ fontSize: '2rem' }}>Personal</h1>
                 <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button
+                        className="glass-button"
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                        onClick={() => setShowImportModal(true)}
+                    >
+                        <Upload size={20} />
+                        Importar Nómina
+                    </button>
                     <button
                         className="glass-button accent"
                         style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
@@ -328,6 +394,14 @@ export const PersonnelPage = () => {
                 title="Gestión y Reparto de Propinas"
             >
                 <TipManagementModalContent data={data} distributeTips={distributeTips} onClose={() => setIsTipsModalOpen(false)} />
+            </Modal>
+
+            {/* Import Modal */}
+            <Modal isOpen={showImportModal} onClose={() => setShowImportModal(false)} title="Importar Nómina">
+                <ExcelImporter
+                    onDataLoaded={handleImportPayroll}
+                    onClose={() => setShowImportModal(false)}
+                />
             </Modal>
         </div>
     );

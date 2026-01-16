@@ -141,7 +141,7 @@ const Sidebar = () => {
             }}
             title={isCollapsed ? item.label : ''} // Tooltip cuando está colapsado
         >
-            <item.icon size={20} />
+            <item.icon size={isMobile ? 18 : 20} />
             {/* Muestra el label solo cuando NO está colapsado, o cuando está en móvil en el overflow menu */}
             {(!isCollapsed || isMobile) && <span className="sidebar-label" style={{ fontSize: '0.85rem', display: isMobile && !isOverflow ? 'none' : 'block' }}>{item.label}</span>}
         </NavLink>
@@ -152,7 +152,7 @@ const Sidebar = () => {
             className={`glass-panel sidebar ${isCollapsed ? 'collapsed' : ''}`}
             style={{
                 width: isMobile ? '100%' : (isCollapsed ? '50px' : settings.sidebarWidth),
-                height: isMobile ? '60px' : '100vh',
+                height: isMobile ? '50px' : '100vh',
                 padding: 0,
                 borderRadius: 0,
                 borderLeft: 'none',
@@ -160,7 +160,8 @@ const Sidebar = () => {
                 borderBottom: 'none',
                 display: 'flex',
                 flexDirection: isMobile ? 'row' : 'column',
-                background: isMobile ? '#0f0f0f' : undefined,
+                background: isMobile ? 'rgba(15, 15, 15, 0.95)' : undefined,
+                backdropFilter: isMobile ? 'blur(10px)' : undefined,
                 position: isMobile ? 'fixed' : 'relative',
                 bottom: isMobile ? 0 : 'auto',
                 left: isMobile ? 0 : 'auto',
@@ -233,7 +234,7 @@ const Sidebar = () => {
                         className="glass-panel"
                         style={{
                             position: 'absolute',
-                            bottom: '70px', // Above the bar with some spacing
+                            bottom: '60px', // Above the bar with some spacing
                             right: '10px',
                             display: 'flex',
                             flexDirection: 'column',

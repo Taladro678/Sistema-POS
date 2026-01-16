@@ -16,10 +16,13 @@ const mapMethodLabel = (method) => {
     const labels = {
         'bancaribe': 'Punto Bancaribe',
         'Bancaribe': 'Punto Bancaribe',
+        'Bancaribe (Punto)': 'Punto Bancaribe',
         'banplus': 'Punto Banplus',
         'Banplus': 'Punto Banplus',
+        'Banplus (Punto)': 'Punto Banplus',
         'banesco': 'Punto Banesco',
         'Banesco': 'Punto Banesco',
+        'Banesco (Punto)': 'Punto Banesco',
         'pm_banesco_ps': 'Pago Movil Banesco PS',
         'pm_banesco_raquel': 'Pago Movil Banesco Raquel',
         'pm_bdv_ps': 'Pago Movil BDV PS',
@@ -31,6 +34,7 @@ const mapMethodLabel = (method) => {
         'usd': 'Efectivo USD',
         'USD ($)': 'Efectivo USD',
         'punto': 'Punto de Venta',
+        'Otro Punto': 'Punto de Venta',
         'punto_venta': 'Punto de Venta',
         'credito': 'Crédito (Fiado)',
         'Crédito (Fiado)': 'Crédito (Fiado)'
@@ -50,6 +54,13 @@ const ReportsPage = () => {
     const [selectedSale, setSelectedSale] = useState(null);
     const selectedCustomerId = searchParams.get('customerId') || '';
     const [timeRange, setTimeRange] = useState(selectedCustomerId ? 'all' : 'today');
+
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    React.useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const handleCustomerChange = (e) => {
         const id = e.target.value;
@@ -91,10 +102,29 @@ const ReportsPage = () => {
         let totalUSD = 0, totalBs = 0, totalConverted = 0;
         let totalReceivable = 0, totalExpenses = 0, totalDebts = 0;
 
-        // Tracks native amounts for legend
         const methodTotals = {};
+        const departmentTotals = { 'Restaurante': 0, 'Quesera': 0 };
 
         filteredSales.forEach(sale => {
+            // Priority 1: Use the new granular department breakdown if available
+            if (sale.departmentTotals) {
+                Object.entries(sale.departmentTotals).forEach(([dept, amount]) => {
+                    if (departmentTotals[dept] !== undefined) {
+                        departmentTotals[dept] += amount;
+                    } else {
+                        departmentTotals[dept] = amount;
+                    }
+                });
+            } else {
+                // Legacy fallback: single department for the whole sale
+                const dept = sale.department || 'Restaurante';
+                if (departmentTotals[dept] !== undefined) {
+                    departmentTotals[dept] += sale.total;
+                } else {
+                    departmentTotals[dept] = sale.total;
+                }
+            }
+
             if (sale.payments && Array.isArray(sale.payments) && sale.payments.length > 0) {
                 sale.payments.forEach(p => {
                     const amount = parseFloat(p.amount);
@@ -157,79 +187,111 @@ const ReportsPage = () => {
         totalDebts = (data.debts || []).reduce((acc, debt) => acc + (debt.amount || 0), 0);
         totalReceivable += (data.accountsReceivable || []).reduce((acc, rec) => acc + (rec.amount || 0), 0);
 
-        return { totalUSD, totalBs, totalConverted, totalReceivable, totalExpenses, totalDebts, allPaymentsChartData };
+        return { totalUSD, totalBs, totalConverted, totalReceivable, totalExpenses, totalDebts, allPaymentsChartData, departmentTotals };
     }, [filteredSales, exchangeRate, data.expenses, data.debts, data.accountsReceivable]);
 
     return (
-        <div style={{ padding: '0.75rem', height: '100%', display: 'flex', flexDirection: 'column', gap: '0.75rem', overflow: 'hidden', background: '#0b0e14' }}>
-
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                    <div>
-                        <h1 style={{ fontSize: '1.25rem', fontWeight: '900', color: '#fff', letterSpacing: '-0.5px' }}>ANÁLISIS DE VENTAS</h1>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Dashboard Financiero en Tiempo Real</p>
-                    </div>
-                    <div style={{ padding: '4px', display: 'flex', flexDirection: 'row', gap: '6px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', minWidth: '320px', marginLeft: '2rem' }}>
-                        {['today', 'week', 'month', 'all'].map(r => (
-                            <button key={r}
-                                className={`glass-button ${timeRange === r ? 'primary' : ''}`}
-                                onClick={() => setTimeRange(r)}
-                                style={{
-                                    fontSize: '0.75rem',
-                                    padding: '0.5rem 1.2rem',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    fontWeight: '900',
-                                    color: timeRange === r ? '#fff' : '#9ca3af',
-                                    background: timeRange === r ? '#3b82f6' : 'transparent',
-                                    cursor: 'pointer',
-                                    flex: 1,
-                                    whiteSpace: 'nowrap',
-                                    transition: 'all 0.2s ease'
-                                }}
-                            >
-                                {r === 'today' ? 'Hoy' : r === 'week' ? 'Semana' : r === 'month' ? 'Mes' : 'Todo'}
-                            </button>
-                        ))}
-                    </div>
+        <div style={{
+            padding: isMobile ? '0.5rem' : '1rem',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem',
+            overflowY: 'auto',
+            background: '#0b0e14'
+        }}>
+            {/* Header Area */}
+            <div style={{
+                display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
+                alignItems: isMobile ? 'stretch' : 'center',
+                justifyContent: 'space-between',
+                gap: '1rem',
+                flexShrink: 0
+            }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <h1 style={{ margin: 0, fontSize: isMobile ? '1.25rem' : '1.5rem', fontWeight: '900', color: '#fff', letterSpacing: '-0.5px' }}>
+                        ANÁLISIS DE VENTAS
+                    </h1>
+                    <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Dashboard Financiero en Tiempo Real</p>
                 </div>
-                <div className="glass-panel" style={{ padding: '0.25rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+
+                <div className="no-scrollbar" style={{
+                    display: 'flex',
+                    gap: '0.5rem',
+                    overflowX: 'auto',
+                    padding: '0.25rem',
+                    background: 'rgba(255,255,255,0.05)',
+                    borderRadius: '12px',
+                    flexShrink: 0
+                }}>
+                    {['today', 'week', 'month', 'all'].map(r => (
+                        <button key={r}
+                            className={`glass-button ${timeRange === r ? 'primary' : ''}`}
+                            onClick={() => setTimeRange(r)}
+                            style={{
+                                fontSize: '0.7rem',
+                                padding: '0.4rem 0.75rem',
+                                borderRadius: '8px',
+                                background: timeRange === r ? 'var(--accent-blue)' : 'transparent',
+                                color: timeRange === r ? '#000' : '#fff',
+                                whiteSpace: 'nowrap',
+                                flex: 1,
+                                minWidth: '60px'
+                            }}
+                        >
+                            {r === 'today' ? 'Hoy' : r === 'week' ? 'Semana' : r === 'month' ? 'Mes' : 'Todo'}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="glass-panel" style={{ padding: '0.4rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Filter size={14} className="text-gray-400" />
-                    <select className="glass-input" value={selectedCustomerId} onChange={handleCustomerChange} style={{ border: 'none', background: 'transparent', fontSize: '0.8rem', color: '#fff' }}>
-                        <option value="" style={{ background: '#1a1a1a' }}>-- Todos los Clientes --</option>
+                    <select className="glass-input" value={selectedCustomerId} onChange={handleCustomerChange} style={{ border: 'none', background: 'transparent', fontSize: '0.8rem', color: '#fff', width: '100%' }}>
+                        <option value="" style={{ background: '#1a1a1a' }}>-- Clientes --</option>
                         {customers.map(c => <option key={c.id} value={c.id} style={{ background: '#1a1a1a' }}>{c.name}</option>)}
                     </select>
                 </div>
             </div>
 
             {/* KPI Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 2fr) repeat(2, 1fr)', gap: '0.75rem' }}>
+                <div className="glass-panel" style={{ padding: '0.75rem', borderLeft: '4px solid var(--accent-orange)', background: 'rgba(255, 165, 0, 0.05)' }}>
+                    <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>RESTAURANTE</p>
+                    <h2 style={{ margin: '0.25rem 0 0 0', fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 'bold', color: '#fff' }}>${financials.departmentTotals['Restaurante'].toFixed(2)}</h2>
+                </div>
+                <div className="glass-panel" style={{ padding: '0.75rem', borderLeft: '4px solid #f1c40f', background: 'rgba(241, 196, 15, 0.05)' }}>
+                    <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>QUESERA</p>
+                    <h2 style={{ margin: '0.25rem 0 0 0', fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 'bold', color: '#fff' }}>${(financials.departmentTotals['Quesera'] || 0).toFixed(2)}</h2>
+                </div>
                 <div className="glass-panel" style={{ padding: '0.75rem', borderLeft: '4px solid var(--accent-green)', background: 'rgba(39, 174, 96, 0.05)' }}>
-                    <p style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>VENTA TOTAL ESTIMADA</p>
-                    <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fff' }}>${financials.totalConverted.toFixed(2)}</h2>
+                    <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>VENTA TOTAL</p>
+                    <h2 style={{ margin: '0.25rem 0 0 0', fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 'bold', color: '#fff' }}>${financials.totalConverted.toFixed(2)}</h2>
                 </div>
                 <div className="glass-panel" style={{ padding: '0.75rem', borderLeft: '4px solid #27ae60' }}>
-                    <p style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>TOTAL DIVISAS ($)</p>
-                    <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#27ae60' }}>${financials.totalUSD.toFixed(2)}</h2>
+                    <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>DIVISAS ($)</p>
+                    <h2 style={{ margin: '0.25rem 0 0 0', fontSize: isMobile ? '1rem' : '1.2rem', fontWeight: 'bold', color: '#27ae60' }}>${financials.totalUSD.toFixed(2)}</h2>
                 </div>
                 <div className="glass-panel" style={{ padding: '0.75rem', borderLeft: '4px solid #3498db' }}>
-                    <p style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>TOTAL BOLÍVARES (BS)</p>
-                    <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#3498db' }}>Bs {financials.totalBs.toLocaleString()}</h2>
-                </div>
-                <div className="glass-panel" style={{ padding: '0.75rem', borderLeft: '4px solid #e74c3c' }}>
-                    <p style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>GASTOS REGISTRADOS</p>
-                    <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#e74c3c' }}>${financials.totalExpenses.toFixed(2)}</h2>
+                    <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>BOLÍVARES</p>
+                    <h2 style={{ margin: '0.25rem 0 0 0', fontSize: isMobile ? '1rem' : '1.2rem', fontWeight: 'bold', color: '#3498db' }}>Bs {financials.totalBs.toLocaleString()}</h2>
                 </div>
             </div>
 
             {/* Main Content Area */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 350px', gap: '0.75rem', flex: 1, minHeight: 0 }}>
+            <div style={{
+                display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
+                gap: '0.75rem',
+                flex: 1,
+                minHeight: 0,
+                overflowY: isMobile ? 'visible' : 'hidden'
+            }}>
 
                 {/* Left Side: Trends and Table */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', overflow: 'hidden' }}>
-                    <div className="glass-panel" style={{ padding: '1rem', height: '200px', flexShrink: 0 }}>
-                        <h3 style={{ fontSize: '0.8rem', fontWeight: 'bold', marginBottom: '1rem', color: 'var(--text-secondary)' }}>COMPARATIVA DE SALDOS ($)</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1, minHeight: isMobile ? 'auto' : 0 }}>
+                    <div className="glass-panel" style={{ padding: '1rem', height: isMobile ? '250px' : '200px', flexShrink: 0 }}>
+                        <h3 style={{ margin: '0 0 1rem 0', fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>COMPARATIVA DE SALDOS ($)</h3>
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={[
                                 { name: 'Ventas', valor: financials.totalConverted, color: '#2ecc71' },
@@ -253,29 +315,32 @@ const ReportsPage = () => {
                         </ResponsiveContainer>
                     </div>
 
-                    <div className="glass-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                    <div className="glass-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: isMobile ? '400px' : 'auto', maxHeight: isMobile ? '500px' : 'none' }}>
                         <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h3 style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>HISTORIAL DE VENTAS</h3>
+                            <h3 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 'bold' }}>HISTORIAL DE VENTAS</h3>
                         </div>
                         <div style={{ overflowY: 'auto', flex: 1 }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: isMobile ? '0.75rem' : '0.8rem' }}>
                                 <thead style={{ position: 'sticky', top: 0, background: '#161922', zIndex: 10 }}>
                                     <tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}>
                                         <th style={{ padding: '0.75rem 1rem', fontWeight: 'bold' }}>HORA</th>
                                         <th style={{ padding: '0.75rem 1rem', fontWeight: 'bold' }}>TOTAL</th>
-                                        <th style={{ padding: '0.75rem 1rem', fontWeight: 'bold' }}>MÉTODO</th>
-                                        <th style={{ padding: '0.75rem 1rem', fontWeight: 'bold' }}>CAJERO</th>
+                                        {!isMobile && <th style={{ padding: '0.75rem 1rem', fontWeight: 'bold' }}>MÉTODO</th>}
+                                        {!isMobile && <th style={{ padding: '0.75rem 1rem', fontWeight: 'bold' }}>CAJERO</th>}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {filteredSales.slice().reverse().map(sale => (
-                                        <tr key={sale.id} onClick={() => setSelectedSale(sale)} className="table-row-hover" style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', cursor: 'pointer' }}>
+                                        <tr key={sale.id} onClick={() => setSelectedSale(sale)} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', cursor: 'pointer', background: 'transparent' }} onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
                                             <td style={{ padding: '0.75rem 1rem' }}>{new Date(sale.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                                            <td style={{ padding: '0.75rem 1rem', fontWeight: 'bold', color: 'var(--accent-green)' }}>${parseFloat(sale.total).toFixed(2)}</td>
-                                            <td style={{ padding: '0.75rem 1rem', color: '#ccc' }}>
-                                                {sale.payments ? sale.payments.map(p => mapMethodLabel(p.method)).join(', ') : mapMethodLabel(sale.paymentMethod)}
+                                            <td style={{ padding: '0.75rem 1rem', fontWeight: 'bold', color: 'var(--accent-green)' }}>
+                                                ${parseFloat(sale.total).toFixed(2)}
+                                                {isMobile && <div style={{ fontSize: '0.65rem', color: '#ccc', fontWeight: 'normal' }}>{sale.payments ? sale.payments.map(p => mapMethodLabel(p.method).split(' ')[0]).join(', ') : mapMethodLabel(sale.paymentMethod).split(' ')[0]}</div>}
                                             </td>
-                                            <td style={{ padding: '0.75rem 1rem', color: 'var(--text-secondary)' }}>{sale.cashier || 'Cajero 1'}</td>
+                                            {!isMobile && <td style={{ padding: '0.75rem 1rem', color: '#ccc' }}>
+                                                {sale.payments ? sale.payments.map(p => mapMethodLabel(p.method)).join(', ') : mapMethodLabel(sale.paymentMethod)}
+                                            </td>}
+                                            {!isMobile && <td style={{ padding: '0.75rem 1rem', color: 'var(--text-secondary)' }}>{sale.cashier || 'Cajero 1'}</td>}
                                         </tr>
                                     ))}
                                 </tbody>
@@ -285,14 +350,23 @@ const ReportsPage = () => {
                 </div>
 
                 {/* Right Side: Detailed Payment Summary */}
-                <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#11141d', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div className="glass-panel" style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden',
+                    background: '#11141d',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                    width: isMobile ? '100%' : '350px',
+                    flexShrink: 0,
+                    minHeight: isMobile ? 'auto' : 0
+                }}>
                     <div style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
-                        <h3 style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <CreditCard size={18} color="var(--accent-blue)" /> DETALLE POR MEDIO DE PAGO
+                        <h3 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <CreditCard size={18} color="var(--accent-blue)" /> POR MEDIO DE PAGO
                         </h3>
                     </div>
 
-                    <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, overflowY: 'auto' }}>
+                    <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, overflowY: isMobile ? 'visible' : 'auto' }}>
 
                         {/* Summary Chart */}
                         <div style={{ height: '240px', flexShrink: 0 }}>
@@ -305,7 +379,7 @@ const ReportsPage = () => {
                                         outerRadius={55}
                                         paddingAngle={2}
                                         labelLine={true}
-                                        label={({ name, percent }) => `${name.split(' ')[0]} ${(percent * 100).toFixed(0)}%`}
+                                        label={({ name, percent }) => isMobile ? `${(percent * 100).toFixed(0)}%` : `${name.split(' ')[0]} ${(percent * 100).toFixed(0)}%`}
                                     >
                                         {financials.allPaymentsChartData.map((entry, index) => (
                                             <Cell key={index} fill={entry.color} stroke="rgba(0,0,0,0.5)" strokeWidth={2} />
@@ -351,7 +425,7 @@ const ReportsPage = () => {
                         </div>
 
                         {/* Grand Totals Section */}
-                        <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '2px dashed rgba(255,255,255,0.05)' }}>
+                        <div style={{ marginTop: isMobile ? '1rem' : 'auto', paddingTop: '1rem', borderTop: '2px dashed rgba(255,255,255,0.05)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                                 <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 'bold' }}>TOTAL BOLÍVARES</span>
                                 <span style={{ color: '#3498db', fontSize: '0.85rem', fontWeight: 'bold' }}>Bs {financials.totalBs.toLocaleString()}</span>

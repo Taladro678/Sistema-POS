@@ -15,14 +15,16 @@ export const CategoriesPage = () => {
 
     const [formData, setFormData] = useState({
         label: '',
-        keywords: []
+        keywords: [],
+        department: 'Restaurante'
     });
 
     const handleEdit = (category) => {
         setEditingCategory(category);
         setFormData({
             label: category.label,
-            keywords: category.keywords || []
+            keywords: category.keywords || [],
+            department: category.department || 'Restaurante'
         });
         setIsModalOpen(true);
     };
@@ -55,6 +57,7 @@ export const CategoriesPage = () => {
         const categoryData = {
             label: formData.label.trim(),
             keywords: formData.keywords,
+            department: formData.department,
             id: editingCategory?.id || formData.label.toLowerCase().replace(/\s+/g, '_')
         };
 
@@ -75,7 +78,7 @@ export const CategoriesPage = () => {
 
     const resetForm = () => {
         setEditingCategory(null);
-        setFormData({ label: '', keywords: [] });
+        setFormData({ label: '', keywords: [], department: 'Restaurante' });
         setKeywordInput('');
     };
 
@@ -120,6 +123,23 @@ export const CategoriesPage = () => {
                     <Tag size={18} color="var(--accent-cyan)" />
                     <span style={{ fontWeight: 'bold' }}>{row.label}</span>
                 </div>
+            )
+        },
+        {
+            header: 'Departamento',
+            accessor: 'department',
+            render: (row) => (
+                <span style={{
+                    fontSize: '0.75rem',
+                    padding: '0.2rem 0.5rem',
+                    borderRadius: '4px',
+                    background: row.department === 'Quesera' ? 'rgba(241, 196, 15, 0.1)' : 'rgba(255, 165, 0, 0.1)',
+                    color: row.department === 'Quesera' ? '#f1c40f' : 'var(--accent-orange)',
+                    border: row.department === 'Quesera' ? '1px solid #f1c40f44' : '1px solid #ffa50044',
+                    fontWeight: 'bold'
+                }}>
+                    {row.department || 'Restaurante'}
+                </span>
             )
         },
         {
@@ -254,6 +274,20 @@ export const CategoriesPage = () => {
                             value={formData.label}
                             onChange={(e) => setFormData({ ...formData, label: e.target.value })}
                         />
+                    </div>
+
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
+                            Departamento Responsable
+                        </label>
+                        <select
+                            className="glass-input"
+                            value={formData.department}
+                            onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                        >
+                            <option value="Restaurante">Restaurante (Comida/Bebida)</option>
+                            <option value="Quesera">Quesera (Quesos/Lácteos)</option>
+                        </select>
                     </div>
 
                     <div>

@@ -6,17 +6,18 @@
 }
 
 :root {
-  --glass-bg: rgba(30, 30, 30, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
-  --accent-blue: #8ab4f8;
-  --accent-green: #81c995;
-  --accent-red: #f28b82;
-  --accent-yellow: #fdd663;
-  --accent-orange: #fb8c00;
-  --text-primary: #e8eaed;
-  --text-secondary: #9aa0a6;
+  --glass-bg: rgba(18, 18, 18, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+  --accent-blue: #00d4ff;
+  --accent-green: #00ffa3;
+  --accent-red: #ff4d4d;
+  --accent-yellow: #fffa65;
+  --accent-orange: #ff9f43;
+  --text-primary: #ffffff;
+  --text-secondary: #b3b3b3;
   --bg-dark: #000000;
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 .logo {
@@ -61,14 +62,40 @@
 /* Glassmorphism Utilities */
 .glass-panel {
   background: var(--glass-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--glass-border);
-  border-radius: 8px;
-  /* Smaller radius */
+  border-radius: 12px;
   box-shadow: var(--glass-shadow);
-  padding: 0.75rem;
-  /* Reduced padding */
+  padding: 1rem;
+}
+
+/* Scrollbar Customization */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .glass-input {
@@ -156,7 +183,8 @@
 .main-content {
   flex: 1;
   height: 100%;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
 }
 
@@ -431,10 +459,35 @@
 
   .app-container {
     flex-direction: column;
-    padding-bottom: 60px;
+    padding-bottom: 50px;
   }
 
   .main-content {
     padding: 0;
+  }
+}
+
+/* Grid Utilities */
+.manual-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.manual-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (max-width: 1024px) {
+  .manual-grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+
+  .manual-grid-3,
+  .manual-grid-2 {
+    grid-template-columns: 1fr;
   }
 }

@@ -12,11 +12,18 @@ export const OrdersPage = () => {
     const tables = data.tables || [];
 
     const [selectedArea, setSelectedArea] = useState('Todas'); // 'Todas', 'Restaurante', 'Quesera', 'Patio'
-    const [viewMode, setViewMode] = useState('orders'); // 'tables' | 'orders' - Default to orders
+    const [viewMode, setViewMode] = useState('tables'); // Default to tables for better overview
     const [editingTable, setEditingTable] = useState(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isTrashModalOpen, setIsTrashModalOpen] = useState(false);
     const [orderToAssignTable, setOrderToAssignTable] = useState(null);
+
+    const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
+    React.useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Form States
     const [tableName, setTableName] = useState('');
@@ -104,90 +111,123 @@ export const OrdersPage = () => {
     };
 
     return (
-        <div className="p-6 h-full overflow-y-auto flex flex-col">
+        <div style={{ padding: isMobile ? '1rem' : '1.5rem', height: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {/* Header Area */}
-            <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
-                <div className="flex items-center gap-4">
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <Coffee className="text-orange-400" />
-                        <span>Gestión de Pedidos</span>
+            <div style={{
+                display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
+                alignItems: isMobile ? 'stretch' : 'center',
+                justifyContent: 'space-between',
+                gap: '1rem',
+                marginBottom: '0.5rem'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'space-between' }}>
+                    <h1 style={{ margin: 0, fontSize: isMobile ? '1.25rem' : '1.75rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Coffee className="text-orange-400" size={isMobile ? 24 : 32} />
+                        {isMobile ? 'Mesas y Pedidos' : 'Gestión de Pedidos'}
                     </h1>
 
-                    {/* Trash Button */}
-                    <button
-                        onClick={() => setIsTrashModalOpen(true)}
-                        className="glass-button secondary flex items-center gap-2 px-3 py-1.5 text-sm hover:text-red-400 transition-colors"
-                        title="Ver Pedidos Cancelados de Mesas"
-                    >
-                        <History size={16} />
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                            onClick={() => setIsTrashModalOpen(true)}
+                            className="glass-button"
+                            style={{ padding: '0.5rem', height: '36px', width: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            title="Historial de Pedidos"
+                        >
+                            <History size={18} />
+                        </button>
 
-                    {/* Add Table Button */}
-                    <button
-                        onClick={openAddModal}
-                        className="glass-button primary flex items-center gap-2 px-3 py-1.5 text-sm"
-                    >
-                        <Plus size={16} />
-                        <span>Nueva Mesa</span>
-                    </button>
+                        <button
+                            onClick={openAddModal}
+                            className="glass-button primary"
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                padding: isMobile ? '0.2rem 0.6rem' : '0.5rem 1rem',
+                                fontSize: isMobile ? '0.8rem' : '0.9rem',
+                                height: '36px'
+                            }}
+                        >
+                            <Plus size={16} />
+                            <span>Nueva Mesa</span>
+                        </button>
+                    </div>
                 </div>
 
-                {/* Status Legend */}
-                <div className="flex gap-2">
-                    <div className="px-3 py-1 rounded-full border border-[var(--vscode-border)] bg-[var(--vscode-input)] flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
-                        <span className="text-xs font-medium text-[var(--vscode-text)]">Disponible</span>
+                {/* Status Legend - Optimized for Mobile */}
+                <div style={{
+                    display: 'flex',
+                    gap: '0.75rem',
+                    justifyContent: isMobile ? 'center' : 'flex-end',
+                    padding: '0.5rem',
+                    background: 'rgba(255,255,255,0.03)',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255,255,255,0.05)'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem' }}>
+                        <div style={{ w: 8, h: 8, width: 8, height: 8, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 5px #22c55e' }}></div>
+                        <span style={{ opacity: 0.8 }}>Libre</span>
                     </div>
-                    <div className="px-3 py-1 rounded-full border border-[var(--vscode-border)] bg-[var(--vscode-input)] flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"></div>
-                        <span className="text-xs font-medium text-[var(--vscode-text)]">Ocupada</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem' }}>
+                        <div style={{ w: 8, h: 8, width: 8, height: 8, borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 5px #ef4444' }}></div>
+                        <span style={{ opacity: 0.8 }}>Ocupada</span>
                     </div>
-                    <div className="px-3 py-1 rounded-full border border-[var(--vscode-border)] bg-[var(--vscode-input)] flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]"></div>
-                        <span className="text-xs font-medium text-[var(--vscode-text)]">Reservada</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem' }}>
+                        <div style={{ w: 8, h: 8, width: 8, height: 8, borderRadius: '50%', background: '#f59e0b', boxShadow: '0 0 5px #f59e0b' }}></div>
+                        <span style={{ opacity: 0.8 }}>Reservada</span>
                     </div>
                 </div>
             </div>
 
-            {/* View Mode Toggle */}
-            <div className="flex gap-2 mb-6 border-b border-[var(--vscode-border)] pb-1">
+            {/* View Mode Toggle & Area Filters Integrated */}
+            <div className="no-scrollbar" style={{
+                display: 'flex',
+                gap: '0.5rem',
+                overflowX: 'auto',
+                paddingBottom: '0.5rem',
+                borderBottom: '1px solid rgba(255,255,255,0.1)',
+                marginBottom: '1.25rem',
+                flexShrink: 0
+            }}>
                 <button
                     onClick={() => setViewMode('tables')}
-                    className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${viewMode === 'tables'
-                        ? 'border-[var(--vscode-highlight)] text-white'
-                        : 'border-transparent text-[var(--vscode-text)] hover:text-white'
-                        }`}
+                    className={`glass-button ${viewMode === 'tables' ? 'primary' : ''}`}
+                    style={{ padding: '0.4rem 1rem', fontSize: '0.85rem', whiteSpace: 'nowrap', borderRadius: '10px' }}
                 >
                     Mesas
                 </button>
                 <button
                     onClick={() => setViewMode('orders')}
-                    className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${viewMode === 'orders'
-                        ? 'border-[var(--vscode-highlight)] text-white'
-                        : 'border-transparent text-[var(--vscode-text)] hover:text-white'
-                        }`}
+                    className={`glass-button ${viewMode === 'orders' ? 'primary' : ''}`}
+                    style={{ padding: '0.4rem 1rem', fontSize: '0.85rem', whiteSpace: 'nowrap', borderRadius: '10px' }}
                 >
                     Todos los Pedidos ({(data.heldOrders || []).filter(o => !o.isProduction || o.status === 'ready').length})
                 </button>
-            </div>
 
-            {/* Area Tabs (Only for Tables view) */}
-            {viewMode === 'tables' && (
-                <div className="flex gap-2 mb-6 border-b border-[var(--vscode-border)] pb-1 overflow-x-auto">
-                    {['Todas', ...areas].map(area => (
-                        <button
-                            key={area}
-                            onClick={() => setSelectedArea(area)}
-                            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${selectedArea === area
-                                ? 'border-[var(--vscode-highlight)] text-white'
-                                : 'border-transparent text-[var(--vscode-text)] hover:text-white'
-                                }`}
-                        >
-                            {area}
-                        </button>
-                    ))}
-                </div>
-            )}
+                {viewMode === 'tables' && (
+                    <>
+                        <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', margin: '0 0.5rem' }}></div>
+                        {['Todas', ...areas].map(area => (
+                            <button
+                                key={area}
+                                onClick={() => setSelectedArea(area)}
+                                className={`glass-button ${selectedArea === area ? 'active' : ''}`}
+                                style={{
+                                    padding: '0.4rem 1rem',
+                                    fontSize: '0.85rem',
+                                    whiteSpace: 'nowrap',
+                                    borderRadius: '10px',
+                                    border: selectedArea === area ? '1px solid var(--accent-blue)' : '1px solid transparent',
+                                    background: selectedArea === area ? 'rgba(0, 212, 255, 0.1)' : 'rgba(255,255,255,0.05)'
+                                }}
+                            >
+                                {area}
+                            </button>
+                        ))}
+                    </>
+                )}
+            </div>
 
             {/* Tables Grid */}
             {viewMode === 'tables' && (
@@ -222,15 +262,23 @@ export const OrdersPage = () => {
                             )}
 
                             {/* Table Name & Area */}
-                            < div className="mt-6 text-center" >
-                                <h3 className="text-xl font-bold text-white mb-1 group-hover:text-blue-400 transition-colors">
+                            <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                                <h3 style={{ margin: '0 0 0.25rem 0', fontSize: isMobile ? '1.25rem' : '1.5rem', fontWeight: 'bold', color: 'white' }}>
                                     {table.name}
                                 </h3>
-                                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10">
-                                    <LayoutGrid size={12} className="text-[var(--vscode-text-secondary)]" />
-                                    <span className="text-xs text-[var(--vscode-text-secondary)]">
-                                        {table.area || 'Restaurante'}
-                                    </span>
+                                <div style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.25rem',
+                                    padding: '0.2rem 0.6rem',
+                                    borderRadius: '12px',
+                                    background: 'rgba(255,255,255,0.05)',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    fontSize: '0.7rem',
+                                    color: 'rgba(255,255,255,0.8)'
+                                }}>
+                                    <LayoutGrid size={12} />
+                                    {table.area || 'Restaurante'}
                                 </div>
                             </div>
 

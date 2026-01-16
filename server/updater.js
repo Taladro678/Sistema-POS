@@ -39,6 +39,11 @@ const downloadAndExtract = async (url) => {
     const tempPath = path.join(__dirname, 'update_temp.zip');
     const extractPath = path.join(__dirname, '../update_staging');
 
+    // Remove previous staging if exists
+    if (fs.existsSync(extractPath)) {
+        fs.rmSync(extractPath, { recursive: true, force: true });
+    }
+
     // Download
     const writer = fs.createWriteStream(tempPath);
     const response = await axios({
@@ -56,14 +61,77 @@ const downloadAndExtract = async (url) => {
                 const zip = new admZip(tempPath);
                 zip.extractAllTo(extractPath, true);
 
-                // Cleanup
+                // Cleanup Zip
                 fs.unlinkSync(tempPath);
-                console.log('🚀 Actualización lista en carpeta staging.');
+
+                console.log('📂 Aplicando cambios...');
+                applyUpdate(extractPath);
+
                 resolve();
             } catch (e) {
+                console.error("Error al extraer:", e);
                 reject(e);
             }
         });
         writer.on('error', reject);
     });
+};
+
+const applyUpdate = (stagingPath) => {
+    // GitHub zips contain a root folder "User-Repo-Hash", we need to find it
+    const files = fs.readdirSync(stagingPath);
+    const rootFolder = files.find(f => fs.statSync(path.join(stagingPath, f)).isDirectory());
+
+    if (!rootFolder) {
+        throw new Error("No se encontró carpeta raíz en el ZIP de actualización");
+    }
+
+    const sourcePath = path.join(stagingPath, rootFolder);
+    const appRoot = path.join(__dirname, '..'); // nodejs-project root
+
+    console.log(`📍 Fuente: ${sourcePath}`);
+    console.log(`📍 Destino: ${appRoot}`);
+
+    // Copy DIST (Frontend)
+    const sourceDist = path.join(sourcePath, 'dist');
+    const targetDist = path.join(appRoot, 'dist');
+    if (fs.existsSync(sourceDist)) {
+        console.log('🔄 Actualizando Frontend...');
+        copyRecursiveSync(sourceDist, targetDist);
+    } else {
+        console.warn("⚠️ No se encontró la carpeta 'dist' en la actualización. Asegúrate de compilar antes de pushear.");
+    }
+
+    // Copy SERVER (Backend)
+    const sourceServer = path.join(sourcePath, 'server');
+    const targetServer = path.join(appRoot, 'server');
+    if (fs.existsSync(sourceServer)) {
+        console.log('🔄 Actualizando Backend...');
+        // Exclude DB files from overwrite
+        copyRecursiveSync(sourceServer, targetServer, ['server_db.json', 'local_db.json', 'node_modules']);
+    }
+
+    // Cleanup Staging
+    fs.rmSync(stagingPath, { recursive: true, force: true });
+    console.log('✨ Actualización aplicada con éxito.');
+};
+
+// Helper: Recursive Copy
+const copyRecursiveSync = (src, dest, ignoreList = []) => {
+    if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+
+    const entries = fs.readdirSync(src, { withFileTypes: true });
+
+    for (const entry of entries) {
+        const srcPath = path.join(src, entry.name);
+        const destPath = path.join(dest, entry.name);
+
+        if (ignoreList.includes(entry.name)) continue;
+
+        if (entry.isDirectory()) {
+            copyRecursiveSync(srcPath, destPath, ignoreList);
+        } else {
+            fs.copyFileSync(srcPath, destPath);
+        }
+    }
 };

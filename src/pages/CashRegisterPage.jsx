@@ -4,7 +4,8 @@ import { useDialog } from '../context/DialogContext';
 import {
     DollarSign, Save, RefreshCw, Calculator, TrendingUp, AlertCircle,
     CheckCircle, Edit2, X, Calendar, ArrowUpRight, ArrowDownRight,
-    CreditCard, Banknote, Wallet, ChevronLeft, ChevronRight, ClipboardCheck
+    CreditCard, Banknote, Wallet, ChevronLeft, ChevronRight, ClipboardCheck,
+    History
 } from 'lucide-react';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -79,9 +80,17 @@ export const CashRegisterPage = () => {
     // UI State
     const [isRateModalOpen, setIsRateModalOpen] = useState(false);
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+    const [historyTab, setHistoryTab] = useState('rates');
     const [newRate, setNewRate] = useState(exchangeRate);
     const [historySearch, setHistorySearch] = useState('');
     const [timeRange, setTimeRange] = useState('week'); // 'week' | 'month'
+
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    React.useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Period Logic
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -216,7 +225,7 @@ export const CashRegisterPage = () => {
                 // Fallback for old sales
                 const label = sale.paymentMethod || 'Otros';
                 result.methods[label] = (result.methods[label] || 0) + sale.total;
-                if (label.includes('Bs') || label.includes('Pago Móvil') || ['Banplus', 'Bancaribe', 'Banesco'].includes(label)) {
+                if (label.includes('Bs') || label.includes('Pago Móvil') || label.includes('Punto') || ['Banplus', 'Bancaribe', 'Banesco'].some(b => label.includes(b))) {
                     const bsAmt = (sale.total * exchangeRate);
                     if (label === 'Efectivo Bs') result.totalCashBs += bsAmt;
                 } else {
@@ -227,7 +236,9 @@ export const CashRegisterPage = () => {
         return result;
     }, [dailySales, exchangeRate]);
 
-    const banks = (methods['Banplus'] || 0) + (methods['Bancaribe'] || 0) + (methods['Banesco'] || 0) + (methods['Punto de Venta'] || 0) + (methods['Punto'] || 0);
+    const banks = (methods['Banplus (Punto)'] || 0) + (methods['Bancaribe (Punto)'] || 0) + (methods['Banesco (Punto)'] || 0) +
+        (methods['Banplus'] || 0) + (methods['Bancaribe'] || 0) + (methods['Banesco'] || 0) +
+        (methods['Punto de Venta'] || 0) + (methods['Punto'] || 0) + (methods['Otro Punto'] || 0);
     const pms = (methods['Pago movil Banesco PS'] || 0) + (methods['Pago Movil Banesco Raquel'] || 0) + (methods['Pago Movil BDV PS'] || 0) + (methods['Pago Movil Banplus'] || 0) + (methods['Pago Móvil'] || 0);
     const zelle = methods['Zelle'] || 0;
     const cashBsUsdEq = methods['Efectivo Bs'] || 0;
@@ -281,15 +292,38 @@ export const CashRegisterPage = () => {
             message: '¿Estás seguro de cerrar la caja? Esto finalizará el turno actual.'
         });
         if (!ok) return;
+
+        const closureRecord = {
+            id: window.crypto.randomUUID(),
+            openingTime: cashRegister.openingTime,
+            closingTime: new Date().toISOString(),
+            openingBalanceBs: cashRegister.openingBalanceBs,
+            openingBalanceUsd: cashRegister.openingBalanceUsd,
+            closingBalanceBs: parseFloat(countedCashBs) || 0,
+            closingBalanceUsd: parseFloat(countedCashUsd) || 0,
+            expectedCashBs: expectedCashBs,
+            expectedCashUsd: expectedCashUsd,
+            differenceBs: (parseFloat(countedCashBs) || 0) - expectedCashBs,
+            differenceUsd: (parseFloat(countedCashUsd) || 0) - expectedCashUsd,
+            salesCount: dailySales.length,
+            totalSalesUsd: totalDailySalesUsd
+        };
+
+        // Save to history
+        const newHistory = [closureRecord, ...(data.cashRegisterHistory || [])];
+        updateData('cashRegisterHistory', newHistory);
+
+        // Update current status
         updateData('cashRegister', {
             ...cashRegister,
             closingBalanceBs: parseFloat(countedCashBs) || 0,
             closingBalanceUsd: parseFloat(countedCashUsd) || 0,
-            closingTime: new Date().toISOString(),
+            closingTime: closureRecord.closingTime,
             status: 'closed',
             isOpen: false
         });
-        await alert({ title: 'Éxito', message: 'Caja cerrada exitosamente.' });
+
+        await alert({ title: 'Éxito', message: 'Caja cerrada exitosamente y guardada en el historial.' });
     };
 
     const handleUpdateRate = () => {
@@ -302,32 +336,34 @@ export const CashRegisterPage = () => {
             {/* Header */}
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <div className="bg-blue-600 p-1.5 rounded-lg"><Calculator className="text-white" size={24} /></div>
+                    <h1 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+                        <div className="bg-blue-600 p-1.5 rounded-lg"><Calculator className="text-white" size={isMobile ? 20 : 24} /></div>
                         Control de Caja
                     </h1>
-                    <p className="text-gray-400 text-sm mt-1">Gestión de flujo de efectivo y métricas diarias</p>
+                    <p className="text-gray-400 text-xs md:text-sm mt-1">Gestión de flujo de efectivo y métricas diarias</p>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: isMobile ? '100%' : 'auto' }}>
                     <button
                         onClick={() => setIsRateModalOpen(true)}
                         className="glass-panel px-4 py-2 flex items-center gap-3 hover:bg-white/5 transition-colors group cursor-pointer"
+                        style={{ flex: 1 }}
                     >
                         <div className="flex flex-col items-end">
-                            <span className="text-[10px] text-gray-200 font-bold uppercase tracking-wider">Tasa de Cambio</span>
-                            <span className="text-base font-bold text-green-400 group-hover:text-green-300 transition-colors">{exchangeRate} Bs/$</span>
+                            <span className="text-[10px] text-gray-200 font-bold uppercase tracking-wider">Tasa</span>
+                            <span className="text-sm md:text-base font-bold text-green-400 group-hover:text-green-300 transition-colors">{exchangeRate} Bs/$</span>
                         </div>
                         <Edit2 size={14} className="text-gray-300 group-hover:text-white transition-colors" />
                     </button>
 
                     <button
                         onClick={() => setIsHistoryModalOpen(true)}
-                        className="glass-button h-full flex items-center gap-2 px-4"
+                        className="glass-button h-full flex items-center gap-2 px-4 py-2"
                         title="Ver historial"
+                        style={{ height: '52px' }}
                     >
                         <Calendar size={16} />
-                        <span className="hidden sm:inline">Historial</span>
+                        {!isMobile && <span>Historial</span>}
                     </button>
                 </div>
             </header>
@@ -784,15 +820,28 @@ export const CashRegisterPage = () => {
                         <button onClick={() => setIsHistoryModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"><X size={20} /></button>
                         <div className="mb-6">
                             <h3 className="text-xl font-bold flex items-center gap-2 mb-1">
-                                <Calendar size={20} className="text-blue-500" /> Historial de Tasas
+                                <History size={20} className="text-blue-500" /> Historial del Sistema
                             </h3>
-                            <p className="text-sm text-gray-500">Registro de cambios en la tasa de cambio</p>
+                            <div className="flex gap-2 mt-4">
+                                <button
+                                    onClick={() => setHistoryTab('rates')}
+                                    className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${historyTab === 'rates' ? 'bg-blue-600 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+                                >
+                                    TASAS DE CAMBIO
+                                </button>
+                                <button
+                                    onClick={() => setHistoryTab('closures')}
+                                    className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${historyTab === 'closures' ? 'bg-purple-600 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+                                >
+                                    CIERRES DE CAJA
+                                </button>
+                            </div>
                         </div>
 
                         <div className="mb-4">
                             <input
                                 type="text"
-                                placeholder="Buscar..."
+                                placeholder={`Buscar en ${historyTab === 'rates' ? 'tasas' : 'cierres'}...`}
                                 className="glass-input w-full pl-4 py-2 text-sm"
                                 value={historySearch}
                                 onChange={(e) => setHistorySearch(e.target.value)}
@@ -800,43 +849,105 @@ export const CashRegisterPage = () => {
                         </div>
 
                         <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
-                            {data.rateHistory && data.rateHistory.length > 0 ? (
-                                data.rateHistory
-                                    .filter(entry => {
-                                        if (!historySearch) return true;
-                                        const term = historySearch.toLowerCase();
-                                        return new Date(entry.date).toLocaleDateString().includes(term) || entry.rate.toString().includes(term);
-                                    })
-                                    .map((entry, index) => (
-                                        <div key={entry.id} className="bg-white/5 rounded-lg p-3 hover:bg-white/10 transition-colors flex justify-between items-center border border-white/5">
-                                            <div>
-                                                <div className="text-xs text-gray-400 font-mono">
-                                                    {new Date(entry.date).toLocaleString()}
+                            {historyTab === 'rates' ? (
+                                data.rateHistory && data.rateHistory.length > 0 ? (
+                                    data.rateHistory
+                                        .filter(entry => {
+                                            if (!historySearch) return true;
+                                            const term = historySearch.toLowerCase();
+                                            return new Date(entry.date).toLocaleDateString().includes(term) || entry.rate.toString().includes(term);
+                                        })
+                                        .map((entry, index) => (
+                                            <div key={entry.id} className="bg-white/5 rounded-lg p-3 hover:bg-white/10 transition-colors flex justify-between items-center border border-white/5">
+                                                <div>
+                                                    <div className="text-xs text-gray-400 font-mono">
+                                                        {new Date(entry.date).toLocaleString()}
+                                                    </div>
+                                                    <div className="text-lg font-bold text-green-400 mt-0.5">
+                                                        {entry.rate.toFixed(2)} Bs/$
+                                                    </div>
                                                 </div>
-                                                <div className="text-lg font-bold text-green-400 mt-0.5">
-                                                    {entry.rate.toFixed(2)} Bs/$
+                                                {index < data.rateHistory.length - 1 && (
+                                                    <div className="text-xs">
+                                                        {(() => {
+                                                            const diff = entry.rate - data.rateHistory[index + 1].rate;
+                                                            const isIncrease = diff > 0;
+                                                            return (
+                                                                <span className={`font-bold px-2 py-1 rounded ${isIncrease ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}`}>
+                                                                    {isIncrease ? '↑' : '↓'} {Math.abs(diff).toFixed(2)}
+                                                                </span>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))
+                                ) : (
+                                    <div className="text-center text-gray-500 py-12 flex flex-col items-center gap-3">
+                                        <div className="p-3 bg-white/5 rounded-full"><AlertCircle size={32} className="opacity-50" /></div>
+                                        No hay historial de tasas disponible
+                                    </div>
+                                )
+                            ) : (
+                                /* Closure History */
+                                data.cashRegisterHistory && data.cashRegisterHistory.length > 0 ? (
+                                    data.cashRegisterHistory
+                                        .filter(entry => {
+                                            if (!historySearch) return true;
+                                            const term = historySearch.toLowerCase();
+                                            return new Date(entry.closingTime).toLocaleDateString().includes(term) ||
+                                                entry.totalSalesUsd.toString().includes(term);
+                                        })
+                                        .map((entry) => (
+                                            <div key={entry.id} className="bg-white/5 rounded-lg p-4 hover:bg-white/10 transition-colors border border-white/5">
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <div>
+                                                        <div className="text-xs text-purple-400 font-bold uppercase tracking-widest">Cierre de Caja</div>
+                                                        <div className="text-sm font-bold text-white">
+                                                            {new Date(entry.closingTime).toLocaleString()}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="text-xs text-gray-500 font-bold">VENTAS TOTALES</div>
+                                                        <div className="text-lg font-bold text-green-400">${entry.totalSalesUsd.toFixed(2)}</div>
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-3 gap-2 py-2 border-t border-white/5 mt-2">
+                                                    <div>
+                                                        <div className="text-[10px] text-gray-500 font-bold uppercase">Transacciones</div>
+                                                        <div className="font-bold text-xs">{entry.salesCount}</div>
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-[10px] text-gray-500 font-bold uppercase">Efectivo Bs</div>
+                                                        <div className={`font-bold text-xs ${entry.differenceBs !== 0 ? 'text-orange-400' : 'text-gray-300'}`}>
+                                                            {entry.closingBalanceBs.toFixed(2)}
+                                                            {entry.differenceBs !== 0 && (
+                                                                <span className="ml-1 text-[8px] opacity-70">
+                                                                    ({entry.differenceBs > 0 ? '+' : ''}{entry.differenceBs.toFixed(2)})
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-[10px] text-gray-500 font-bold uppercase">Efectivo USD</div>
+                                                        <div className={`font-bold text-xs ${entry.differenceUsd !== 0 ? 'text-orange-400' : 'text-gray-300'}`}>
+                                                            {entry.closingBalanceUsd.toFixed(2)}
+                                                            {entry.differenceUsd !== 0 && (
+                                                                <span className="ml-1 text-[8px] opacity-70">
+                                                                    ({entry.differenceUsd > 0 ? '+' : ''}{entry.differenceUsd.toFixed(2)})
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            {index < data.rateHistory.length - 1 && (
-                                                <div className="text-xs">
-                                                    {(() => {
-                                                        const diff = entry.rate - data.rateHistory[index + 1].rate;
-                                                        const isIncrease = diff > 0;
-                                                        return (
-                                                            <span className={`font-bold px-2 py-1 rounded ${isIncrease ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}`}>
-                                                                {isIncrease ? '↑' : '↓'} {Math.abs(diff).toFixed(2)}
-                                                            </span>
-                                                        );
-                                                    })()}
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))
-                            ) : (
-                                <div className="text-center text-gray-500 py-12 flex flex-col items-center gap-3">
-                                    <div className="p-3 bg-white/5 rounded-full"><AlertCircle size={32} className="opacity-50" /></div>
-                                    No hay historial disponible
-                                </div>
+                                        ))
+                                ) : (
+                                    <div className="text-center text-gray-500 py-12 flex flex-col items-center gap-3">
+                                        <div className="p-3 bg-white/5 rounded-full"><AlertCircle size={32} className="opacity-50" /></div>
+                                        No hay historial de cierres disponible
+                                    </div>
+                                )
                             )}
                         </div>
                     </div>

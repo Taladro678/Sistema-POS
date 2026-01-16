@@ -15,6 +15,13 @@ export const SettingsPage = () => {
     const [activeTab, setActiveTab] = useState('general');
     const [audioEnabled, setAudioEnabled] = useState(audioService.isEnabled);
     const [audioVolume, setAudioVolume] = useState(audioService.volume);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+    React.useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -29,11 +36,11 @@ export const SettingsPage = () => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', height: '100%' }}>
             {/* Tabs Navigation */}
-            <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
                 <button
                     className={`glass-button ${activeTab === 'general' ? 'primary' : ''}`}
                     onClick={() => setActiveTab('general')}
-                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                    style={{ flex: '1 1 100px', minWidth: '110px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem 0.5rem' }}
                 >
                     <Settings size={20} />
                     General
@@ -41,7 +48,7 @@ export const SettingsPage = () => {
                 <button
                     className={`glass-button ${activeTab === 'sync' ? 'primary' : ''}`}
                     onClick={() => setActiveTab('sync')}
-                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                    style={{ flex: '1 1 100px', minWidth: '110px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem 0.5rem' }}
                 >
                     <Wifi size={20} />
                     Sincronización
@@ -49,7 +56,7 @@ export const SettingsPage = () => {
                 <button
                     className={`glass-button ${activeTab === 'users' ? 'primary' : ''}`}
                     onClick={() => setActiveTab('users')}
-                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                    style={{ flex: '1 1 100px', minWidth: '110px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem 0.5rem' }}
                 >
                     <Users size={20} />
                     Usuarios

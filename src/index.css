@@ -8,6 +8,16 @@
   scrollbar-width: none;
 }
 
+@media (max-width: 480px) {
+  .hide-on-very-small {
+    display: none !important;
+  }
+
+  .show-on-very-small {
+    display: inline-flex !important;
+  }
+}
+
 /* Toast Notifications */
 .toast-container {
   position: fixed;
