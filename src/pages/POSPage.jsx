@@ -1073,21 +1073,27 @@ export const POSPage = () => {
             >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     {/* Totals & Remaining Compact Grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
-                        <div className="glass-panel" style={{ padding: '0.5rem', textAlign: 'center' }}>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', margin: 0 }}>Total $</p>
-                            <p style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--accent-green)', margin: 0 }}>${total.toFixed(2)}</p>
+                    <div className="no-scrollbar" style={{
+                        display: 'flex',
+                        gap: '0.5rem',
+                        overflowX: 'auto',
+                        paddingBottom: '0.25rem',
+                        flexShrink: 0
+                    }}>
+                        <div className="glass-panel" style={{ padding: '0.5rem', textAlign: 'center', minWidth: '100px', flex: 1 }}>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.65rem', margin: 0 }}>Total $</p>
+                            <p style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--accent-green)', margin: 0 }}>${total.toFixed(2)}</p>
                         </div>
-                        <div className="glass-panel" style={{ padding: '0.5rem', textAlign: 'center' }}>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', margin: 0 }}>Total Bs</p>
-                            <p style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--accent-blue)', margin: 0 }}>{(total * data.exchangeRate).toFixed(2)}</p>
+                        <div className="glass-panel" style={{ padding: '0.5rem', textAlign: 'center', minWidth: '100px', flex: 1 }}>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.65rem', margin: 0 }}>Total Bs</p>
+                            <p style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--accent-blue)', margin: 0 }}>{(total * data.exchangeRate).toFixed(2)}</p>
                         </div>
-                        <div className="glass-panel" style={{ padding: '0.5rem', textAlign: 'center', background: 'rgba(255, 165, 0, 0.15)' }}>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', margin: 0 }}>Falta</p>
-                            <p style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--accent-orange)', margin: 0 }}>
+                        <div className="glass-panel" style={{ padding: '0.5rem', textAlign: 'center', background: 'rgba(255, 165, 0, 0.15)', minWidth: '100px', flex: 1 }}>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.65rem', margin: 0 }}>Falta</p>
+                            <p style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--accent-orange)', margin: 0 }}>
                                 ${Math.max(0, (total - discountAmount) - payments.reduce((sum, p) => p.currency === 'USD' ? sum + p.amount : sum + (p.amount / p.rate), 0)).toFixed(2)}
                             </p>
-                            <p style={{ fontSize: '0.8rem', color: 'var(--accent-orange)', margin: 0, opacity: 0.8 }}>
+                            <p style={{ fontSize: '0.7rem', color: 'var(--accent-orange)', margin: 0, opacity: 0.8 }}>
                                 Bs {(Math.max(0, (total - discountAmount) - payments.reduce((sum, p) => p.currency === 'USD' ? sum + p.amount : sum + (p.amount / p.rate), 0)) * data.exchangeRate).toFixed(2)}
                             </p>
                         </div>
@@ -1264,8 +1270,8 @@ export const POSPage = () => {
                                 </div>
                             </div>
                             <div className="text-right flex-shrink-0">
-                                <div className="text-[10px] uppercase tracking-wider text-[var(--vscode-text-secondary)] mb-0.5">Total a Pagar</div>
-                                <div className="text-xl md:text-2xl font-black text-white leading-none">${total.toFixed(2)}</div>
+                                <div className="text-[10px] uppercase tracking-wider text-[var(--vscode-text-secondary)] mb-0">Total</div>
+                                <div className="text-lg md:text-xl font-bold text-white leading-none">${total.toFixed(2)}</div>
                             </div>
                         </div>
 
