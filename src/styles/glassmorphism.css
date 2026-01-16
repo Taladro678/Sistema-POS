@@ -48,7 +48,7 @@
 .glass-input {
     background: rgba(0, 0, 0, 0.2);
     border: var(--glass-border);
-    color: var(--text-primary);
+    color: #ffffff !important;
     padding: 0.75rem;
     border-radius: 8px;
     width: 100%;

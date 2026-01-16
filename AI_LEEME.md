@@ -496,6 +496,17 @@ npm run build
 npm run preview
 ```
 
+## 📱 Despliegue en Android
+
+Para generar el APK con el servidor Node.js integrado, consulta la guía detallada:
+
+👉 **[INSTRUCCIONES_ANDROID.md](./INSTRUCCIONES_ANDROID.md)**
+
+Resumen rápido:
+```bash
+./preparar_apk.sh
+```
+
 ---
 
 ## 📝 Notas para Futuras Sesiones

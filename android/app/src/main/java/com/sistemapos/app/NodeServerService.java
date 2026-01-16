@@ -9,48 +9,38 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
-import android.os.PowerManager;
+import android.util.Log;
 import androidx.core.app.NotificationCompat;
 
 /**
- * Foreground Service para mantener el servidor Node.js activo
- * incluso cuando la app está en segundo plano
+ * Foreground Service - Just keeps the app alive, 
+ * Node.js is started by the NodeJS Cordova plugin automatically
  */
 public class NodeServerService extends Service {
     
+    private static final String TAG = "NodeServerService";
     private static final String CHANNEL_ID = "NodeServerChannel";
     private static final int NOTIFICATION_ID = 1001;
-    private PowerManager.WakeLock wakeLock;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        
-        // Crear canal de notificación para Android 8.0+
+        Log.d(TAG, "NodeServerService onCreate");
         createNotificationChannel();
-        
-        // Adquirir WakeLock para evitar que el sistema duerma
-        PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "POSServer::WakeLock");
-        wakeLock.acquire();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // Crear notificación persistente
+        Log.d(TAG, "NodeServerService onStartCommand");
         Notification notification = createNotification();
         startForeground(NOTIFICATION_ID, notification);
-        
-        // Retornar START_STICKY para que el servicio se reinicie si es detenido
         return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (wakeLock != null && wakeLock.isHeld()) {
-            wakeLock.release();
-        }
+        Log.d(TAG, "NodeServerService onDestroy");
     }
 
     @Override
@@ -82,7 +72,7 @@ public class NodeServerService extends Service {
 
         return new NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Sistema POS Activo")
-            .setContentText("Servidor local ejecutándose en segundo plano")
+            .setContentText("Servidor ejecutándose")
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentIntent(pendingIntent)
             .setOngoing(true)

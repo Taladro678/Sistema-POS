@@ -510,23 +510,10 @@ export const ProductsPage = () => {
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Precio ($)</label>
-                                    <div style={{ position: 'relative' }}>
-                                        <DollarSign size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-                                        <input
-                                            type="number"
-                                            className="glass-input"
-                                            placeholder="0.00"
-                                            style={{ paddingLeft: '2rem' }}
-                                            value={formData.price}
-                                            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
+
 
                                 {/* Price Fields */}
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', gridColumn: '1 / -1' }}>
                                     <div>
                                         <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
                                             Precio de Costo *
@@ -558,7 +545,7 @@ export const ProductsPage = () => {
 
                                 {/* Margin Calculation Display */}
                                 {formData.costPrice && formData.price && parseFloat(formData.costPrice) > 0 && (
-                                    <div className="glass-panel" style={{
+                                    <div className="glass-panel" style={{ gridColumn: '1 / -1',
                                         padding: '0.75rem',
                                         background: 'rgba(0, 255, 0, 0.05)',
                                         border: '1px solid rgba(0, 255, 0, 0.2)'

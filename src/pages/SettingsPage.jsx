@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { useSettings } from '../context/SettingsContext';
 import { useData } from '../context/DataContext';
 import { useDialog } from '../context/DialogContext';
-import { Save, Download, Upload, Trash2, Users, Lock, FileSpreadsheet, Settings, Volume2 } from 'lucide-react';
+import { Save, Download, Upload, Trash2, Users, Lock, FileSpreadsheet, Settings, Volume2, Wifi, Globe, Info, RefreshCw } from 'lucide-react';
 import { read, utils } from 'xlsx';
 import { UsersPage } from './UsersPage';
 import { audioService } from '../services/audioService';
 
 export const SettingsPage = () => {
     const { settings, updateSettings } = useSettings();
-    const { exportData, importData, connectDrive, isDriveConnected, syncStatus, clearAllData, data, updateData } = useData();
+    const { exportData, importData, connectDrive, isDriveConnected, syncStatus, clearAllData, data, updateData, isLocalServerConnected, serverInfo } = useData();
     const { confirm, alert } = useDialog();
     const [formData, setFormData] = useState(settings);
     const [activeTab, setActiveTab] = useState('general');
@@ -39,6 +39,14 @@ export const SettingsPage = () => {
                     General
                 </button>
                 <button
+                    className={`glass-button ${activeTab === 'sync' ? 'primary' : ''}`}
+                    onClick={() => setActiveTab('sync')}
+                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                >
+                    <Wifi size={20} />
+                    Sincronización
+                </button>
+                <button
                     className={`glass-button ${activeTab === 'users' ? 'primary' : ''}`}
                     onClick={() => setActiveTab('users')}
                     style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
@@ -50,6 +58,19 @@ export const SettingsPage = () => {
 
             {activeTab === 'users' ? (
                 <UsersPage />
+            ) : activeTab === 'sync' ? (
+                <SyncSettingsSection
+                    data={data}
+                    isDriveConnected={isDriveConnected}
+                    connectDrive={connectDrive}
+                    syncStatus={syncStatus}
+                    exportData={exportData}
+                    importData={importData}
+                    confirm={confirm}
+                    alert={alert}
+                    isLocalServerConnected={isLocalServerConnected}
+                    serverInfo={serverInfo}
+                />
             ) : (
                 <>
                     <h1 style={{ fontSize: '2rem' }}>Configuración</h1>
@@ -496,5 +517,175 @@ export const SettingsPage = () => {
             )}
         </div>
 
+    );
+};
+
+const SyncSettingsSection = ({
+    data, isDriveConnected, connectDrive, syncStatus,
+    exportData, importData, confirm, alert, isLocalServerConnected, serverInfo
+}) => {
+    const [manualUrl, setManualUrl] = useState(localStorage.getItem('pos_server_url') || '');
+
+    const handleSaveUrl = () => {
+        if (manualUrl) {
+            localStorage.setItem('pos_server_url', manualUrl);
+        } else {
+            localStorage.removeItem('pos_server_url');
+        }
+        window.location.reload(); // Reload to apply new server connection
+    };
+
+    const suggestedIP = window.location.hostname;
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <h1 style={{ fontSize: '2rem' }}>Sincronización</h1>
+
+            {/* Local Sync Section */}
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                    <Wifi size={24} color="var(--accent-blue)" />
+                    <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Sincronización Local (WiFi)</h2>
+                </div>
+
+                <div style={{
+                    padding: '1rem',
+                    borderRadius: '12px',
+                    background: isLocalServerConnected ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                    border: `1px solid ${isLocalServerConnected ? 'var(--accent-green)' : 'var(--accent-red)'}`,
+                    marginBottom: '1.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem'
+                }}>
+                    <div style={{
+                        width: '12px',
+                        height: '12px',
+                        borderRadius: '50%',
+                        background: isLocalServerConnected ? 'var(--accent-green)' : 'var(--accent-red)',
+                        boxShadow: `0 0 10px ${isLocalServerConnected ? 'var(--accent-green)' : 'var(--accent-red)'}`
+                    }}></div>
+                    <div>
+                        <p style={{ fontWeight: 'bold', margin: 0 }}>
+                            Estado: {isLocalServerConnected ? 'CONECTADO AL SERVIDOR' : 'SERVIDOR DESCONECTADO'}
+                        </p>
+                        <p style={{ fontSize: '0.85rem', margin: '0.25rem 0 0', opacity: 0.8 }}>
+                            {isLocalServerConnected
+                                ? `Conectado a ${serverInfo?.ip}:${serverInfo?.port}`
+                                : 'El servidor principal debe estar encendido para sincronizar otros dispositivos.'
+                            }
+                        </p>
+                    </div>
+                </div>
+
+                <div className="glass-panel" style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', marginBottom: '1.5rem' }}>
+                    <h3 style={{ fontSize: '1rem', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Globe size={18} /> Dirección de Red
+                    </h3>
+                    <p style={{ fontSize: '0.9rem', marginBottom: '1rem', color: 'var(--text-secondary)' }}>
+                        Para que otros dispositivos (celulares, tablets) se conecten, diles que entren a esta dirección en su navegador:
+                    </p>
+                    <div style={{
+                        background: '#000',
+                        padding: '1rem',
+                        borderRadius: '8px',
+                        fontSize: '1.2rem',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        color: 'var(--accent-blue)',
+                        fontFamily: 'monospace',
+                        border: '1px solid rgba(0, 242, 255, 0.3)'
+                    }}>
+                        http://{suggestedIP}:3001
+                    </div>
+                </div>
+
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem' }}>
+                    <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Configuración Avanzada</h3>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                        URL Manual del Servidor (Opcional)
+                    </label>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <input
+                            type="text"
+                            className="glass-input"
+                            placeholder={`http://${suggestedIP}:3001`}
+                            value={manualUrl}
+                            onChange={(e) => setManualUrl(e.target.value)}
+                        />
+                        <button className="glass-button primary" onClick={handleSaveUrl}>
+                            <RefreshCw size={18} />
+                        </button>
+                    </div>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+                        * Si dejas esto vacío, el sistema intentará conectarse automáticamente a la IP actual.
+                    </p>
+                </div>
+            </div>
+
+            {/* Cloud Sync Section */}
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Sincronización en la Nube</h2>
+
+                {!isDriveConnected ? (
+                    <button
+                        className="glass-button"
+                        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: 'white', color: '#333' }}
+                        onClick={connectDrive}
+                    >
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg" alt="Drive" width="20" />
+                        Conectar con Google Drive
+                    </button>
+                ) : (
+                    <div className="glass-panel" style={{ padding: '1rem', background: 'rgba(0,255,0,0.1)', border: '1px solid var(--accent-green)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg" alt="Drive" width="20" />
+                            <span style={{ fontWeight: 'bold', color: 'var(--accent-green)' }}>Conectado a Google Drive</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
+                            <span>Estado:</span>
+                            {syncStatus === 'idle' && <span style={{ color: 'var(--text-secondary)' }}>Sincronizado</span>}
+                            {syncStatus === 'syncing' && <span style={{ color: 'var(--accent-orange)' }}>Guardando...</span>}
+                            {syncStatus === 'success' && <span style={{ color: 'var(--accent-green)' }}>¡Guardado!</span>}
+                            {syncStatus === 'error' && <span style={{ color: 'var(--accent-red)' }}>Error al guardar</span>}
+                        </div>
+                    </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '1.5rem' }}>
+                    <button
+                        className="glass-button"
+                        style={{ flex: '1 1 140px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                        onClick={exportData}
+                    >
+                        <Download size={18} />
+                        Respaldo Manual (.json)
+                    </button>
+                    <label
+                        className="glass-button accent"
+                        style={{ flex: '1 1 140px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', cursor: 'pointer' }}
+                    >
+                        <Upload size={18} />
+                        Restaurar Copia
+                        <input
+                            type="file"
+                            accept=".json"
+                            style={{ display: 'none' }}
+                            onChange={async (e) => {
+                                if (e.target.files[0]) {
+                                    const ok = await confirm({
+                                        title: 'Restaurar Copia',
+                                        message: '¿Estás seguro? Esto reemplazará TODOS los datos actuales.'
+                                    });
+                                    if (ok) {
+                                        importData(e.target.files[0]);
+                                    }
+                                }
+                            }}
+                        />
+                    </label>
+                </div>
+            </div>
+        </div>
     );
 };

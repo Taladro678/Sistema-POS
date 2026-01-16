@@ -7,6 +7,12 @@ const getAutoServerUrl = () => {
     const savedUrl = localStorage.getItem('pos_server_url');
     if (savedUrl) return savedUrl;
 
+    // Check if running inside Capacitor (Native App)
+    const isNative = window.Capacitor?.isNative || window.location.protocol === 'capacitor:';
+    if (isNative) {
+        return `http://localhost:3001`;
+    }
+
     const protocol = window.location.protocol;
     const hostname = window.location.hostname;
     return `${protocol}//${hostname}:3001`;
@@ -22,6 +28,10 @@ class LocalSyncService {
         this.syncInterval = null;
     }
 
+    getSuggestedUrl() {
+        return getAutoServerUrl();
+    }
+
     connect(serverUrl) {
         if (this.socket) return;
 
@@ -29,8 +39,11 @@ class LocalSyncService {
 
         console.log('🔌 Connecting to Local Sync Server:', urlToUse);
         this.socket = io(urlToUse, {
-            reconnectionAttempts: 3, // Reduced attempts
-            timeout: 2000,
+            reconnectionAttempts: Infinity, // Keep trying forever until server starts
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            timeout: 20000,
+            transports: ['websocket', 'polling'], // Try websocket first
             autoConnect: true
         });
 

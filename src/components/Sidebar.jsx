@@ -17,17 +17,19 @@ import { NavLink } from 'react-router-dom';
 import {
     ShoppingCart, Package, Users, Truck, Settings, ChevronLeft, ChevronRight,
     Tag, Coffee, Calculator, BarChart, MoreVertical, ChefHat, UserCircle,
-    LogOut, Wifi, Globe
+    LogOut, Wifi, Globe, Info
 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import { localSyncService } from '../services/localSync';
 import { useDialog } from '../context/DialogContext';
 
 const Sidebar = () => {
     // Obtener configuración global del sidebar (ancho, estado colapsado, etc.)
     const { settings, toggleSidebar } = useSettings();
     const { serverInfo, isLocalServerConnected } = useData();
+    const suggestedUrl = localSyncService.getSuggestedUrl();
     const isCollapsed = settings.isSidebarCollapsed;
 
     // Estado para detectar si estamos en móvil (<=768px) - Tablets usan Sidebar
@@ -330,11 +332,25 @@ const Sidebar = () => {
                     borderTop: '1px solid var(--glass-border)',
                     background: 'rgba(0,0,0,0.1)'
                 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: isLocalServerConnected ? 'var(--accent-green)' : 'var(--accent-red)' }}></div>
-                        <span style={{ fontWeight: '600' }}>POS Server</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: isLocalServerConnected ? 'var(--accent-green)' : 'var(--accent-red)' }}></div>
+                            <span style={{ fontWeight: '600' }}>POS Server</span>
+                        </div>
+                        {!isLocalServerConnected && (
+                            <div title="Este servidor debe estar encendido para que otros dispositivos se conecten.">
+                                <Info size={12} color="var(--text-secondary)" />
+                            </div>
+                        )}
                     </div>
-                    {serverInfo && <p style={{ margin: 0, opacity: 0.7 }}>{serverInfo.ip}:{serverInfo.port}</p>}
+                    {/* Show connected info or suggested URL if offline */}
+                    {serverInfo ? (
+                        <p style={{ margin: 0, opacity: 0.9, color: 'var(--accent-blue)' }}>{serverInfo.ip}:{serverInfo.port}</p>
+                    ) : (
+                        <p style={{ margin: 0, opacity: 0.6, fontSize: '0.65rem' }}>
+                            {suggestedUrl.replace('http://', '').replace('https://', '').split(':')[0]}:3001
+                        </p>
+                    )}
                 </div>
             )}
 
