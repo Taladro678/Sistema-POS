@@ -1,5 +1,15 @@
 {
   "appId": "com.sistemapos.app",
   "appName": "Sistema POS",
-  "webDir": "dist"
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true,
+    "allowNavigation": [
+      "*"
+    ]
+  },
+  "android": {
+    "allowMixedContent": true
+  }
 }
