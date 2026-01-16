@@ -28,13 +28,9 @@ dist-ssr
 *.xlsx
 local_db.json
 server/server_db.json
-temp_node_mobile/
+# Android
+*.apk
+node_modules/
 dist_electron/
 android/app/build/
 .gradle/
-android/app/build/
-dist_electron/
-temp_node_mobile/
-android/app/build/
-.gradle/
-dist_electron/

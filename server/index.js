@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 import { checkForUpdates } from './updater.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const VERSION = '1.0.0'; // Versión base del APK
+const VERSION = '1.1.0'; // Versión base del APK
 
 // Solo activar auto-update si se detecta entorno Android (o se fuerza por config)
 const isAndroid = process.env.NODE_PLATFORM === 'android';
@@ -162,6 +162,12 @@ io.on('connection', (socket) => {
             // Broadcast the UPDATED state to all OTHER clients
             socket.broadcast.emit('sync_update', appState);
         }
+    });
+
+    // --- EPHEMERAL EVENTS (Live Carts) ---
+    socket.on('active_cart_update', (data) => {
+        // data: { userId, username, cart, timestamp }
+        socket.broadcast.emit('remote_cart_update', data);
     });
 
     // --- LEGACY/SPECIFIC EVENTS (Kept for compatibility or specific triggers) ---

@@ -137,14 +137,42 @@ export const DataProvider = ({ children }) => {
     // Notificación sonora cuando un pedido está listo
     useEffect(() => {
         const readyOrders = data.heldOrders?.filter(o => o.status === 'ready') || [];
-
-        if (readyOrders.length > previousReadyCountRef.current && previousReadyCountRef.current > 0) {
-            // Nuevo pedido listo - reproducir sonido
-            audioService.playOrderReadySound();
+        if (readyOrders.length > previousReadyCountRef.current) {
+            audioService.playNotification();
         }
-
         previousReadyCountRef.current = readyOrders.length;
     }, [data.heldOrders]);
+
+    // --- Active Carts Logic (Ephemeral) ---
+    const [activeCarts, setActiveCarts] = useState({});
+
+    useEffect(() => {
+        const unsubscribe = localSyncService.subscribe((type, payload) => {
+            if (type === 'remote_cart_update') {
+                // payload: { userId, username, cart, timestamp }
+                setActiveCarts(prev => {
+                    const newState = { ...prev };
+                    if (payload.cart.length === 0) {
+                        delete newState[payload.userId];
+                    } else {
+                        newState[payload.userId] = payload;
+                    }
+                    return newState;
+                });
+            }
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const sendLiveCartUpdate = (user, cartItems) => {
+        if (!isLocalServerConnected) return;
+        localSyncService.sendActiveCartUpdate({
+            userId: user?.id || 'unknown',
+            username: user?.username || user?.name || 'Anon',
+            cart: cartItems,
+            timestamp: new Date().toISOString()
+        });
+    };
 
     useEffect(() => {
         if (isLocalServerConnected) {
@@ -215,6 +243,21 @@ export const DataProvider = ({ children }) => {
         }));
     };
 
+    const restoreCancelledOrder = (orderId) => {
+        const order = data.cancelledOrders.find(o => o.id === orderId);
+        if (!order) return;
+        setData(prev => ({
+            ...prev,
+            cancelledOrders: prev.cancelledOrders.filter(o => o.id !== orderId),
+            heldOrders: [...prev.heldOrders, { ...order, status: 'active', cancelledAt: undefined }],
+            lastModified: new Date().toISOString()
+        }));
+    };
+
+    const permanentlyDeleteOrder = (orderId) => {
+        deleteItem('cancelledOrders', orderId);
+    };
+
     const updateExchangeRate = (rate) => {
         const val = parseFloat(rate);
         if (val > 0) setData(prev => ({
@@ -282,9 +325,10 @@ export const DataProvider = ({ children }) => {
         <DataContext.Provider value={{
             data, updateData, addItem, updateItem, deleteItem, clearAllData,
             exportData, importData, isDriveConnected, syncStatus,
-            holdOrder, deleteHeldOrder, cancelHeldOrder, addTip,
-            sendOrderToProduction, updateExchangeRate, isLocalServerConnected,
-            serverInfo: data.serverInfo
+            holdOrder, deleteHeldOrder, cancelHeldOrder, restoreCancelledOrder, permanentlyDeleteOrder,
+            addTip, sendOrderToProduction, updateExchangeRate, isLocalServerConnected,
+            serverInfo: data.serverInfo,
+            activeCarts, sendLiveCartUpdate // <-- New Active Carts Exports
         }}>
             {children}
         </DataContext.Provider>

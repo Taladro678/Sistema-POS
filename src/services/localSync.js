@@ -87,6 +87,10 @@ class LocalSyncService {
         this.socket.on("sync_update", (data) => {
             this.notifySubscribers('sync_update', data);
         });
+
+        this.socket.on("remote_cart_update", (data) => {
+            this.notifySubscribers('remote_cart_update', data);
+        });
     }
 
     // Subscribe to events
@@ -102,6 +106,14 @@ class LocalSyncService {
     }
 
     // Actions
+    sendActiveCartUpdate(cartData) {
+        if (this.socket && this.isConnected) {
+            this.socket.emit("active_cart_update", cartData);
+            return true;
+        }
+        return false;
+    }
+
     sendKitchenOrder(order) {
         if (this.socket && this.isConnected) {
             this.socket.emit("new_kitchen_order", order);

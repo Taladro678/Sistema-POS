@@ -6,13 +6,13 @@ import { Users, Coffee, CheckCircle, Clock, Edit2, Plus, Trash2, LayoutGrid, His
 import Modal from '../components/Modal';
 
 export const OrdersPage = () => {
-    const { data, updateItem, addItem, deleteItem, cancelHeldOrder } = useData();
+    const { data, updateItem, addItem, deleteItem, cancelHeldOrder, activeCarts = {} } = useData();
     const { confirm } = useDialog();
     const navigate = useNavigate();
     const tables = data.tables || [];
 
     const [selectedArea, setSelectedArea] = useState('Todas'); // 'Todas', 'Restaurante', 'Quesera', 'Patio'
-    const [viewMode, setViewMode] = useState('tables'); // Default to tables for better overview
+    const [viewMode, setViewMode] = useState('tables'); // 'tables', 'orders', 'active_carts'
     const [editingTable, setEditingTable] = useState(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isTrashModalOpen, setIsTrashModalOpen] = useState(false);
@@ -110,6 +110,20 @@ export const OrdersPage = () => {
         setIsAddModalOpen(true);
     };
 
+    // Helper to take active cart
+    const handleTakeActiveCart = async (remoteUserId, remoteCart) => {
+        const ok = await confirm({
+            title: 'Copiar Carrito',
+            message: `¿Deseas copiar los items del carrito de "${remoteCart.username}" a tu sesión actual?`
+        });
+
+        if (ok) {
+            // Save to local storage as POS cart
+            localStorage.setItem('pos_cart', JSON.stringify(remoteCart.cart));
+            navigate('/');
+        }
+    };
+
     return (
         <div style={{ padding: isMobile ? '1rem' : '1.5rem', height: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {/* Header Area */}
@@ -205,6 +219,21 @@ export const OrdersPage = () => {
                     Todos los Pedidos ({(data.heldOrders || []).filter(o => !o.isProduction || o.status === 'ready').length})
                 </button>
 
+                <button
+                    onClick={() => setViewMode('active_carts')}
+                    className={`glass-button ${viewMode === 'active_carts' ? 'primary' : ''}`}
+                    style={{
+                        padding: '0.4rem 1rem',
+                        fontSize: '0.85rem',
+                        whiteSpace: 'nowrap',
+                        borderRadius: '10px',
+                        border: viewMode === 'active_carts' ? '1px solid var(--accent-orange)' : '1px solid rgba(255,165,0,0.3)',
+                        color: viewMode === 'active_carts' ? 'white' : 'var(--accent-orange)'
+                    }}
+                >
+                    Carritos Activos ({Object.keys(activeCarts).length})
+                </button>
+
                 {viewMode === 'tables' && (
                     <>
                         <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', margin: '0 0.5rem' }}></div>
@@ -229,7 +258,7 @@ export const OrdersPage = () => {
                 )}
             </div>
 
-            {/* Tables Grid */}
+            {/* Content Logic */}
             {viewMode === 'tables' && (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 pb-20">
                     {filteredTables.map(table => (
@@ -321,9 +350,71 @@ export const OrdersPage = () => {
                 </div>
             )}
 
+            {viewMode === 'active_carts' && (
+                <div className="flex flex-col gap-4 pb-20">
+                    {Object.keys(activeCarts).length === 0 ? (
+                        <div className="flex flex-col items-center justify-center p-12 text-[var(--vscode-text-secondary)] opacity-50">
+                            <ShoppingBag size={48} className="mb-4" />
+                            <p>No hay otros usuarios editando pedidos en este momento.</p>
+                        </div>
+                    ) : (
+                        Object.values(activeCarts).map(remote => (
+                            <div key={remote.userId} className="p-4 rounded-xl border border-orange-500/30 bg-orange-500/5 backdrop-blur-md">
+                                <div className="flex justify-between items-start mb-3">
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                                <Users size={18} className="text-orange-400" />
+                                                {remote.username}
+                                            </h3>
+                                            <span className="text-xs bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded-full border border-orange-500/30 animate-pulse">
+                                                Editando ahora...
+                                            </span>
+                                        </div>
+                                        <div className="text-sm text-[var(--vscode-text-secondary)] mt-1 flex items-center gap-1">
+                                            <Clock size={12} />
+                                            Actualizado: {new Date(remote.timestamp).toLocaleTimeString()}
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-xl font-bold text-white">
+                                            ${remote.cart.reduce((sum, i) => sum + (i.price * (i.quantity || 1)), 0).toFixed(2)}
+                                        </div>
+                                        <div className="text-xs text-[var(--vscode-text-secondary)]">
+                                            {remote.cart.length} items
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="text-sm text-[var(--vscode-text-secondary)] bg-black/20 p-2 rounded mb-3">
+                                    {remote.cart.slice(0, 3).map((item, idx) => (
+                                        <div key={idx} className="flex justify-between">
+                                            <span>{item.quantity}x {item.name}</span>
+                                            <span>${(item.price * item.quantity).toFixed(2)}</span>
+                                        </div>
+                                    ))}
+                                    {remote.cart.length > 3 && (
+                                        <div className="text-xs italic mt-1">...y {remote.cart.length - 3} más</div>
+                                    )}
+                                </div>
+
+                                <div className="flex justify-end">
+                                    <button
+                                        onClick={() => handleTakeActiveCart(remote.userId, remote)}
+                                        className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg flex items-center gap-2 transition-all shadow-lg hover:shadow-orange-500/30"
+                                    >
+                                        <ShoppingBag size={16} />
+                                        Copiar Carrito
+                                    </button>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            )}
+
             {viewMode === 'orders' && (
                 <div className="flex flex-col gap-4 pb-20">
-                    {/* Aggregating ALL orders: Held, Kitchen, Bar */}
                     {(data.heldOrders || [])
                         .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
                         .map(order => {
@@ -334,11 +425,9 @@ export const OrdersPage = () => {
                                 <div
                                     key={order.id}
                                     onClick={() => {
-                                        // Navigate to POS with this order
                                         if (table) {
                                             navigate(`/?tableId=${table.id}`);
                                         } else {
-                                            // For non-table orders, navigate to POS and load the order
                                             navigate(`/?orderId=${order.id}`);
                                         }
                                     }}
@@ -448,7 +537,7 @@ export const OrdersPage = () => {
             )}
 
             {/* Modals */}
-            < Modal
+            <Modal
                 isOpen={isAddModalOpen || !!editingTable}
                 onClose={() => {
                     setIsAddModalOpen(false);
@@ -529,34 +618,26 @@ const TrashModal = ({ isOpen, onClose }) => {
     const { data, restoreCancelledOrder, permanentlyDeleteOrder, updateItem } = useData();
     const { confirm, alert } = useDialog();
 
-    // Filter ONLY cancelled orders that belong to a table
     const tableCancelledOrders = (data.cancelledOrders || [])
         .filter(order => order.tableId)
         .sort((a, b) => new Date(b.cancelledAt) - new Date(a.cancelledAt));
 
     const handleRestore = async (order) => {
-        // Find if the table is currently available
         const currentTable = data.tables.find(t => t.id === order.tableId);
-
         if (!currentTable) {
             await alert({ title: 'Error', message: 'La mesa original ya no existe.' });
             return;
         }
-
         if (currentTable.status !== 'available') {
             await alert({ title: 'Aviso', message: `No se puede restaurar: La mesa "${currentTable.name}" está ocupada actualmente.` });
             return;
         }
-
         const ok = await confirm({
             title: 'Restaurar Pedido',
             message: `¿Restaurar pedido de ${currentTable.name}?`
         });
-
         if (ok) {
-            // Restore order
             restoreCancelledOrder(order.id);
-            // Re-occupy the table
             updateItem('tables', currentTable.id, {
                 status: 'occupied',
                 currentOrderId: order.id,
@@ -607,23 +688,23 @@ const TrashModal = ({ isOpen, onClose }) => {
                                     </div>
                                     <div className="text-right">
                                         <div className="font-bold text-red-400">
-                                            ${order.currentOrder?.reduce((sum, item) => sum + (item.price * item.quantity), 0)?.toLocaleString()}
+                                            ${order.items?.reduce((sum, item) => sum + (item.price * item.quantity), 0)?.toLocaleString()}
                                         </div>
                                         <span className="text-xs text-[var(--vscode-text-secondary)]">
-                                            {order.currentOrder?.length} items
+                                            {order.items?.length} items
                                         </span>
                                     </div>
                                 </div>
 
                                 <div className="text-sm text-[var(--vscode-text-secondary)] bg-black/20 p-2 rounded">
-                                    {order.currentOrder?.slice(0, 3).map((item, idx) => (
+                                    {order.items?.slice(0, 3).map((item, idx) => (
                                         <div key={idx} className="flex justify-between">
                                             <span>{item.quantity}x {item.name}</span>
                                             <span>${item.price}</span>
                                         </div>
                                     ))}
-                                    {order.currentOrder?.length > 3 && (
-                                        <div className="text-xs italic mt-1">...y {order.currentOrder.length - 3} más</div>
+                                    {order.items?.length > 3 && (
+                                        <div className="text-xs italic mt-1">...y {order.items.length - 3} más</div>
                                     )}
                                 </div>
 
@@ -663,13 +744,11 @@ const AssignTableModal = ({ isOpen, onClose, order }) => {
         });
 
         if (ok) {
-            // 1. Update the order in heldOrders
             updateItem('heldOrders', order.id, {
                 tableId: table.id,
                 tableName: table.name
             });
 
-            // 2. Update the table status
             updateItem('tables', table.id, {
                 status: 'occupied',
                 currentOrderId: order.id,

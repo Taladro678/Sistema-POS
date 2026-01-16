@@ -24,7 +24,8 @@ export const POSPage = () => {
         addTip,
         addItem,
         updateItem,
-        sendOrderToProduction
+        sendOrderToProduction,
+        sendLiveCartUpdate // <-- Added
     } = useData();
     const { currentUser } = useAuth();
     const { addToast } = useToast();
@@ -108,6 +109,17 @@ export const POSPage = () => {
     const [discountValue, setDiscountValue] = useState('');
     const [discountType, setDiscountType] = useState('amount'); // 'amount' or 'percent'
     const [orderNote, setOrderNote] = useState('');
+
+    // Broadcast Active Cart to others
+    React.useEffect(() => {
+        if (typeof sendLiveCartUpdate === 'function') {
+            // Wait 500ms debounce to avoid flooding network
+            const timeoutId = setTimeout(() => {
+                sendLiveCartUpdate(currentUser, cart);
+            }, 500);
+            return () => clearTimeout(timeoutId);
+        }
+    }, [cart, currentUser, sendLiveCartUpdate]);
 
     // Client Search Modal
     const [isClientModalOpen, setIsClientModalOpen] = useState(false);

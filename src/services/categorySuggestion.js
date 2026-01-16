@@ -26,11 +26,18 @@ const removeAccents = (str) => {
 };
 
 /**
- * Normalize string for comparison (lowercase, no accents, trim)
+ * Normalize string for comparison: lowercase, remove accents, remove non-alphanumeric (except spaces)
  */
 const normalize = (str) => {
     if (!str) return '';
-    return removeAccents(str.toLowerCase().trim());
+    // Remove accents
+    let n = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    // Lowercase
+    n = n.toLowerCase();
+    // Replace punctuation/symbols with spaces
+    n = n.replace(/[^a-z0-9\s]/g, ' ');
+    // Remove extra spaces
+    return n.trim().replace(/\s+/g, ' ');
 };
 
 /**
@@ -41,43 +48,38 @@ const normalize = (str) => {
  */
 const calculateScore = (productName, keywords) => {
     const normalizedName = normalize(productName);
+    const nameWords = normalizedName.split(' ');
     let score = 0;
 
-    // Early exit if no keywords
-    if (!keywords || keywords.length === 0) return 0;
+    // Early exit if no keywords or name
+    if (!keywords || keywords.length === 0 || !normalizedName) return 0;
 
     keywords.forEach((keyword, index) => {
         const normalizedKeyword = normalize(keyword);
-
         if (!normalizedKeyword) return;
 
-        // Check if keyword exists in product name
+        // Check for exact word match vs substring match
         if (normalizedName.includes(normalizedKeyword)) {
-            // Base points for match
-            let points = 10;
+            let points = 10; // Base points
 
-            // Bonus for exact match
-            if (normalizedName === normalizedKeyword) {
-                points += 50;
+            // Check if it's a "clean" match (whole words or exact)
+            const isExactMatch = normalizedName === normalizedKeyword;
+            const isWordMatch = nameWords.includes(normalizedKeyword);
+
+            if (isExactMatch) {
+                points += 60; // Huge bonus for exact identity
+            } else if (isWordMatch) {
+                points += 25; // Bonus for containing the exact word
             }
 
-            // Bonus for start position (first words matter more)
+            // Bonus for match location
             const position = normalizedName.indexOf(normalizedKeyword);
             if (position === 0) {
                 points += 20; // Starts with keyword
-            } else if (position < 5) {
-                points += 10; // Near the beginning
-            }
-
-            // Bonus for word boundary match (not just substring)
-            const words = normalizedName.split(/\s+/);
-            if (words.some(word => word === normalizedKeyword || word.includes(normalizedKeyword))) {
-                points += 15;
             }
 
             // Slight penalty for later keywords in category definition
-            // (earlier keywords are usually more representative)
-            const keywordPenalty = index * 0.5;
+            const keywordPenalty = Math.min(index * 0.5, 5);
             points -= keywordPenalty;
 
             score += points;
@@ -91,11 +93,11 @@ const calculateScore = (productName, keywords) => {
  * Suggest best category for a product based on its name
  * @param {string} productName - Product name to categorize
  * @param {Array} categories - Array of category objects with { id, label, keywords }
- * @returns {Object} - Suggested category { id, label, confidence }
+ * @returns {Object} - Suggested category { id, label, confidence, score } or null
  */
 export const suggestCategory = (productName, categories) => {
     if (!productName || !categories || categories.length === 0) {
-        return categories?.[0] || null;
+        return null;
     }
 
     let bestCategory = null;
@@ -110,20 +112,14 @@ export const suggestCategory = (productName, categories) => {
         }
     });
 
-    // If no good match found (score too low), return first category as default
-    if (bestScore < 5) {
-        return {
-            ...categories[0],
-            confidence: 'low',
-            score: 0
-        };
-    }
+    // If no match found at all
+    if (bestScore <= 0) return null;
 
-    // Calculate confidence level
+    // confidence level thresholds
     let confidence = 'low';
-    if (bestScore >= 50) {
+    if (bestScore >= 40) {
         confidence = 'high';
-    } else if (bestScore >= 20) {
+    } else if (bestScore >= 10) { // Even a base match is medium if we return it
         confidence = 'medium';
     }
 

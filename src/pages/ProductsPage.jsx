@@ -125,20 +125,24 @@ export const ProductsPage = () => {
 
     // Intelligent category suggestion when product name changes
     useEffect(() => {
-        if (formData.name && !editingProduct && (data.categories || []).length > 0) {
+        // Only suggest if there's a name and no category selected (or we are in new mode)
+        if (formData.name && (data.categories || []).length > 0) {
             const suggestion = suggestCategory(formData.name, data.categories);
             setSuggestedCategory(suggestion);
 
             // Auto-apply suggestion after 1 second if user hasn't selected a category
+            // and we have reasonable confidence
             const timer = setTimeout(() => {
-                if (suggestion && (!formData.category || formData.category === '')) {
+                if (suggestion && suggestion.confidence !== 'low' && (!formData.category || formData.category === '')) {
                     setFormData(prev => ({ ...prev, category: suggestion.id }));
                 }
             }, 1000);
 
             return () => clearTimeout(timer);
+        } else {
+            setSuggestedCategory(null);
         }
-    }, [formData.name, editingProduct, data.categories, formData.category]);
+    }, [formData.name, data.categories, formData.category]); // Also depend on category to avoid stuck suggestions
 
     const resetForm = () => {
         setEditingProduct(null);
@@ -153,6 +157,39 @@ export const ProductsPage = () => {
         });
         setPhotoFile(null);
         setSuggestedCategory(null);
+    };
+
+    const handleAutoCategorizeAll = async () => {
+        const productsWithoutCategory = (data.products || []).filter(p => !p.category);
+        if (productsWithoutCategory.length === 0) {
+            return await alert({ title: 'Aviso', message: 'Todos los productos ya tienen una categoría asignada.' });
+        }
+
+        const ok = await confirm({
+            title: 'Categorización Inteligente Masiva',
+            message: `¿Deseas intentar categorizar automáticamente ${productsWithoutCategory.length} productos sin categoría?\n\nSe usarán las palabras clave definidas en tus categorías.`
+        });
+
+        if (ok) {
+            let count = 0;
+            const updatedProducts = data.products.map(p => {
+                if (!p.category) {
+                    const suggestion = suggestCategory(p.name, data.categories);
+                    if (suggestion && suggestion.confidence !== 'low') {
+                        count++;
+                        return { ...p, category: suggestion.id };
+                    }
+                }
+                return p;
+            });
+
+            if (count > 0) {
+                updateData('products', updatedProducts);
+                await alert({ title: 'Éxito', message: `Se categorizaron ${count} productos correctamente.` });
+            } else {
+                await alert({ title: 'Aviso', message: 'No se encontraron coincidencias con alta confianza. Prueba agregando palabras clave a tus categorías.' });
+            }
+        }
     };
 
     const handleImportData = async (excelData) => {
@@ -490,6 +527,14 @@ export const ProductsPage = () => {
                             </button>
                             <button
                                 className="glass-button"
+                                style={{ padding: '0.4rem 0.6rem', height: '32px', color: 'var(--accent-purple)' }}
+                                onClick={handleAutoCategorizeAll}
+                                title="Categorización Inteligente Masiva"
+                            >
+                                <Sparkles size={16} />
+                            </button>
+                            <button
+                                className="glass-button"
                                 style={{ padding: '0.4rem 0.6rem', height: '32px' }}
                                 onClick={() => setShowImportModal(true)}
                                 title="Importar Excel"
@@ -606,24 +651,29 @@ export const ProductsPage = () => {
                                     <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Categoría</label>
 
                                     {/* Smart Suggestion Badge */}
-                                    {suggestedCategory && !editingProduct && suggestedCategory.confidence !== 'low' && (
-                                        <div style={{
-                                            background: 'rgba(168, 85, 247, 0.1)',
-                                            border: '1px solid rgba(168, 85, 247, 0.3)',
-                                            padding: '0.5rem 0.75rem',
-                                            borderRadius: '8px',
-                                            marginBottom: '0.5rem',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem',
-                                            animation: 'pulse 2s ease-in-out infinite'
-                                        }}>
-                                            <Sparkles size={16} color="rgb(168, 85, 247)" />
-                                            <span style={{ fontSize: '0.85rem', color: 'rgb(168, 85, 247)' }}>
+                                    {suggestedCategory && suggestedCategory.confidence !== 'low' && formData.category !== suggestedCategory.id && (
+                                        <div
+                                            onClick={() => setFormData(prev => ({ ...prev, category: suggestedCategory.id }))}
+                                            style={{
+                                                background: 'rgba(168, 85, 247, 0.1)',
+                                                border: '1px solid rgba(168, 85, 247, 0.3)',
+                                                padding: '0.4rem 0.6rem',
+                                                borderRadius: '8px',
+                                                marginBottom: '0.5rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s'
+                                            }}
+                                            className="hover-scale"
+                                        >
+                                            <Sparkles size={14} color="rgb(168, 85, 247)" />
+                                            <span style={{ fontSize: '0.75rem', color: 'rgb(168, 85, 247)' }}>
                                                 <strong>Sugerencia:</strong> {suggestedCategory.label}
                                             </span>
                                             <span style={{
-                                                fontSize: '0.7rem',
+                                                fontSize: '0.65rem',
                                                 marginLeft: 'auto',
                                                 opacity: 0.7
                                             }}>
