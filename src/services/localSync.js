@@ -8,9 +8,9 @@ const getAutoServerUrl = () => {
     if (savedUrl) return savedUrl;
 
     // Check if running inside Capacitor (Native App)
-    const isNative = window.Capacitor?.isNative || window.location.protocol === 'capacitor:';
+    const isNative = window.Capacitor?.isNative || window.location.protocol === 'capacitor:' || window.location.protocol === 'file:';
     if (isNative) {
-        return `http://localhost:3001`;
+        return `http://127.0.0.1:3001`;
     }
 
     const protocol = window.location.protocol;
@@ -26,10 +26,15 @@ class LocalSyncService {
         this.isConnected = false;
         this.subscribers = [];
         this.syncInterval = null;
+        this.serverInfo = null; // Store server info
     }
 
     getSuggestedUrl() {
         return getAutoServerUrl();
+    }
+
+    getServerInfo() {
+        return this.serverInfo;
     }
 
     connect(serverUrl) {
@@ -62,6 +67,12 @@ class LocalSyncService {
             console.log("❌ Disconnected from Local Server");
             this.isConnected = false;
             this.notifySubscribers('connection_status', false);
+        });
+
+        this.socket.on("server_info", (info) => {
+            console.log('ℹ️ Server Info received:', info);
+            this.serverInfo = info;
+            this.notifySubscribers('server_info', info);
         });
 
         // Listen for specific updates
