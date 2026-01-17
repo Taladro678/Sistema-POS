@@ -22,25 +22,14 @@ export const generateUniqueId = () => {
 export const DataProvider = ({ children }) => {
     const { alert } = useDialog();
 
-    // One-time cleanup for v2.1.7 - ATOMIC RESET
+    // One-time sync for v2.1.8 - NO DESTRUCTIVE CLEAR
     useEffect(() => {
-        const CLEANUP_KEY = 'v2.1.7_atomic_reset';
-        if (!localStorage.getItem(CLEANUP_KEY)) {
-            console.warn('💣 CRITICAL: Performing atomic reset for v2.1.7...');
-
-            const serverUrl = localStorage.getItem('server_url');
-            const user = localStorage.getItem('currentUser');
-
-            localStorage.clear();
-
-            if (serverUrl) localStorage.setItem('server_url', serverUrl);
-            if (user) localStorage.setItem('currentUser', user);
-
-            localStorage.setItem(CLEANUP_KEY, 'true');
-            // We set a flag to ignore local timestamp on next sync
+        const SYNC_KEY = 'v2.1.8_force_sync';
+        if (!localStorage.getItem(SYNC_KEY)) {
+            console.warn('🔄 Version 2.1.8: Forcing server sync to apply ID fixes...');
+            localStorage.setItem(SYNC_KEY, 'true');
             localStorage.setItem('force_server_sync', 'true');
-
-            window.location.reload();
+            // Refresh logic if needed, but not necessarily a reload if it's OTA
         }
     }, []);
 
