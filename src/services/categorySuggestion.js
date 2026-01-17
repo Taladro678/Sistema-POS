@@ -59,12 +59,12 @@ const calculateScore = (productName, keywords) => {
         if (!normalizedKeyword) return;
 
         // Check for exact word match vs substring match
-        if (normalizedName.includes(normalizedKeyword)) {
-            let points = 10; // Base points
+        const isExactMatch = normalizedName === normalizedKeyword;
+        const isWordMatch = nameWords.includes(normalizedKeyword);
+        const startsWithKeyword = normalizedName.startsWith(normalizedKeyword + ' ');
 
-            // Check if it's a "clean" match (whole words or exact)
-            const isExactMatch = normalizedName === normalizedKeyword;
-            const isWordMatch = nameWords.includes(normalizedKeyword);
+        if (isExactMatch || isWordMatch || startsWithKeyword) {
+            let points = 10; // Base points
 
             if (isExactMatch) {
                 points += 60; // Huge bonus for exact identity
@@ -73,8 +73,7 @@ const calculateScore = (productName, keywords) => {
             }
 
             // Bonus for match location
-            const position = normalizedName.indexOf(normalizedKeyword);
-            if (position === 0) {
+            if (normalizedName.indexOf(normalizedKeyword) === 0) {
                 points += 20; // Starts with keyword
             }
 

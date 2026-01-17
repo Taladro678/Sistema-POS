@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useData } from '../context/DataContext';
+import { useData, generateUniqueId } from '../context/DataContext';
 import { useDialog } from '../context/DialogContext';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
@@ -196,6 +196,9 @@ export const ProductsPage = () => {
         let successCount = 0;
         let autoCategorized = 0;
 
+        const currentProducts = [...(data.products || [])];
+        let hasChanges = false;
+
         for (const row of excelData) {
             let rawSymbol = row['A'];
             let rawName = row['B'];
@@ -232,34 +235,45 @@ export const ProductsPage = () => {
             if (price === 0 && row['O']) price = parseCurrency(row['O']);
             const cost = parseCurrency(rawCost);
 
-            let category = '';
+            let categoryId = '';
             if (data.categories && data.categories.length > 0) {
                 const suggestion = suggestCategory(cleanName, data.categories);
                 if (suggestion && suggestion.confidence !== 'low') {
-                    category = suggestion.id;
+                    categoryId = suggestion.id;
                     autoCategorized++;
                 }
             }
 
-            // Duplicate Handling: Check if product already exists by name
-            const existingProduct = (data.products || []).find(p => p.name.toLowerCase() === cleanName.toLowerCase());
+            const existingIndex = currentProducts.findIndex(p => p.name.toLowerCase() === cleanName.toLowerCase());
 
-            const productData = {
-                name: cleanName,
-                price: price,
-                costPrice: cost,
-                stock: existingProduct ? existingProduct.stock : 0,
-                category: category || (existingProduct ? existingProduct.category : ''),
-                image: existingProduct ? existingProduct.image : '',
-                showInPOS: true
-            };
-
-            if (existingProduct) {
-                updateItem('products', existingProduct.id, productData);
+            if (existingIndex >= 0) {
+                // Update existing
+                currentProducts[existingIndex] = {
+                    ...currentProducts[existingIndex],
+                    price: price,
+                    costPrice: cost,
+                    category: categoryId || currentProducts[existingIndex].category,
+                    showInPOS: true
+                };
             } else {
-                addItem('products', productData);
+                // Add new with guaranteed unique ID
+                currentProducts.push({
+                    id: generateUniqueId(),
+                    name: cleanName,
+                    price: price,
+                    costPrice: cost,
+                    stock: 0,
+                    category: categoryId,
+                    image: '',
+                    showInPOS: true
+                });
             }
             successCount++;
+            hasChanges = true;
+        }
+
+        if (hasChanges) {
+            updateData('products', currentProducts);
         }
 
         setShowImportModal(false);

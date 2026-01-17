@@ -6,7 +6,7 @@
 // Node.js Mobile Initializer
 // This script runs on the frontend (WebView) and starts the Node.js background process.
 
-alert('⚠️ CARGANDO nodejs-init.js...'); // DEBUG - CONFIRM LOAD
+alert('⚠️ RECOVERY: nodejs-init.js...'); // DEBUG - CONFIRM LOAD
 
 // Force verbose logging
 

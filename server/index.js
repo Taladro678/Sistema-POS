@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 import { checkForUpdates } from './updater.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const VERSION = '2.1.3'; // Versión base del APK
+const VERSION = '2.1.6'; // Versión base del APK
 
 // Solo activar auto-update si se detecta entorno Android (o se fuerza por config)
 const isAndroid = process.env.NODE_PLATFORM === 'android';
@@ -219,7 +219,8 @@ io.on('connection', (socket) => {
 app.get('/api/check-update', async (req, res) => {
     try {
         console.log('🔍 Manual update check requested...');
-        const result = await checkForUpdates(VERSION);
+        // Pass 'io' to updater for progress reporting
+        const result = await checkForUpdates(VERSION, io);
         res.json(result);
 
         // If update was applied and we are on Android, restart after delay

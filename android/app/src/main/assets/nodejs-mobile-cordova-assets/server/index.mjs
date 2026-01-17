@@ -8,35 +8,23 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { checkForUpdates } from './updater.mjs';
 
-console.log('🔹 server/index.mjs: Módulos importados correctamente');
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-console.log('🔹 server/index.mjs: __dirname calculado:', __dirname);
-
-const VERSION = '1.0.0'; // Versión base del APK
+const VERSION = '2.1.3'; // Versión base del APK
 
 // Solo activar auto-update si se detecta entorno Android (o se fuerza por config)
 const isAndroid = process.env.NODE_PLATFORM === 'android';
-console.log('🔹 server/index.mjs: Entorno Android detectado:', isAndroid);
 
 const app = express();
-console.log('🔹 server/index.mjs: Express inicializado');
 app.use(cors());
 app.use(express.json());
 
 const server = createServer(app);
 
 // Serve Static Files (Frontend)
-// En Android, 'dist' estará en ../dist relativo a este archivo (server/index.mjs)
-// porque copiamos todo 'dist' dentro de 'nodejs-project/dist' antes de compilar.
 const distPath = process.env.FRONTEND_DIST_PATH || path.join(__dirname, '../dist');
-console.log('🔹 server/index.mjs: Sirviendo frontend desde:', distPath);
 app.use(express.static(distPath));
 
-// Handle React Routing (return index.html for all non-API routes)
-app.get('*', (req, res) => {
-    res.sendFile(path.join(distPath, 'index.html'));
-});
+
 
 // Get Local IP
 const getLocalIp = () => {
@@ -61,23 +49,16 @@ const io = new Server(server, {
 const PORT = 3001;
 
 // In-Memory State (Centralized Source of Truth)
-const defaultUsers = [
-    { id: 'u1', name: 'Administrador', role: 'admin', pin: '123' },
-    { id: 'u2', name: 'Cajero', role: 'cashier', pin: '123' },
-    { id: 'u3', name: 'Cocina', role: 'kitchen', pin: '123' },
-    { id: 'u4', name: 'Barra', role: 'bar', pin: '123' },
-    { id: 'u5', name: 'Mesero', role: 'waiter', pin: '123' }
-];
-
 let appState = {
     // Core Data
     inventory: [],
     products: [],
     suppliers: [],
     personnel: [],
-    users: defaultUsers,
+    users: [],
     categories: [],
     customers: [],
+
     // Transactional Data
     sales: [],
     heldOrders: [],
@@ -95,6 +76,7 @@ let appState = {
     cashRegister: {},
     defaultForeignCurrencyDiscountPercent: 0,
 
+    // Metadata
     lastModified: new Date().toISOString()
 };
 
@@ -105,28 +87,27 @@ if (fs.existsSync(DB_FILE)) {
     try {
         const data = fs.readFileSync(DB_FILE, 'utf8');
         const loadedState = JSON.parse(data);
+        // Merge loaded state with default structure to ensure all fields exist
         appState = { ...appState, ...loadedState };
-
-        // Si el archivo cargado no tenia usuarios (vacio), inyectar los defaults
-        if (!appState.users || appState.users.length === 0) {
-            appState.users = defaultUsers;
-        }
-
         console.log('📂 Estado restaurado desde server_db.json');
     } catch (e) {
         console.error('⚠️ Error cargando base de datos local:', e);
     }
-} else {
-    // Si no existe el archivo, nos aseguramos de que los defaults esten ahi
-    appState.users = defaultUsers;
 }
 
-// Save State Helper
+// Save State Helper (Atomic)
 const saveState = () => {
     try {
-        fs.writeFileSync(DB_FILE, JSON.stringify(appState, null, 2));
+        const tempFile = `${DB_FILE}.tmp`;
+        const jsonData = JSON.stringify(appState, null, 2);
+
+        // Write to temp file first
+        fs.writeFileSync(tempFile, jsonData);
+
+        // Rename temp file to actual file (Atomic operation)
+        fs.renameSync(tempFile, DB_FILE);
     } catch (e) {
-        console.error('❌ Error guardando estado:', e);
+        console.error('❌ Error guardando estado (Atomic):', e);
     }
 };
 
@@ -144,33 +125,46 @@ io.on('connection', (socket) => {
     });
 
     // --- GENERIC FULL SYNC (Primary Mechanism) ---
-    // Clients send their full state (or partial updates) to be merged
     socket.on('full_state_update', (newState) => {
-        // Log basic info
         console.log('🔄 Recibida actualización de estado desde cliente');
 
-        // Merge Strategy: Only accept updates if the incoming timestamp is NEWER
-        // This prevents old versions of the state from overwriting new data
-        const incomingTime = new Date(newState.lastModified || 0).getTime();
-        const serverTime = new Date(appState.lastModified || 0).getTime();
+        let hasChanges = false;
 
-        if (incomingTime > serverTime) {
-            console.log('   ✅ El estado recibido es más reciente. Actualizando...');
-            Object.keys(newState).forEach(key => {
-                if (newState[key] !== undefined) {
-                    appState[key] = newState[key];
+        // Critical arrays to protect against accidental wipe
+        const criticalKeys = ['inventory', 'products', 'categories', 'sales', 'users', 'personnel', 'customers', 'kitchenOrders', 'heldOrders', 'tables'];
+
+        Object.keys(newState).forEach(key => {
+            if (newState[key] === undefined) return;
+
+            // PROTECTION: Do not overwrite existing server data with empty arrays from client
+            // unless the server data is also empty or it's an intentional clear (hard to distinguish, so err on safety)
+            if (criticalKeys.includes(key) && Array.isArray(newState[key]) && newState[key].length === 0) {
+                if (Array.isArray(appState[key]) && appState[key].length > 0) {
+                    console.warn(`🛡️ RECHAZADO overwrite de '${key}' con array vacío. Conservando ${appState[key].length} registros del servidor.`);
+                    return;
                 }
-            });
-            appState.lastModified = newState.lastModified;
-            saveState(); // Persist to disk
+            }
+
+            // Simple Deep Compare to avoid writing if nothing changed
+            if (JSON.stringify(appState[key]) !== JSON.stringify(newState[key])) {
+                appState[key] = newState[key];
+                hasChanges = true;
+            }
+        });
+
+        if (hasChanges) {
+            appState.lastModified = new Date().toISOString();
+            saveState(); // Persist to disk safely
 
             // Broadcast the UPDATED state to all OTHER clients
             socket.broadcast.emit('sync_update', appState);
-        } else {
-            console.log('   ⚠️ El estado recibido es antiguo o igual. Rechazado.');
-            // Enviar el estado del servidor de vuelta al cliente para que se sincronice con el mas nuevo
-            socket.emit('sync_update', appState);
         }
+    });
+
+    // --- EPHEMERAL EVENTS (Live Carts) ---
+    socket.on('active_cart_update', (data) => {
+        // data: { userId, username, cart, timestamp }
+        socket.broadcast.emit('remote_cart_update', data);
     });
 
     // --- LEGACY/SPECIFIC EVENTS (Kept for compatibility or specific triggers) ---
@@ -222,6 +216,23 @@ io.on('connection', (socket) => {
 });
 
 // API Routes (Optional fallback)
+app.get('/api/check-update', async (req, res) => {
+    try {
+        console.log('🔍 Manual update check requested...');
+        const result = await checkForUpdates(VERSION);
+        res.json(result);
+
+        // If update was applied and we are on Android, restart after delay
+        if (result.updated && isAndroid) {
+            console.log('♻️ Update applied manually. Restarting in 2s...');
+            setTimeout(() => process.exit(0), 2000);
+        }
+    } catch (error) {
+        console.error('❌ Error in manual update check:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.post('/api/sync', (req, res) => {
     // const { clientData } = req.body;
     // Logic to merge...
@@ -230,32 +241,37 @@ app.post('/api/sync', (req, res) => {
 
 // Initial Update Check
 if (isAndroid) {
-    checkForUpdates(VERSION).then(result => {
-        if (result.updated) {
-            console.log('🔄 Actualización aplicada. Reiniciando pronto...');
-            // En entorno real de nodejs-mobile, aquí dispararíamos un reinicio local
-        }
-    });
+    // Check for updates 5 seconds after startup to allow stabilization
+    setTimeout(() => {
+        checkForUpdates(VERSION).then(result => {
+            if (result.updated) {
+                console.log('🔄 Actualización aplicada. Reiniciando Servidor...');
+                console.log(`📦 Nueva versión: ${result.newVersion}`);
+
+                // Multiple aggressive restart attempts
+                setTimeout(() => {
+                    console.log('♻️ FORZANDO REINICIO INMEDIATO...');
+                    process.exit(0);
+                }, 500);
+
+                // Fallback: throw error to crash if exit doesn't work
+                setTimeout(() => {
+                    throw new Error('RESTART_REQUIRED');
+                }, 1000);
+            }
+        }).catch(err => {
+            console.error('❌ Error durante auto-update:', err);
+        });
+    }, 5000);
 }
 
-// Manejo de errores del servidor
-server.on('error', (e) => {
-    console.error('❌ Error CRÍTICO en servidor HTTP:', e);
+// Handle React Routing (return index.html for all non-API routes)
+app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
 });
 
-console.log(`🔹 server/index.mjs: Llamando a server.listen(${PORT}, '0.0.0.0')...`);
-
 server.listen(PORT, '0.0.0.0', () => {
-    console.log('🔹 server/index.mjs: Callback de listen ejecutado. Servidor escuchando.');
-
-    let ip = 'unknown';
-    try {
-        ip = getLocalIp();
-    } catch (err) {
-        console.error('⚠️ Error obteniendo IP local:', err);
-        ip = 'error';
-    }
-
+    const ip = getLocalIp();
     console.log(`
     🚀 SERVIDOR POS LISTO
     -----------------------------------------

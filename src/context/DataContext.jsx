@@ -9,8 +9,41 @@ const DataContext = createContext();
 // eslint-disable-next-line react-refresh/only-export-components
 export const useData = () => useContext(DataContext);
 
+// Unique ID generator with counter to prevent duplicates in rapid succession
+let idCounter = 0;
+export const generateUniqueId = () => {
+    // timestamp (13 digits) + counter (3 digits) = 16 digits
+    // safely within Number.MAX_SAFE_INTEGER (9,007,199,254,740,991)
+    const timestamp = Date.now();
+    const counter = idCounter++ % 1000; // supports 1000 products per ms
+    return (timestamp * 1000) + counter;
+};
+
 export const DataProvider = ({ children }) => {
     const { alert } = useDialog();
+
+    // One-time cleanup for v2.1.5 to remove polluted data (IDs and Categories)
+    useEffect(() => {
+        const CLEANUP_KEY = 'v2.1.5_data_cleanup_final_real';
+        if (!localStorage.getItem(CLEANUP_KEY)) {
+            console.warn('🧹 Perforing one-time data cleanup for v2.1.5...');
+
+            // Critical keys to keep
+            const serverUrl = localStorage.getItem('server_url');
+            const user = localStorage.getItem('currentUser');
+            const exchangeRate = localStorage.getItem('exchangeRate');
+
+            localStorage.clear();
+
+            if (serverUrl) localStorage.setItem('server_url', serverUrl);
+            if (user) localStorage.setItem('currentUser', user);
+            if (exchangeRate) localStorage.setItem('exchangeRate', exchangeRate);
+
+            localStorage.setItem(CLEANUP_KEY, 'true');
+            window.location.reload();
+        }
+    }, []);
+
     const loadData = (key, fallback) => {
         try {
             const saved = localStorage.getItem(key);
@@ -188,7 +221,7 @@ export const DataProvider = ({ children }) => {
 
     const addItem = (section, item) => setData(prev => ({
         ...prev,
-        [section]: [...(prev[section] || []), { ...item, id: item.id || Date.now() }],
+        [section]: [...(prev[section] || []), { ...item, id: item.id || generateUniqueId() }],
         lastModified: new Date().toISOString()
     }));
 

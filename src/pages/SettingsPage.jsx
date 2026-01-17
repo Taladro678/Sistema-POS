@@ -509,8 +509,39 @@ export const SettingsPage = () => {
                                             btn.disabled = true;
                                             btn.innerHTML = 'Buscando actualizaciones...';
 
-                                            const response = await fetch('/api/check-update');
+                                            // Improved Android detection
+                                            const isAndroid = /Android/i.test(navigator.userAgent);
+                                            const isNative = window.Capacitor?.isNative || isAndroid;
+
+                                            // Force local server URL on Android
+                                            const baseUrl = isNative ? "http://127.0.0.1:3001" : "";
+
+                                            // Listen for progress
+                                            if (window.socket) {
+                                                window.socket.off("ota_progress");
+                                                window.socket.on("ota_progress", (data) => {
+                                                    const { percent, downloaded, total, status } = data;
+                                                    btn.innerHTML = `${status === "downloading" ? "Descargando" : status}: ${percent}% (${downloaded}/${total} MB)`;
+                                                    btn.style.background = `linear-gradient(90deg, #4f46e5 ${percent}%, #374151 ${percent}%)`;
+                                                });
+
+                                                window.socket.off("ota_status");
+                                                window.socket.on("ota_status", (data) => {
+                                                    const msgs = { checking: "Buscando...", found: "Versión encontrada", extracting: "📂 Descomprimiendo...", installing: "✨ Instalando...", error: "Error" };
+                                                    if (msgs[data.status]) btn.innerHTML = msgs[data.status];
+                                                });
+                                            }
+
+                                            console.log("🔍 Checking for updates at:", `${baseUrl}/api/check-update`);
+                                            const response = await fetch(`${baseUrl}/api/check-update`);
                                             const result = await response.json();
+
+                                            // Reset UI
+                                            if (window.socket) {
+                                                window.socket.off("ota_progress");
+                                                window.socket.off("ota_status");
+                                            }
+                                            btn.style.background = "";
 
                                             if (result.updated) {
                                                 await alert({

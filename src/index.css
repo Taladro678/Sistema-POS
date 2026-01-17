@@ -811,3 +811,20 @@ textarea {
   scrollbar-width: none;
   /* Firefox */
 }
+/* Fix for 6.6" Screens (approx 800-850px height) */
+@media (max-height: 850px) {
+  .modal-content {
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+  }
+  
+  .pos-cart-sidebar {
+    height: 60vh !important;
+  }
+  
+  /* Compact buttons for small screens */
+  button {
+      padding-top: 0.5rem !important;
+      padding-bottom: 0.5rem !important;
+  }
+}
