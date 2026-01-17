@@ -99,7 +99,6 @@ export const POSPage = () => {
 
     // Split Payment State
     const [payments, setPayments] = useState([]);
-    const [selectedDepartment, setSelectedDepartment] = useState('Restaurante');
     const [currentPaymentAmount, setCurrentPaymentAmount] = useState('');
     const [currentPaymentMethod, setCurrentPaymentMethod] = useState('');
     const [paymentNote, setPaymentNote] = useState('');
@@ -438,7 +437,7 @@ export const POSPage = () => {
             cashier: 'Cajero 1',
             tableId: currentTable ? currentTable.id : null,
             tableName: currentTable ? currentTable.name : null,
-            department: currentTable?.department || selectedDepartment, // Use manual selector if no table
+            department: currentTable?.department || (departmentTotals['Quesera'] > departmentTotals['Restaurante'] ? 'Quesera' : 'Restaurante'),
             departmentTotals: departmentTotals, // Store the detailed breakdown
             payments: Array.isArray(overridePayments) ? overridePayments : payments
         };
@@ -624,43 +623,7 @@ export const POSPage = () => {
                         </div>
                     )}
 
-                    {/* Department Selector for Para Llevar */}
-                    {!currentTable && (!isMobile || !isSearchExpanded) && (
-                        <div style={{ display: 'flex', gap: '2px', background: 'rgba(255,255,255,0.05)', padding: '2px', borderRadius: '4px' }}>
-                            <button
-                                onClick={() => setSelectedDepartment('Restaurante')}
-                                style={{
-                                    padding: '0.2rem 0.6rem',
-                                    fontSize: '0.65rem',
-                                    border: 'none',
-                                    borderRadius: '3px',
-                                    cursor: 'pointer',
-                                    background: selectedDepartment === 'Restaurante' ? 'var(--accent-blue)' : 'transparent',
-                                    color: selectedDepartment === 'Restaurante' ? '#000' : 'var(--text-secondary)',
-                                    fontWeight: 'bold',
-                                    transition: 'all'
-                                }}
-                            >
-                                REST.
-                            </button>
-                            <button
-                                onClick={() => setSelectedDepartment('Quesera')}
-                                style={{
-                                    padding: '0.2rem 0.6rem',
-                                    fontSize: '0.65rem',
-                                    border: 'none',
-                                    borderRadius: '3px',
-                                    cursor: 'pointer',
-                                    background: selectedDepartment === 'Quesera' ? '#f1c40f' : 'transparent',
-                                    color: selectedDepartment === 'Quesera' ? '#000' : 'var(--text-secondary)',
-                                    fontWeight: 'bold',
-                                    transition: 'all'
-                                }}
-                            >
-                                QUES.
-                            </button>
-                        </div>
-                    )}
+                    {/* Department Selector removed (now automatic) */}
 
 
 
