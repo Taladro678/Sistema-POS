@@ -583,7 +583,7 @@ export const SettingsPage = () => {
                                 por <span style={{ color: 'var(--accent-blue)', fontWeight: 'bold' }}>Luvin Rafael Bustillos Diaz</span>
                             </p>
                             <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-                                Versión 2.1.3 • Enero 2026
+                                Versión {serverInfo?.version || '2.1.10'} • Enero 2026
                             </p>
                         </div>
 

@@ -6,7 +6,7 @@
 // Node.js Mobile Initializer
 // This script runs on the frontend (WebView) and starts the Node.js background process.
 
-alert('⚠️ RECOVERY: nodejs-init.js...'); // DEBUG - CONFIRM LOAD
+console.log('[Node.js Init] RECOVERY: nodejs-init.js loaded');
 
 // Force verbose logging
 

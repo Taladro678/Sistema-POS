@@ -7,7 +7,7 @@ import { useDialog } from '../context/DialogContext';
 import ProductCard from '../components/ProductCard';
 import CartSidebar from '../components/CartSidebar';
 import Modal from '../components/Modal';
-import { ShoppingBag, X, Search, ChevronDown, Clock, FileText, DollarSign, Calendar, Coffee, UserPlus, User, Trash2, AlertTriangle, Plus } from 'lucide-react';
+import { ShoppingBag, X, Search, ChevronDown, Clock, FileText, DollarSign, Calendar, Coffee, UserPlus, User, Trash2, AlertTriangle, Plus, Sparkles } from 'lucide-react';
 
 import ClientSearchModal from '../components/ClientSearchModal';
 // import { Nodejs } from '@ahovakimyan/capacitor-nodejs';
