@@ -99,6 +99,7 @@ export const POSPage = () => {
 
     // Split Payment State
     const [payments, setPayments] = useState([]);
+    const [showTipInput, setShowTipInput] = useState(false);
     const [currentPaymentAmount, setCurrentPaymentAmount] = useState('');
     const [currentPaymentMethod, setCurrentPaymentMethod] = useState('');
     const [paymentNote, setPaymentNote] = useState('');
@@ -1035,104 +1036,86 @@ export const POSPage = () => {
                     </div>
                 }
             >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {/* Totals & Remaining Compact Grid */}
-                    <div className="no-scrollbar" style={{
-                        display: 'flex',
-                        gap: '0.5rem',
-                        overflowX: 'auto',
-                        paddingBottom: '0.25rem',
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {/* Totals & Remaining Compact Header */}
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(3, 1fr)',
+                        gap: '0.4rem',
                         flexShrink: 0
                     }}>
-                        <div className="glass-panel" style={{ padding: '0.5rem', textAlign: 'center', minWidth: '100px', flex: 1 }}>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.65rem', margin: 0 }}>Total $</p>
-                            <p style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--accent-green)', margin: 0 }}>${total.toFixed(2)}</p>
+                        <div className="glass-panel p-2 text-center" style={{ background: 'rgba(0,0,0,0.2)' }}>
+                            <p className="text-[9px] uppercase text-white/40 m-0">Total $</p>
+                            <p className="text-sm font-bold text-green-400 m-0">${total.toFixed(2)}</p>
                         </div>
-                        <div className="glass-panel" style={{ padding: '0.5rem', textAlign: 'center', minWidth: '100px', flex: 1 }}>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.65rem', margin: 0 }}>Total Bs</p>
-                            <p style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--accent-blue)', margin: 0 }}>{(total * data.exchangeRate).toFixed(2)}</p>
+                        <div className="glass-panel p-2 text-center" style={{ background: 'rgba(0,0,0,0.2)' }}>
+                            <p className="text-[9px] uppercase text-white/40 m-0">Total Bs</p>
+                            <p className="text-sm font-bold text-blue-400 m-0">{(total * data.exchangeRate).toFixed(2)}</p>
                         </div>
-                        <div className="glass-panel" style={{ padding: '0.5rem', textAlign: 'center', background: 'rgba(255, 165, 0, 0.15)', minWidth: '100px', flex: 1 }}>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.65rem', margin: 0 }}>Falta</p>
-                            <p style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--accent-orange)', margin: 0 }}>
+                        <div className="glass-panel p-2 text-center" style={{ background: 'rgba(255, 165, 0, 0.1)', border: '1px solid rgba(255, 165, 0, 0.2)' }}>
+                            <p className="text-[9px] uppercase text-white/40 m-0">Falta</p>
+                            <p className="text-sm font-bold text-orange-400 m-0">
                                 ${Math.max(0, (total - discountAmount) - payments.reduce((sum, p) => p.currency === 'USD' ? sum + p.amount : sum + (p.amount / p.rate), 0)).toFixed(2)}
                             </p>
-                            <p style={{ fontSize: '0.7rem', color: 'var(--accent-orange)', margin: 0, opacity: 0.8 }}>
-                                Bs {(Math.max(0, (total - discountAmount) - payments.reduce((sum, p) => p.currency === 'USD' ? sum + p.amount : sum + (p.amount / p.rate), 0)) * data.exchangeRate).toFixed(2)}
-                            </p>
                         </div>
                     </div>
 
-                    {/* Discount Section */}
-                    <div className="glass-panel p-4">
-                        <div className="flex justify-between items-center mb-3">
-                            <div className="flex items-center gap-2">
-                                <label className="text-sm font-medium text-[var(--vscode-text-secondary)]">Descuento</label>
-                                {discountType === 'percent' && (
-                                    <button
-                                        className="px-2 py-0.5 text-[10px] border border-blue-500/30 bg-blue-500/10 text-blue-400 rounded hover:bg-blue-500/20 transition-all"
-                                        onClick={async () => {
-                                            if (data.defaultForeignCurrencyDiscountPercent) {
-                                                setDiscountValue(data.defaultForeignCurrencyDiscountPercent.toString());
-                                            } else {
-                                                await alert({ title: 'Configuración', message: 'No hay porcentaje configurado en Ajustes.' });
-                                            }
-                                        }}
-                                        title="Aplicar Promo Divisa Configurada"
-                                    >
-                                        Promo Divisa
-                                    </button>
-                                )}
+                    {/* Discount & Note - More Compact Row */}
+                    <div className="grid grid-cols-2 gap-2">
+                        <div className="glass-panel p-2">
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="text-[10px] uppercase text-white/40">Dcto</label>
+                                <div className="flex bg-black/40 rounded p-0.5 border border-white/5">
+                                    <button onClick={() => setDiscountType('amount')} className={`px-2 rounded text-[10px] ${discountType === 'amount' ? 'bg-blue-600' : ''}`}>$</button>
+                                    <button onClick={() => setDiscountType('percent')} className={`px-2 rounded text-[10px] ${discountType === 'percent' ? 'bg-blue-600' : ''}`}>%</button>
+                                </div>
                             </div>
-                            <div className="flex bg-black/40 rounded-lg p-1 border border-white/10">
-                                <button
-                                    onClick={() => setDiscountType('amount')}
-                                    className={`px-3 py-1 rounded-md text-xs transition-all ${discountType === 'amount' ? 'bg-blue-600 text-white shadow-lg' : 'text-white/50 hover:text-white'}`}
-                                >$</button>
-                                <button
-                                    onClick={() => setDiscountType('percent')}
-                                    className={`px-3 py-1 rounded-md text-xs transition-all ${discountType === 'percent' ? 'bg-blue-600 text-white shadow-lg' : 'text-white/50 hover:text-white'}`}
-                                >%</button>
-                            </div>
+                            <input
+                                type="number"
+                                className="vscode-input w-full text-sm font-bold h-8"
+                                placeholder="0"
+                                value={discountValue}
+                                onChange={(e) => setDiscountValue(e.target.value)}
+                            />
                         </div>
-                        <input
-                            type="number"
-                            className="vscode-input w-full text-lg font-bold"
-                            placeholder={discountType === 'percent' ? "0%" : "$0.00"}
-                            value={discountValue}
-                            onChange={(e) => setDiscountValue(e.target.value)}
-                        />
-                    </div>
-
-                    {/* Order Note */}
-                    <div className="glass-panel p-4">
-                        <label className="block text-sm font-medium text-[var(--vscode-text-secondary)] mb-2">Nota del Pedido</label>
-                        <textarea
-                            className="vscode-input w-full h-20 resize-none text-sm"
-                            placeholder="Añadir nota especial..."
-                            value={orderNote}
-                            onChange={(e) => setOrderNote(e.target.value)}
-                        />
+                        <div className="glass-panel p-2">
+                            <label className="block text-[10px] uppercase text-white/40 mb-1">Nota Pedido</label>
+                            <textarea
+                                className="vscode-input w-full h-8 min-h-[32px] text-xs resize-none"
+                                placeholder="..."
+                                value={orderNote}
+                                onChange={(e) => setOrderNote(e.target.value)}
+                            />
+                        </div>
                     </div>
 
                     {/* Add Payment Section */}
-                    <div className="glass-panel p-4 border-blue-500/20 bg-blue-500/5">
-                        <label className="block text-sm font-medium text-blue-400 mb-3">Agregar Pago</label>
+                    <div className="glass-panel p-3 border-blue-500/20 bg-blue-500/5">
+                        <label className="block text-xs font-semibold text-blue-400 mb-2">Agregar Pago</label>
                         <div className="grid grid-cols-12 gap-2">
-                            <div className="col-span-4">
+                            <div className="col-span-12 flex gap-1">
                                 <input
                                     type="number"
-                                    className="vscode-input w-full h-10 text-base"
+                                    className="vscode-input w-24 h-9 text-sm font-bold"
                                     placeholder="Monto"
                                     value={currentPaymentAmount}
                                     onChange={(e) => setCurrentPaymentAmount(e.target.value)}
                                 />
+                                <div className="no-scrollbar flex gap-1 overflow-x-auto p-1 bg-black/20 rounded flex-1">
+                                    {[5, 10, 20, 50, 100].map(val => (
+                                        <button
+                                            key={val}
+                                            onClick={() => setPaymentNote(prev => prev ? `${prev}, $${val}` : `$${val}`)}
+                                            className="px-2 py-1 text-[10px] bg-white/5 border border-white/10 rounded"
+                                        >${val}</button>
+                                    ))}
+                                </div>
                             </div>
                             <div className="col-span-12">
                                 <input
                                     type="text"
-                                    className="vscode-input w-full h-10 text-xs"
-                                    placeholder="Nota/Billetes (Ej: 2x$10, 1x$5)"
+                                    className="vscode-input w-full h-8 text-[10px]"
+                                    placeholder="Nota/Billetes"
                                     value={paymentNote}
                                     onChange={(e) => setPaymentNote(e.target.value)}
                                 />
@@ -1141,7 +1124,7 @@ export const POSPage = () => {
                                 <select
                                     value={currentPaymentMethod}
                                     onChange={(e) => setCurrentPaymentMethod(e.target.value)}
-                                    className="vscode-select w-full h-10 text-sm"
+                                    className="vscode-select w-full h-9 text-xs"
                                 >
                                     <option value="">Método...</option>
                                     {paymentMethods.map(m => (
@@ -1151,7 +1134,7 @@ export const POSPage = () => {
                             </div>
                             <div className="col-span-2">
                                 <button
-                                    className="primary-button w-full h-10 flex items-center justify-center p-0"
+                                    className="primary-button w-full h-9 flex items-center justify-center p-0"
                                     onClick={() => {
                                         if (!currentPaymentAmount || !currentPaymentMethod) return;
                                         const amount = parseFloat(currentPaymentAmount);
@@ -1174,18 +1157,18 @@ export const POSPage = () => {
                                         setPaymentNote('');
                                     }}
                                 >
-                                    <Plus size={20} />
+                                    <Plus size={18} />
                                 </button>
                             </div>
 
                             {currentPaymentMethod === 'Crédito (Fiado)' && (
-                                <div className="col-span-12 mt-2">
+                                <div className="col-span-12">
                                     <select
                                         value={selectedCustomerId}
                                         onChange={(e) => setSelectedCustomerId(e.target.value)}
-                                        className="vscode-select w-full border-red-500/50"
+                                        className="vscode-select w-full h-8 text-xs border-red-500/50"
                                     >
-                                        <option value="">Seleccionar Cliente para Crédito...</option>
+                                        <option value="">Cliente para Crédito...</option>
                                         {data.customers.map(c => (
                                             <option key={c.id} value={c.id}>{c.name}</option>
                                         ))}
@@ -1197,56 +1180,65 @@ export const POSPage = () => {
 
                     {/* Payments List */}
                     {payments.length > 0 && (
-                        <div className="flex flex-col gap-2 max-h-[150px] overflow-y-auto pr-1">
+                        <div className="flex flex-col gap-1 max-h-[100px] overflow-y-auto pr-1">
                             {payments.map(p => (
-                                <div key={p.id} className="flex justify-between items-center p-3 rounded-lg bg-white/5 border border-white/10 group hover:bg-white/10 transition-all">
+                                <div key={p.id} className="flex justify-between items-center p-2 rounded bg-white/5 border border-white/5 group">
                                     <div className="flex flex-col">
-                                        <span className="text-xs text-[var(--vscode-text-secondary)]">{p.method}</span>
-                                        <span className="text-sm font-bold text-white">
+                                        <span className="text-[10px] text-white/50">{p.method}</span>
+                                        <span className="text-xs font-bold text-white">
                                             {p.currency === 'USD' ? `$${p.amount.toFixed(2)}` : `Bs ${p.amount.toFixed(2)}`}
                                         </span>
                                     </div>
                                     <button
                                         onClick={() => setPayments(payments.filter(pay => pay.id !== p.id))}
-                                        className="p-2 rounded-full hover:bg-red-500/20 text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                                        className="p-1 rounded-full hover:bg-red-500/20 text-red-400"
                                     >
-                                        <X size={16} />
+                                        <X size={14} />
                                     </button>
                                 </div>
                             ))}
                         </div>
                     )}
 
-                    {/* Footer: Tip & Confirm */}
-                    <div className="mt-2 pt-4 border-t border-white/10 flex flex-col gap-4">
-                        <div className="flex justify-between items-center flex-wrap gap-y-3">
-                            <div className="flex items-center gap-2">
-                                <label className="text-xs font-medium text-[var(--vscode-text-secondary)]">Propina:</label>
-                                <div className="relative">
-                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-white/40 text-xs">$</span>
-                                    <input
-                                        type="number"
-                                        className="vscode-input w-20 pl-5 h-8 text-xs font-bold"
-                                        placeholder="0.00"
-                                        value={tipAmount}
-                                        onChange={(e) => setTipAmount(e.target.value)}
-                                    />
-                                </div>
+                    {/* Footer: Totals & Tip Toggle & Confirm */}
+                    <div className="mt-1 pt-2 border-t border-white/10 space-y-2">
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={() => setShowTipInput(!showTipInput)}
+                                    className={`px-2 py-1 rounded text-[10px] font-bold transition-all flex items-center gap-1 ${showTipInput ? 'bg-blue-600 text-white' : 'bg-white/5 text-blue-400 border border-blue-500/20'}`}
+                                >
+                                    <Sparkles size={10} />
+                                    {showTipInput ? 'Propina' : '+ Propina'}
+                                </button>
+                                {showTipInput && (
+                                    <div className="relative">
+                                        <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-white/40 text-[10px]">$</span>
+                                        <input
+                                            type="number"
+                                            autoFocus
+                                            className="vscode-input w-14 pl-4 h-7 text-[10px] font-bold"
+                                            placeholder="0.00"
+                                            value={tipAmount}
+                                            onChange={(e) => setTipAmount(e.target.value)}
+                                        />
+                                    </div>
+                                )}
                             </div>
-                            <div className="text-right flex-shrink-0">
-                                <div className="text-[10px] uppercase tracking-wider text-[var(--vscode-text-secondary)] mb-0">Total</div>
-                                <div className="text-lg md:text-xl font-bold text-white leading-none">${total.toFixed(2)}</div>
+                            <div className="text-right">
+                                <span className="text-[8px] uppercase text-white/40 block">Total Final</span>
+                                <span className="text-lg font-bold text-white">${total.toFixed(2)}</span>
                             </div>
                         </div>
 
                         <button
-                            className="primary-button w-full py-3 text-base md:text-lg font-bold shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] transition-all"
+                            className="primary-button w-full py-2.5 text-base font-bold shadow-[0_0_10px_rgba(59,130,246,0.3)]"
                             onClick={async () => {
                                 const totalPaid = payments.reduce((sum, p) => p.currency === 'USD' ? sum + p.amount : sum + (p.amount / p.rate), 0);
-                                if (totalPaid < total - 0.01) {
+                                if (totalPaid < (total - discountAmount) - 0.01) {
                                     await alert({
                                         title: 'Monto Incompleto',
-                                        message: `Falta por pagar: $${(total - totalPaid).toFixed(2)}`
+                                        message: `Falta por pagar: $${((total - discountAmount) - totalPaid).toFixed(2)}`
                                     });
                                     return;
                                 }
@@ -1355,7 +1347,7 @@ export const POSPage = () => {
                         CONFIRMAR Y ENVIAR A COCINA
                     </button>
                 </div>
-            </Modal>
+            </Modal >
 
             {/* Held Orders Modal */}
             <Modal
@@ -1479,10 +1471,10 @@ export const POSPage = () => {
                         )
                     )}
                 </div>
-            </Modal>
+            </Modal >
 
             {/* Sales Report Modal */}
-            <Modal
+            < Modal
                 isOpen={isSalesModalOpen}
                 onClose={() => setIsSalesModalOpen(false)}
                 title="Reporte de Ventas"
@@ -1545,7 +1537,7 @@ export const POSPage = () => {
                         </div>
                     </div>
                 </div>
-            </Modal>
+            </Modal >
 
             {/* Overlay for mobile */}
             {
