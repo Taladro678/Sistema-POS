@@ -9,10 +9,21 @@ import { fileURLToPath } from 'url';
 import { checkForUpdates } from './updater.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const VERSION = '2.1.9'; // Versión base del APK
+const VERSION = '2.1.10'; // Versión base del APK
 
 // Solo activar auto-update si se detecta entorno Android (o se fuerza por config)
 const isAndroid = process.env.NODE_PLATFORM === 'android';
+
+// --- ESTABILIDAD DEL PROCESO ---
+process.on('uncaughtException', (err) => {
+    console.error('🔥 CRITICAL UNCAUGHT EXCEPTION:', err);
+    // No salimos del proceso para evitar que la app POS se quede sin servidor
+    // A menos que sea un error fatal de memoria u otro irrecuperable
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('⚠️ UNHANDLED REJECTION at:', promise, 'reason:', reason);
+});
 
 const app = express();
 app.use(cors());
@@ -242,7 +253,7 @@ app.post('/api/sync', (req, res) => {
 
 // Initial Update Check
 if (isAndroid) {
-    // Check for updates 5 seconds after startup to allow stabilization
+    // Check for updates 30 seconds after startup to allow stabilization
     setTimeout(() => {
         checkForUpdates(VERSION).then(result => {
             if (result.updated) {
@@ -253,17 +264,12 @@ if (isAndroid) {
                 setTimeout(() => {
                     console.log('♻️ FORZANDO REINICIO INMEDIATO...');
                     process.exit(0);
-                }, 500);
-
-                // Fallback: throw error to crash if exit doesn't work
-                setTimeout(() => {
-                    throw new Error('RESTART_REQUIRED');
                 }, 1000);
             }
         }).catch(err => {
             console.error('❌ Error durante auto-update:', err);
         });
-    }, 5000);
+    }, 30000); // Subido a 30s para evitar reinicios durante carga crítica
 }
 
 // Handle React Routing (return index.html for all non-API routes)

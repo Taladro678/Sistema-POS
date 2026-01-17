@@ -202,8 +202,9 @@ export const DataProvider = ({ children }) => {
     useEffect(() => {
         if (isLocalServerConnected) {
             const timeoutId = setTimeout(() => {
+                console.log('📤 Throttled Full Sync (15s)...');
                 localSyncService.sendFullStateUpdate(data);
-            }, 2000);
+            }, 15000);
             return () => clearTimeout(timeoutId);
         }
     }, [data, isLocalServerConnected]);
