@@ -22,24 +22,24 @@ export const generateUniqueId = () => {
 export const DataProvider = ({ children }) => {
     const { alert } = useDialog();
 
-    // One-time cleanup for v2.1.5 to remove polluted data (IDs and Categories)
+    // One-time cleanup for v2.1.7 - ATOMIC RESET
     useEffect(() => {
-        const CLEANUP_KEY = 'v2.1.5_data_cleanup_final_real';
+        const CLEANUP_KEY = 'v2.1.7_atomic_reset';
         if (!localStorage.getItem(CLEANUP_KEY)) {
-            console.warn('🧹 Perforing one-time data cleanup for v2.1.5...');
+            console.warn('💣 CRITICAL: Performing atomic reset for v2.1.7...');
 
-            // Critical keys to keep
             const serverUrl = localStorage.getItem('server_url');
             const user = localStorage.getItem('currentUser');
-            const exchangeRate = localStorage.getItem('exchangeRate');
 
             localStorage.clear();
 
             if (serverUrl) localStorage.setItem('server_url', serverUrl);
             if (user) localStorage.setItem('currentUser', user);
-            if (exchangeRate) localStorage.setItem('exchangeRate', exchangeRate);
 
             localStorage.setItem(CLEANUP_KEY, 'true');
+            // We set a flag to ignore local timestamp on next sync
+            localStorage.setItem('force_server_sync', 'true');
+
             window.location.reload();
         }
     }, []);
@@ -154,9 +154,12 @@ export const DataProvider = ({ children }) => {
             if (type === 'sync_update') {
                 const serverTime = new Date(payload.lastModified || 0).getTime();
                 const localTime = new Date(data.lastModified || 0).getTime();
+                const forceServer = localStorage.getItem('force_server_sync') === 'true';
 
-                if (serverTime > localTime) {
+                if (serverTime > localTime || forceServer) {
+                    console.log('📥 Accepting server data (Force/Newer)');
                     setData(prev => ({ ...prev, ...payload }));
+                    if (forceServer) localStorage.removeItem('force_server_sync');
                 } else if (localTime > serverTime) {
                     // Si lo local es mas nuevo, forzar al servidor a actualizarse
                     localSyncService.sendFullStateUpdate(data);
