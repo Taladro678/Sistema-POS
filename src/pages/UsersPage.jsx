@@ -161,7 +161,6 @@ export const UsersPage = () => {
             <div className="glass-panel" style={{ padding: isMobile ? '0.6rem' : '1rem', background: 'rgba(255,255,255,0.05)' }}>
                 <p style={{ fontSize: isMobile ? '0.75rem' : '0.875rem' }} className="text-gray-300">
                     Aquí se administran los credenciales de acceso al sistema.
-                    Para gestionar sueldos y datos personales, ve a la sección de <b>Personal</b>.
                 </p>
             </div>
 

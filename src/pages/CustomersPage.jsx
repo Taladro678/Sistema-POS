@@ -108,17 +108,17 @@ export const CustomersPage = () => {
     };
 
     return (
-        <div className="p-6 h-full overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <UserCircle size={32} />
+        <div className="p-4 md:p-6 h-full overflow-y-auto">
+            <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+                <h1 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+                    <UserCircle size={isMobile ? 24 : 32} />
                     Clientes
                 </h1>
-                <button onClick={handleNew} className="glass-button primary flex items-center gap-2">
-                    <Plus size={18} />
-                    Nuevo Cliente
-                </button>
-                <div style={{ marginLeft: '1rem' }}>
+                <div className="flex gap-2 flex-wrap">
+                    <button onClick={handleNew} className="glass-button primary flex items-center gap-2 text-xs md:text-sm">
+                        <Plus size={16} />
+                        Nuevo
+                    </button>
                     <ExcelImporter onDataLoaded={handleImport} buttonText="Importar Excel" />
                 </div>
             </div>

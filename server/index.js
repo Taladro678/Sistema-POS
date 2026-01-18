@@ -8,7 +8,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { checkForUpdates } from './updater.js';
 
-const VERSION = '2.2.5'; // Corrección Header Mobile
+const VERSION = '2.2.6'; // Refinamiento UI Mobile
 
 // Solo activar auto-update si se detecta entorno Android (o se fuerza por config)
 const isAndroid = process.env.NODE_PLATFORM === 'android';

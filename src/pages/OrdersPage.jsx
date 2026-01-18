@@ -169,34 +169,35 @@ export const OrdersPage = () => {
                     </div>
                 </div>
 
-                {/* Status Legend - Optimized for Mobile */}
-                <div style={{
-                    display: 'flex',
-                    gap: '0.75rem',
-                    justifyContent: isMobile ? 'center' : 'flex-end',
-                    padding: '0.5rem',
-                    background: 'rgba(255,255,255,0.03)',
-                    borderRadius: '12px',
-                    border: '1px solid rgba(255,255,255,0.05)'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem' }}>
-                        <div style={{ w: 8, h: 8, width: 8, height: 8, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 5px #22c55e' }}></div>
-                        <span style={{ opacity: 0.8 }}>Libre</span>
+                {/* Status Legend - Hidden on Mobile */}
+                {!isMobile && (
+                    <div style={{
+                        display: 'flex',
+                        gap: '0.75rem',
+                        justifyContent: 'flex-end',
+                        padding: '0.5rem',
+                        background: 'rgba(255,255,255,0.03)',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(255,255,255,0.05)'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem' }}>
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 5px #22c55e' }}></div>
+                            <span style={{ opacity: 0.8 }}>Libre</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem' }}>
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 5px #ef4444' }}></div>
+                            <span style={{ opacity: 0.8 }}>Ocupada</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem' }}>
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b', boxShadow: '0 0 5px #f59e0b' }}></div>
+                            <span style={{ opacity: 0.8 }}>Reservada</span>
+                        </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem' }}>
-                        <div style={{ w: 8, h: 8, width: 8, height: 8, borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 5px #ef4444' }}></div>
-                        <span style={{ opacity: 0.8 }}>Ocupada</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem' }}>
-                        <div style={{ w: 8, h: 8, width: 8, height: 8, borderRadius: '50%', background: '#f59e0b', boxShadow: '0 0 5px #f59e0b' }}></div>
-                        <span style={{ opacity: 0.8 }}>Reservada</span>
-                    </div>
-                </div>
+                )}
             </div>
 
             {/* View Mode Toggle & Area Filters Integrated */}
-            <div className="no-scrollbar" style={{
-                display: 'flex',
+            <div className={`no-scrollbar ${isMobile ? 'grid grid-cols-2' : 'flex'}`} style={{
                 gap: '0.5rem',
                 overflowX: 'auto',
                 paddingBottom: '0.5rem',
@@ -207,26 +208,27 @@ export const OrdersPage = () => {
                 <button
                     onClick={() => setViewMode('tables')}
                     className={`glass-button ${viewMode === 'tables' ? 'primary' : ''}`}
-                    style={{ padding: '0.4rem 1rem', fontSize: '0.85rem', whiteSpace: 'nowrap', borderRadius: '10px' }}
+                    style={{ padding: '0.4rem 0.6rem', fontSize: '0.75rem', whiteSpace: 'nowrap', borderRadius: '10px' }}
                 >
                     Mesas
                 </button>
                 <button
                     onClick={() => setViewMode('orders')}
                     className={`glass-button ${viewMode === 'orders' ? 'primary' : ''}`}
-                    style={{ padding: '0.4rem 1rem', fontSize: '0.85rem', whiteSpace: 'nowrap', borderRadius: '10px' }}
+                    style={{ padding: '0.4rem 0.6rem', fontSize: '0.75rem', whiteSpace: 'nowrap', borderRadius: '10px' }}
                 >
-                    Todos los Pedidos ({(data.heldOrders || []).filter(o => !o.isProduction || o.status === 'ready').length})
+                    Pedidos ({(data.heldOrders || []).filter(o => !o.isProduction || o.status === 'ready').length})
                 </button>
 
                 <button
                     onClick={() => setViewMode('active_carts')}
                     className={`glass-button ${viewMode === 'active_carts' ? 'primary' : ''}`}
                     style={{
-                        padding: '0.4rem 1rem',
-                        fontSize: '0.85rem',
+                        padding: '0.4rem 0.6rem',
+                        fontSize: '0.75rem',
                         whiteSpace: 'nowrap',
                         borderRadius: '10px',
+                        gridColumn: isMobile ? 'span 2' : 'auto',
                         border: viewMode === 'active_carts' ? '1px solid var(--accent-orange)' : '1px solid rgba(255,165,0,0.3)',
                         color: viewMode === 'active_carts' ? 'white' : 'var(--accent-orange)'
                     }}
@@ -235,16 +237,16 @@ export const OrdersPage = () => {
                 </button>
 
                 {viewMode === 'tables' && (
-                    <>
-                        <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', margin: '0 0.5rem' }}></div>
+                    <div className={`no-scrollbar ${isMobile ? 'col-span-2 flex' : 'flex'}`} style={{ gap: '0.5rem', overflowX: 'auto' }}>
+                        {!isMobile && <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', margin: '0 0.5rem' }}></div>}
                         {['Todas', ...areas].map(area => (
                             <button
                                 key={area}
                                 onClick={() => setSelectedArea(area)}
                                 className={`glass-button ${selectedArea === area ? 'active' : ''}`}
                                 style={{
-                                    padding: '0.4rem 1rem',
-                                    fontSize: '0.85rem',
+                                    padding: '0.4rem 0.8rem',
+                                    fontSize: '0.75rem',
                                     whiteSpace: 'nowrap',
                                     borderRadius: '10px',
                                     border: selectedArea === area ? '1px solid var(--accent-blue)' : '1px solid transparent',
@@ -254,7 +256,7 @@ export const OrdersPage = () => {
                                 {area}
                             </button>
                         ))}
-                    </>
+                    </div>
                 )}
             </div>
 

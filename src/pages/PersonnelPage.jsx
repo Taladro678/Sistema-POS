@@ -221,33 +221,33 @@ export const PersonnelPage = () => {
     };
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', height: '100%' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h1 style={{ fontSize: '2rem' }}>Personal</h1>
-                <div style={{ display: 'flex', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: isMobile ? '1rem' : '1.5rem', height: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                <h1 style={{ fontSize: isMobile ? '1.25rem' : '2rem', margin: 0 }}>Personal</h1>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                     <button
                         className="glass-button"
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
                         onClick={() => setShowImportModal(true)}
                     >
-                        <Upload size={20} />
-                        Importar Nómina
+                        <Upload size={16} />
+                        Importar
                     </button>
                     <button
                         className="glass-button accent"
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
                         onClick={() => setIsTipsModalOpen(true)}
                     >
-                        <Gift size={20} />
-                        Gestión de Propinas
+                        <Gift size={16} />
+                        Propinas
                     </button>
                     <button
                         className="glass-button primary"
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
                         onClick={() => setIsModalOpen(true)}
                     >
-                        <UserPlus size={20} />
-                        Nuevo Empleado
+                        <UserPlus size={16} />
+                        Nuevo
                     </button>
                 </div>
             </div>
