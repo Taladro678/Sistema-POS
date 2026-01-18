@@ -40,9 +40,12 @@ export const checkForUpdates = async (currentVersion = '0.0.0', io) => {
         const downloadUrl = response.data.zipball_url;
         const currentVersionClean = currentVersion.replace(/^v/, '');
 
-        console.log(`🔍 Versión actual: ${currentVersionClean} | Versión GitHub: ${latestVersion}`);
+        console.log(`🔍 [OTA DEBUG] Local: "${currentVersionClean}" | GitHub: "${latestVersion}"`);
 
-        if (isNewerVersion(latestVersion, currentVersionClean)) {
+        const isNewer = isNewerVersion(latestVersion, currentVersionClean);
+        console.log(`🔍 [OTA DEBUG] ¿GitHub es más nuevo?: ${isNewer}`);
+
+        if (isNewer) {
             console.log(`✨ Nueva versión encontrada: ${latestVersion}. Descargando...`);
             if (io) io.emit('ota_status', { status: 'found', version: latestVersion });
 

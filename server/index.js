@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 import { checkForUpdates } from './updater.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const VERSION = '2.2.1'; // Incrementar para evitar downgrade OTA
+const VERSION = '2.2.2'; // Salto forzado para diagnostico
 
 // Solo activar auto-update si se detecta entorno Android (o se fuerza por config)
 const isAndroid = process.env.NODE_PLATFORM === 'android';
@@ -253,23 +253,21 @@ app.post('/api/sync', (req, res) => {
 
 // Initial Update Check
 if (isAndroid) {
-    // Check for updates 30 seconds after startup to allow stabilization
+    console.log(`🤖 Android detectado. VERSION local: ${VERSION}. Iniciando guardia OTA...`);
+    // Check for updates 60 seconds after startup to allow full stability
     setTimeout(() => {
         checkForUpdates(VERSION).then(result => {
+            console.log('📡 Resultado de auto-update:', JSON.stringify(result));
             if (result.updated) {
-                console.log('🔄 Actualización aplicada. Reiniciando Servidor...');
-                console.log(`📦 Nueva versión: ${result.newVersion}`);
-
-                // Multiple aggressive restart attempts
-                setTimeout(() => {
-                    console.log('♻️ FORZANDO REINICIO INMEDIATO...');
-                    process.exit(0);
-                }, 1000);
+                console.log('🔄 Actualización aplicada con éxito. Reiniciando servidor en 2s...');
+                setTimeout(() => process.exit(0), 2000);
+            } else {
+                console.log('✅ No se requiere actualización OTA.');
             }
         }).catch(err => {
-            console.error('❌ Error durante auto-update:', err);
+            console.error('❌ Error fatal en flujo de auto-update:', err);
         });
-    }, 30000); // Subido a 30s para evitar reinicios durante carga crítica
+    }, 60000); // Subido a 60s
 }
 
 // Handle React Routing (return index.html for all non-API routes)
