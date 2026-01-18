@@ -319,49 +319,49 @@ export const POSPage = () => {
     return (
         <div className="pos-container" style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0a0a0a', color: 'white', overflow: 'hidden' }}>
             {/* Header */}
-            <header style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
-                    <div style={{ position: 'relative', flex: isSearchExpanded ? 1 : 'none' }}>
+            <header style={{ padding: isMobile ? '0.4rem 0.5rem' : '0.5rem 1rem', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: isMobile ? '0.5rem' : '1rem', flexShrink: 0, width: '100%', overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: 0 }}>
+                    <div style={{ position: 'relative', flex: isSearchExpanded ? 1 : 'initial', flexShrink: 0 }}>
                         {isSearchExpanded ? (
-                            <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '20px', display: 'flex', alignItems: 'center', padding: '0 10px', border: '1px solid var(--accent-blue)' }}>
-                                <Search size={16} />
+                            <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '20px', display: 'flex', alignItems: 'center', padding: '0 8px', border: '1px solid var(--accent-blue)', minWidth: isMobile ? '120px' : '200px' }}>
+                                <Search size={14} />
                                 <input
                                     autoFocus
                                     className="glass-input"
-                                    style={{ border: 'none', background: 'transparent', width: '100%', padding: '8px' }}
-                                    placeholder="Buscar producto..."
+                                    style={{ border: 'none', background: 'transparent', width: '100%', padding: '6px', fontSize: '0.8rem' }}
+                                    placeholder="Buscar..."
                                     value={searchQuery}
                                     onChange={e => setSearchQuery(e.target.value)}
                                     onBlur={() => !searchQuery && setIsSearchExpanded(false)}
                                 />
-                                <X size={16} onClick={() => { setIsSearchExpanded(false); setSearchQuery(''); }} style={{ cursor: 'pointer' }} />
+                                <X size={14} onClick={() => { setIsSearchExpanded(false); setSearchQuery(''); }} style={{ cursor: 'pointer' }} />
                             </div>
                         ) : (
-                            <button className="glass-button" onClick={() => setIsSearchExpanded(true)} style={{ borderRadius: '50%', width: '40px', height: '40px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Search size={20} />
+                            <button className="glass-button" onClick={() => setIsSearchExpanded(true)} style={{ borderRadius: '50%', width: '36px', height: '36px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <Search size={18} />
                             </button>
                         )}
                     </div>
                     {!isSearchExpanded && (
-                        <div className="no-scrollbar" style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', padding: '5px 0' }}>
-                            <button className={`glass-button ${selectedCategory === 'all' ? 'primary' : ''}`} onClick={() => setSelectedCategory('all')} style={{ whiteSpace: 'nowrap', borderRadius: '20px', padding: '5px 15px' }}>Todos</button>
+                        <div className={`no-scrollbar ${isMobile ? 'grid grid-rows-2 grid-flow-col' : 'flex'}`} style={{ gap: '0.3rem', overflowX: 'auto', padding: '2px 0', flex: 1, minWidth: 0 }}>
+                            <button className={`glass-button ${selectedCategory === 'all' ? 'primary' : ''}`} onClick={() => setSelectedCategory('all')} style={{ whiteSpace: 'nowrap', borderRadius: '20px', padding: '3px 10px', fontSize: '0.8rem' }}>Todos</button>
                             {displayCategories.map(cat => (
-                                <button key={cat.id} className={`glass-button ${selectedCategory === cat.id ? 'primary' : ''}`} onClick={() => setSelectedCategory(cat.id)} style={{ whiteSpace: 'nowrap', borderRadius: '20px', padding: '5px 15px' }}>{cat.label}</button>
+                                <button key={cat.id} className={`glass-button ${selectedCategory === cat.id ? 'primary' : ''}`} onClick={() => setSelectedCategory(cat.id)} style={{ whiteSpace: 'nowrap', borderRadius: '20px', padding: '3px 10px', fontSize: '0.8rem' }}>{cat.label}</button>
                             ))}
                         </div>
                     )}
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button className="glass-button" onClick={() => setIsHeldOrdersModalOpen(true)} style={{ position: 'relative' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+                    <button className="glass-button" onClick={() => setIsHeldOrdersModalOpen(true)} style={{ position: 'relative', padding: isMobile ? '8px' : '0.5rem 1rem' }}>
                         <Clock size={20} />
                         {heldOrders.length > 0 && <span style={{ position: 'absolute', top: -5, right: -5, background: 'var(--accent-orange)', borderRadius: '50%', width: '18px', height: '18px', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{heldOrders.length}</span>}
                     </button>
-                    <button className="glass-button" onClick={() => setIsSalesModalOpen(true)}><FileText size={20} /></button>
+                    <button className="glass-button" onClick={() => setIsSalesModalOpen(true)} style={{ padding: isMobile ? '8px' : '0.5rem 1rem' }}><FileText size={20} /></button>
                     {isMobile && (
-                        <button className="primary-button" onClick={() => setIsCartOpen(true)} style={{ gap: '5px' }}>
+                        <button className="primary-button" onClick={() => setIsCartOpen(true)} style={{ gap: '5px', padding: '8px 12px' }}>
                             <ShoppingBag size={18} />
-                            <span>{formatPrice(total)}</span>
+                            <span className="font-bold">{formatPrice(total)}</span>
                         </button>
                     )}
                 </div>
@@ -689,12 +689,14 @@ export const POSPage = () => {
                 fullscreen={isMobile}
             >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%' }}>
-                    <div className="glass-panel p-4 bg-green-500/10 border-green-500/30 text-center">
-                        <span className="text-xs text-green-400 font-bold">VENTAS TOTALES (HOY)</span>
-                        <h2 className="text-3xl font-black text-green-500">${(data.sales || []).reduce((sum, s) => sum + s.total, 0).toFixed(2)}</h2>
-                    </div>
+                    {currentUser?.role !== 'cashier' && (
+                        <div className="glass-panel p-4 bg-green-500/10 border-green-500/30 text-center">
+                            <span className="text-xs text-green-400 font-bold">VENTAS TOTALES (HOY)</span>
+                            <h2 className="text-3xl font-black text-green-500">${(data.sales || []).reduce((sum, s) => sum + s.total, 0).toFixed(2)}</h2>
+                        </div>
+                    )}
                     <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        {(data.sales || []).slice().reverse().map(sale => (
+                        {(data.sales || []).slice().reverse().slice(0, currentUser?.role === 'cashier' ? 4 : undefined).map(sale => (
                             <div key={sale.id} className="glass-panel p-3 text-xs bg-white/5 flex justify-between items-center">
                                 <div>
                                     <span className="font-bold block">{new Date(sale.date).toLocaleTimeString()} - {sale.cashier}</span>

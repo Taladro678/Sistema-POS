@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 import { checkForUpdates } from './updater.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const VERSION = '2.2.2'; // Versión estabilizada
+const VERSION = '2.2.5'; // Corrección Header Mobile
 
 // Solo activar auto-update si se detecta entorno Android (o se fuerza por config)
 const isAndroid = process.env.NODE_PLATFORM === 'android';
@@ -80,16 +80,31 @@ let appState = {
     lastModified: new Date().toISOString()
 };
 
-const DB_FILE = path.join(__dirname, 'server_db.json');
+const DATA_DIR = isAndroid ? path.join(__dirname, '../../../data') : path.join(__dirname, '../data');
+if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+const DB_FILE = path.join(DATA_DIR, 'server_db.json');
+const OLD_DB_FILE = path.join(__dirname, 'server_db.json');
+
+// Migration Logic: If old DB exists and new one doesn't, move it.
+if (fs.existsSync(OLD_DB_FILE) && !fs.existsSync(DB_FILE)) {
+    try {
+        fs.copyFileSync(OLD_DB_FILE, DB_FILE);
+        console.log('🚚 Base de datos migrada a ubicación persistente');
+    } catch (e) {
+        console.error('⚠️ Error migrando base de datos:', e);
+    }
+}
 
 // Load State from File
 if (fs.existsSync(DB_FILE)) {
     try {
         const data = fs.readFileSync(DB_FILE, 'utf8');
         const loadedState = JSON.parse(data);
-        // Merge loaded state with default structure to ensure all fields exist
         appState = { ...appState, ...loadedState };
-        console.log('📂 Estado restaurado desde server_db.json');
+        console.log(`📂 Estado restaurado desde ${DB_FILE}`);
     } catch (e) {
         console.error('⚠️ Error cargando base de datos local:', e);
     }
