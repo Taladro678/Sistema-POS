@@ -6,11 +6,15 @@
 // Node.js Mobile Initializer
 // This script runs on the frontend (WebView) and starts the Node.js background process.
 
-console.log('[Node.js Init] RECOVERY: nodejs-init.js loaded');
+console.log('[Node.js Init] nodejs-init.js loaded');
 
 // Force verbose logging
 
 (function () {
+    function onServerReady() {
+        console.log('[Node.js Init] onServerReady callback triggered');
+    }
+
     console.log('[Node.js Init] Script loaded');
 
     function startNodeJS() {

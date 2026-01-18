@@ -183,6 +183,14 @@ body {
   min-height: 100vh;
   color: var(--vscode-text);
   background-color: var(--vscode-bg);
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: border-box;
 }
 
 h1,
@@ -424,6 +432,54 @@ textarea {
   overflow-y: auto;
 }
 
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.sticky {
+  position: sticky;
+}
+
+.top-0 {
+  top: 0;
+}
+
+.bottom-0 {
+  bottom: 0;
+}
+
+.tracking-wider {
+  letter-spacing: 0.05em;
+}
+
+.tracking-widest {
+  letter-spacing: 0.1em;
+}
+
+.grayscale {
+  filter: grayscale(1);
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.min-w-60 {
+  min-width: 60px;
+}
+
+.min-w-80 {
+  min-width: 80px;
+}
+
+.flex-grow {
+  flex-grow: 1;
+}
+
+.flex-shrink-0 {
+  flex-shrink: 0;
+}
+
 /* Backgrounds & Effects */
 .bg-black\/80 {
   background-color: rgba(0, 0, 0, 0.8);
@@ -602,6 +658,7 @@ textarea {
   color: var(--vscode-text);
   display: flex;
   flex-direction: column;
+  max-width: 100%;
 }
 
 .glass-panel.transparent {
@@ -811,20 +868,21 @@ textarea {
   scrollbar-width: none;
   /* Firefox */
 }
+
 /* Fix for 6.6" Screens (approx 800-850px height) */
 @media (max-height: 850px) {
   .modal-content {
     max-height: 85vh !important;
     overflow-y: auto !important;
   }
-  
+
   .pos-cart-sidebar {
     height: 60vh !important;
   }
-  
+
   /* Compact buttons for small screens */
   button {
-      padding-top: 0.5rem !important;
-      padding-bottom: 0.5rem !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
   }
 }

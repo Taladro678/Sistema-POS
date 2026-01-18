@@ -1,12 +1,12 @@
-const cordova = require('cordova-bridge');
+// const cordova = require('cordova-bridge');
 
 /**
  * NATIVE BRIDGE ENTRY POINT
  * This file runs in the background of the APK.
  */
-cordova.channel.on('message', (msg) => {
-    console.log('Mensaje desde la interfaz nativa:', msg);
-});
+// cordova.channel.on('message', (msg) => {
+//     console.log('Mensaje desde la interfaz nativa:', msg);
+// });
 
 console.log('🚀 Iniciando Servidor POS Interno...');
 
@@ -17,11 +17,12 @@ console.log('🚀 Iniciando Servidor POS Interno...');
         process.env.NODE_PLATFORM = 'android';
 
         // Dynamic import for ESM compatibility
-        await import('./server/index.js');
+        await import('./server/index.mjs');
 
-        cordova.channel.send('Servidor iniciado correctamente desde APK');
+        // cordova.channel.send('Servidor iniciado correctamente desde APK');
+        console.log('✅ Servidor iniciado correctamente (sin bridge)');
     } catch (e) {
         console.error('❌ Error fatal iniciando servidor interno:', e);
-        cordova.channel.send('Error iniciando servidor: ' + e.message);
+        // cordova.channel.send('Error iniciando servidor: ' + e.message);
     }
 })();

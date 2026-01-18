@@ -11,6 +11,17 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  * UPDATER MODULE (Resumable)
  * Responsible for downloading the latest code from GitHub and extracting it.
  */
+
+const isNewerVersion = (latest, current) => {
+    const l = latest.split('.').map(Number);
+    const c = current.split('.').map(Number);
+    for (let i = 0; i < 3; i++) {
+        if (l[i] > (c[i] || 0)) return true;
+        if (l[i] < (c[i] || 0)) return false;
+    }
+    return false;
+};
+
 export const checkForUpdates = async (currentVersion = '0.0.0', io) => {
     const REPO = 'Taladro678/Sistema-POS';
     const GITHUB_API = `https://api.github.com/repos/${REPO}/releases/latest`;
@@ -31,7 +42,7 @@ export const checkForUpdates = async (currentVersion = '0.0.0', io) => {
 
         console.log(`🔍 Versión actual: ${currentVersionClean} | Versión GitHub: ${latestVersion}`);
 
-        if (latestVersion !== currentVersionClean) {
+        if (isNewerVersion(latestVersion, currentVersionClean)) {
             console.log(`✨ Nueva versión encontrada: ${latestVersion}. Descargando...`);
             if (io) io.emit('ota_status', { status: 'found', version: latestVersion });
 
