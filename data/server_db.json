@@ -3828,215 +3828,6 @@
   ],
   "categories": [
     {
-      "id": "burgers",
-      "label": "Hamburguesas",
-      "department": "Restaurante",
-      "keywords": [
-        "hamburguesa",
-        "burger",
-        "carne",
-        "doble",
-        "triple",
-        "bacon",
-        "queso",
-        "bbq",
-        "angus",
-        "wagyu",
-        "cheeseburger"
-      ]
-    },
-    {
-      "id": "cheeses",
-      "label": "Quesos",
-      "department": "Quesera",
-      "keywords": [
-        "queso",
-        "cheese",
-        "cheddar",
-        "mozzarella",
-        "parmesano",
-        "gouda",
-        "mano",
-        "telita",
-        "guayanes",
-        "fundido",
-        "gratinado"
-      ]
-    },
-    {
-      "id": "drinks",
-      "label": "Bebidas",
-      "department": "Restaurante",
-      "keywords": [
-        "bebida",
-        "refresco",
-        "jugo",
-        "agua",
-        "energizante",
-        "cola",
-        "pepsi",
-        "fanta",
-        "sprite",
-        "malta",
-        "te",
-        "cafe",
-        "limonada",
-        "naranja",
-        "manzana",
-        "batido",
-        "smoothie",
-        "soda",
-        "polar",
-        "tercio",
-        "cerveza",
-        "licor"
-      ]
-    },
-    {
-      "id": "sides",
-      "label": "Contornos",
-      "department": "Restaurante",
-      "keywords": [
-        "contorno",
-        "papas",
-        "fritas",
-        "yuca",
-        "aros",
-        "cebolla",
-        "pure",
-        "arroz",
-        "platano",
-        "tostones",
-        "tajadas",
-        "arepas"
-      ]
-    },
-    {
-      "id": "soups",
-      "label": "Sopas",
-      "department": "Restaurante",
-      "keywords": [
-        "sopa",
-        "caldo",
-        "consomé",
-        "crema",
-        "sancocho",
-        "mondongo",
-        "hervido",
-        "fosforera",
-        "pollo",
-        "res",
-        "gallina",
-        "pescado",
-        "mariscos",
-        "asopado"
-      ]
-    },
-    {
-      "id": "pasta",
-      "label": "Pasta",
-      "department": "Restaurante",
-      "keywords": [
-        "pasta",
-        "espagueti",
-        "spaghetti",
-        "fettuccine",
-        "lasagna",
-        "ravioli",
-        "macarrones",
-        "penne",
-        "tallarines",
-        "carbonara",
-        "bolognesa",
-        "alfredo"
-      ]
-    },
-    {
-      "id": "comida",
-      "label": "Comida",
-      "department": "Restaurante",
-      "keywords": [
-        "pollo",
-        "carne",
-        "pescado",
-        "cerdo",
-        "cochino",
-        "chuleta",
-        "asado",
-        "guisado",
-        "frito",
-        "parrilla",
-        "plancha",
-        "brasa",
-        "filete",
-        "lomo",
-        "costilla",
-        "pechuga",
-        "bollo",
-        "bollito",
-        "cachapa",
-        "calamares"
-      ]
-    },
-    {
-      "id": "desserts",
-      "label": "Postres",
-      "department": "Restaurante",
-      "keywords": [
-        "postre",
-        "dulce",
-        "helado",
-        "torta",
-        "pastel",
-        "cake",
-        "flan",
-        "gelatina",
-        "brownie",
-        "pie",
-        "mousse",
-        "quesillo",
-        "tres leches",
-        "marquesa",
-        "tiramisu",
-        "alfajores",
-        "miel"
-      ]
-    },
-    {
-      "id": "salads",
-      "label": "Ensaladas",
-      "department": "Restaurante",
-      "keywords": [
-        "ensalada",
-        "verde",
-        "cesar",
-        "mixta",
-        "lechuga",
-        "tomate",
-        "vegetales",
-        "verduras",
-        "fresca"
-      ]
-    },
-    {
-      "id": "snacks",
-      "label": "Snacks",
-      "department": "Restaurante",
-      "keywords": [
-        "snack",
-        "aperitivo",
-        "tequeño",
-        "empanada",
-        "pastelito",
-        "arepa",
-        "deditos",
-        "nuggets",
-        "alitas",
-        "wings",
-        "nachos"
-      ]
-    },
-    {
       "id": "groceries",
       "label": "Víveres/Bodega",
       "department": "Venta",
@@ -4074,6 +3865,205 @@
         "toalla",
         "detergente",
         "limpieza"
+      ]
+    },
+    {
+      "id": "burgers",
+      "label": "Hamburguesas",
+      "keywords": [
+        "hamburguesa",
+        "burger",
+        "carne",
+        "doble",
+        "triple",
+        "bacon",
+        "queso",
+        "bbq",
+        "angus",
+        "wagyu",
+        "cheeseburger"
+      ]
+    },
+    {
+      "id": "cheeses",
+      "label": "Quesos",
+      "keywords": [
+        "queso",
+        "cheese",
+        "cheddar",
+        "mozzarella",
+        "parmesano",
+        "gouda",
+        "mano",
+        "telita",
+        "guayanes",
+        "fundido",
+        "gratinado"
+      ]
+    },
+    {
+      "id": "drinks",
+      "label": "Bebidas",
+      "keywords": [
+        "bebida",
+        "refresco",
+        "jugo",
+        "agua",
+        "energizante",
+        "cola",
+        "pepsi",
+        "fanta",
+        "sprite",
+        "malta",
+        "te",
+        "cafe",
+        "limonada",
+        "naranja",
+        "manzana",
+        "batido",
+        "smoothie",
+        "soda",
+        "polar",
+        "tercio",
+        "cerveza",
+        "licor"
+      ]
+    },
+    {
+      "id": "sides",
+      "label": "Contornos",
+      "keywords": [
+        "contorno",
+        "papas",
+        "fritas",
+        "yuca",
+        "aros",
+        "cebolla",
+        "pure",
+        "arroz",
+        "platano",
+        "tostones",
+        "tajadas",
+        "arepas"
+      ]
+    },
+    {
+      "id": "soups",
+      "label": "Sopas",
+      "keywords": [
+        "sopa",
+        "caldo",
+        "consomé",
+        "crema",
+        "sancocho",
+        "mondongo",
+        "hervido",
+        "fosforera",
+        "pollo",
+        "res",
+        "gallina",
+        "pescado",
+        "mariscos",
+        "asopado"
+      ]
+    },
+    {
+      "id": "pasta",
+      "label": "Pasta",
+      "keywords": [
+        "pasta",
+        "espagueti",
+        "spaghetti",
+        "fettuccine",
+        "lasagna",
+        "ravioli",
+        "macarrones",
+        "penne",
+        "tallarines",
+        "carbonara",
+        "bolognesa",
+        "alfredo"
+      ]
+    },
+    {
+      "id": "comida",
+      "label": "Comida",
+      "keywords": [
+        "pollo",
+        "carne",
+        "pescado",
+        "cerdo",
+        "cochino",
+        "chuleta",
+        "asado",
+        "guisado",
+        "frito",
+        "parrilla",
+        "plancha",
+        "brasa",
+        "filete",
+        "lomo",
+        "costilla",
+        "pechuga",
+        "bollo",
+        "bollito",
+        "cachapa",
+        "calamares"
+      ]
+    },
+    {
+      "id": "desserts",
+      "label": "Postres",
+      "keywords": [
+        "postre",
+        "dulce",
+        "helado",
+        "torta",
+        "pastel",
+        "cake",
+        "flan",
+        "gelatina",
+        "brownie",
+        "pie",
+        "mousse",
+        "quesillo",
+        "tres leches",
+        "marquesa",
+        "tiramisu",
+        "alfajores",
+        "miel"
+      ]
+    },
+    {
+      "id": "salads",
+      "label": "Ensaladas",
+      "keywords": [
+        "ensalada",
+        "verde",
+        "cesar",
+        "mixta",
+        "lechuga",
+        "tomate",
+        "vegetales",
+        "verduras",
+        "fresca"
+      ]
+    },
+    {
+      "id": "snacks",
+      "label": "Snacks",
+      "keywords": [
+        "snack",
+        "aperitivo",
+        "tequeño",
+        "empanada",
+        "pastelito",
+        "arepa",
+        "deditos",
+        "nuggets",
+        "alitas",
+        "wings",
+        "nachos"
       ]
     }
   ],
@@ -4148,57 +4138,17 @@
   "tips": 0,
   "tipHistory": [],
   "tipDistributions": [],
-  "exchangeRate": 347.2631,
+  "exchangeRate": 60,
   "rateHistory": [
     {
-      "id": 1768961968509,
-      "rate": 347.2631,
-      "date": "2026-01-21T02:19:28.509Z"
-    },
-    {
-      "id": 1768959285891,
-      "rate": 347.26,
-      "date": "2026-01-21T01:34:45.891Z"
-    },
-    {
-      "id": 1768959279352,
-      "rate": 347.26,
-      "date": "2026-01-21T01:34:39.352Z"
-    },
-    {
-      "id": 1768959271216,
-      "rate": 347.26,
-      "date": "2026-01-21T01:34:31.216Z"
-    },
-    {
-      "id": 1768958727310,
-      "rate": 344.51,
-      "date": "2026-01-21T01:25:27.310Z"
-    },
-    {
-      "id": 1768958726638,
-      "rate": 344.51,
-      "date": "2026-01-21T01:25:26.638Z"
-    },
-    {
-      "id": 1768958726527,
-      "rate": 344.51,
-      "date": "2026-01-21T01:25:26.527Z"
-    },
-    {
-      "id": 1768958724714,
-      "rate": 347.26,
-      "date": "2026-01-21T01:25:24Z"
+      "id": 1768964797284,
+      "rate": 60,
+      "date": "2026-01-21T03:06:37.284Z"
     }
   ],
-  "cashRegister": {
-    "isOpen": false,
-    "status": "closed",
-    "openingBalanceBs": 0,
-    "openingBalanceUsd": 0
-  },
+  "cashRegister": {},
   "defaultForeignCurrencyDiscountPercent": 0,
-  "lastModified": "2026-01-21T02:42:33.865Z",
+  "lastModified": "2026-01-21T03:06:57.660Z",
   "cancelledKitchenOrders": [],
   "cancelledBarOrders": [],
   "pendingPayment": [],

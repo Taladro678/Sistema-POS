@@ -638,7 +638,7 @@ app.get('/api/bcv-rate', async (req, res) => {
         // Bypassing SSL for BCV (Certificados venezolanos a veces vencidos)
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-        const response = await fetch('http://www.bcv.org.ve/', {
+        const response = await fetch('https://www.bcv.org.ve/', {
             signal: controller.signal,
             headers: {
                 'User-Agent': 'Mozilla/5.0' // Ocultarnos un poco

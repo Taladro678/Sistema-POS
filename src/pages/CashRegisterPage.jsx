@@ -521,7 +521,7 @@ export const CashRegisterPage = () => {
                     >
                         <div className="flex flex-col items-start">
                             <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Tasa Actual</span>
-                            <span className="text-sm font-bold text-green-400 group-hover:text-green-300 transition-colors">{exchangeRate} Bs/$</span>
+                            <span className="text-sm font-bold text-green-400 group-hover:text-green-300 transition-colors">{exchangeRate} Bs</span>
                         </div>
                         <Edit2 size={12} className="text-gray-500 group-hover:text-white transition-colors ml-auto" />
                     </button>

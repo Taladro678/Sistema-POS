@@ -529,7 +529,7 @@ export const POSPage = () => {
                                 </span>
                             )}
 
-                            <span className="text-[9px] text-orange-400/60 font-bold uppercase">Bs/$</span>
+                            <span className="text-[9px] text-orange-400/60 font-bold uppercase">Bs</span>
                         </div>
                     </div>
                 }
