@@ -26,6 +26,39 @@ const removeAccents = (str) => {
 };
 
 /**
+ * Category exclusion rules - products containing these words should NOT go in specific categories
+ */
+const EXCLUSION_RULES = {
+    'soups': ['dental', 'crema dental', 'pasta dental', 'colgate', 'cepillo', 'aseo', 'limpieza', 'jabon', 'alfajores', 'miel', 'flores', 'calamares', 'viveres', 'polar', 'cerveza', 'licor', 'postres'],
+    'pasta': ['dental', 'crema dental', 'pasta dental', 'cepillo'],
+    'desserts': ['dental', 'crema dental', 'sopa', 'caldo', 'pollo', 'carne'],
+    'drinks': ['crema', 'sopa', 'caldo', 'pollo', 'carne', 'galleta', 'desodorante', 'jabon', 'shampoo', 'perfume', 'limpieza', 'aseo', 'pasta', 'viveres'],
+    'cheeses': ['bollo', 'bollito', 'casabe', 'arepa', 'empanada', 'cachapa', 'tequeño', 'pastelito']
+};
+
+/**
+ * Keywords that should ONLY match as full words, never as substrings
+ * This prevents 'cola' from matching 'chocolate', or 'te' matching 'pastel'
+ */
+const STRICT_KEYWORDS = ['cola', 'soda', 'te', 'cafe', 'ice', 'res', 'pan', 'ron', 'gin', 'pez', 'sal'];
+
+/**
+ * Check if product should be excluded from a category
+ */
+const shouldExclude = (productName, categoryId) => {
+    const normalizedName = normalize(productName);
+    const exclusions = EXCLUSION_RULES[categoryId] || [];
+
+    return exclusions.some(exclusion => {
+        const normalizedExclusion = normalize(exclusion);
+        // Strict word check for exclusions to avoid false negatives? 
+        // No, usually exclusions are specific enough. 
+        // But "miel" exclude from soups -> "miel" is safe.
+        return normalizedName.includes(normalizedExclusion);
+    });
+};
+
+/**
  * Normalize string for comparison: lowercase, remove accents, remove non-alphanumeric (except spaces)
  */
 const normalize = (str) => {
@@ -63,22 +96,39 @@ const calculateScore = (productName, keywords) => {
         const isWordMatch = nameWords.includes(normalizedKeyword);
         const startsWithKeyword = normalizedName.startsWith(normalizedKeyword + ' ');
 
-        if (isExactMatch || isWordMatch || startsWithKeyword) {
-            let points = 10; // Base points
+        // Check if this keyword must be handled strictly
+        const isStrict = STRICT_KEYWORDS.includes(normalizedKeyword);
+
+        // Only allow partial substring match if:
+        // 1. Keyword is NOT strict (like 'cola' shouldn't match 'chocolate')
+        // 2. Keyword is long enough (>= 5 chars) to avoid noise
+        const containsKeyword = !isStrict && normalizedKeyword.length >= 5 && normalizedName.includes(normalizedKeyword);
+
+        if (isExactMatch || isWordMatch || startsWithKeyword || containsKeyword) {
+            let points = 5; // Base points for any match
+
+            if (isStrict && !isExactMatch && !isWordMatch && !startsWithKeyword) {
+                // If it's a strict keyword but just a substring (like 'cola' in 'chocolate'), skip it
+                return;
+            }
 
             if (isExactMatch) {
                 points += 60; // Huge bonus for exact identity
             } else if (isWordMatch) {
-                points += 25; // Bonus for containing the exact word
+                points += 30; // Bonus for containing the exact word
+            } else if (startsWithKeyword) {
+                points += 20; // Starts with keyword
+            } else if (containsKeyword) {
+                points += 5; // Lower bonus for partial match
             }
 
             // Bonus for match location
             if (normalizedName.indexOf(normalizedKeyword) === 0) {
-                points += 20; // Starts with keyword
+                points += 15; // Starts with keyword
             }
 
             // Slight penalty for later keywords in category definition
-            const keywordPenalty = Math.min(index * 0.5, 5);
+            const keywordPenalty = Math.min(index * 0.3, 3);
             points -= keywordPenalty;
 
             score += points;
@@ -103,6 +153,11 @@ export const suggestCategory = (productName, categories) => {
     let bestScore = 0;
 
     categories.forEach(category => {
+        // Skip if product should be excluded from this category
+        if (shouldExclude(productName, category.id)) {
+            return;
+        }
+
         const score = calculateScore(productName, category.keywords || []);
 
         if (score > bestScore) {
@@ -111,14 +166,14 @@ export const suggestCategory = (productName, categories) => {
         }
     });
 
-    // If no match found at all
-    if (bestScore <= 0) return null;
+    // If no match found at all (lowered threshold from 0 to accept any positive score)
+    if (bestScore < 5) return null; // Only reject if score is very low
 
-    // confidence level thresholds
+    // confidence level thresholds (adjusted to be more permissive)
     let confidence = 'low';
-    if (bestScore >= 40) {
+    if (bestScore >= 30) {
         confidence = 'high';
-    } else if (bestScore >= 10) { // Even a base match is medium if we return it
+    } else if (bestScore >= 10) {
         confidence = 'medium';
     }
 

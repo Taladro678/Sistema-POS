@@ -14,6 +14,7 @@ import {
     Banknote, CreditCard, Wallet, Coins
 } from 'lucide-react';
 
+import CashDenominationModal from '../components/CashDenominationModal';
 import ClientSearchModal from '../components/ClientSearchModal';
 
 export const POSPage = () => {
@@ -28,6 +29,10 @@ export const POSPage = () => {
         addItem,
         updateItem,
         sendOrderToProduction,
+        updateExchangeRate,
+        refreshBcvRate,
+        loadingBcv,
+        formatAmount,
         sendLiveCartUpdate
     } = useData();
     const { currentUser } = useAuth();
@@ -56,6 +61,7 @@ export const POSPage = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
     const [showAllCategories, setShowAllCategories] = useState(false);
+    const [pendingCurrency, setPendingCurrency] = useState('USD');
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
@@ -69,14 +75,19 @@ export const POSPage = () => {
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
     const [tipAmount, setTipAmount] = useState('');
+    const [tipType, setTipType] = useState('USD');
     const [payments, setPayments] = useState([]);
     const [currentPaymentAmount, setCurrentPaymentAmount] = useState('');
+    const [isEditingRate, setIsEditingRate] = useState(false);
+    const [tempRate, setTempRate] = useState('');
     const [currentPaymentMethod, setCurrentPaymentMethod] = useState('');
     const [selectedCustomerId, setSelectedCustomerId] = useState('');
+    const [isCashModalOpen, setIsCashModalOpen] = useState(false);
+    const [pendingPaymentData, setPendingPaymentData] = useState(null);
 
     // Discount & Notes
     const [discountValue, setDiscountValue] = useState('');
-    const [discountType, setDiscountType] = useState('amount');
+    const [discountType, setDiscountType] = useState('USD');
     const [orderNote, setOrderNote] = useState('');
 
     // Active Cart Broadcast
@@ -244,6 +255,19 @@ export const POSPage = () => {
         if (tableId) navigate('/tables');
     };
 
+    const handleRefreshBcv = async () => {
+        if (loadingBcv) return;
+        await refreshBcvRate(true);
+    };
+
+    const handleSaveManualRate = () => {
+        const val = parseFloat(tempRate);
+        if (val > 0) {
+            updateExchangeRate(val);
+            setIsEditingRate(false);
+        }
+    };
+
     const handleFinalizePayment = async () => {
         if (payments.length === 0) {
             await alert({ title: 'Error', message: 'Debe agregar al menos un pago.' });
@@ -307,6 +331,40 @@ export const POSPage = () => {
         return res;
     }, [data.products, selectedCategory, searchQuery]);
 
+    const handleSetQuantity = async (product) => {
+        const currentQty = cart.find(item => item.id === product.id)?.quantity || 0;
+        const result = await prompt({
+            title: 'Ingresar Cantidad',
+            message: `Cantidad para "${product.name}":`,
+            defaultValue: currentQty > 0 ? currentQty.toString() : '1',
+            type: 'number'
+        });
+
+        if (result !== null) {
+            const qty = parseInt(result);
+            if (!isNaN(qty)) {
+                setCart(prevCart => {
+                    const existingItemIndex = prevCart.findIndex(item => item.id === product.id);
+                    const newCart = [...prevCart];
+                    if (qty <= 0) {
+                        if (existingItemIndex >= 0) {
+                            newCart.splice(existingItemIndex, 1);
+                            return newCart;
+                        }
+                        return prevCart;
+                    }
+
+                    if (existingItemIndex >= 0) {
+                        newCart[existingItemIndex] = { ...newCart[existingItemIndex], quantity: qty };
+                        return newCart;
+                    } else {
+                        return [...prevCart, { ...product, quantity: qty }];
+                    }
+                });
+            }
+        }
+    };
+
     const handleRecallOrder = (order) => {
         setCart(order.items);
         setOriginalOrder(order);
@@ -369,15 +427,25 @@ export const POSPage = () => {
 
             {/* Main Area */}
             <main style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-                <div style={{ flex: 1, padding: '1rem', overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem', alignContent: 'start' }}>
-                    {filteredProducts.map(p => (
-                        <ProductCard
-                            key={p.id}
-                            product={{ ...p, quantity: cart.find(c => c.id === p.id)?.quantity || 0 }}
-                            onAdd={addToCart}
-                            priceDisplay={formatPrice(p.price)}
-                        />
-                    ))}
+                <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }} className="no-scrollbar">
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? '130px' : '160px'}, 1fr))`,
+                        gap: '1rem',
+                        gridAutoRows: 'min-content',
+                        alignContent: 'start'
+                    }}>
+                        {filteredProducts.map(p => (
+                            <ProductCard
+                                key={p.id}
+                                product={{ ...p, quantity: cart.find(c => c.id === p.id)?.quantity || 0 }}
+                                onAdd={addToCart}
+                                onRemove={removeFromCart}
+                                onLongPress={handleSetQuantity}
+                                priceDisplay={formatPrice(p.price)}
+                            />
+                        ))}
+                    </div>
                 </div>
 
                 {!isMobile && (
@@ -412,224 +480,367 @@ export const POSPage = () => {
                 </div>
             )}
 
-            {/* Payment Modal (Ultra-Responsive Redesign) */}
+            {/* Payment Modal (Ultra-Premium Redesign - Ph2) */}
             <Modal
                 isOpen={isPaymentModalOpen}
                 onClose={() => setIsPaymentModalOpen(false)}
-                title="Procesar Pago"
+                title={
+                    <div className="flex items-center justify-between w-full pr-4">
+                        <span className="text-lg font-black tracking-tight">Procesar Pago</span>
+                        <div
+                            className={`flex items-center gap-2 px-3 py-1 rounded-full border transition-all duration-300 ${loadingBcv
+                                ? 'bg-orange-500/20 border-orange-500/50 animate-pulse'
+                                : 'bg-orange-500/10 border-orange-500/20 hover:border-orange-500/40'
+                                } shadow-sm cursor-pointer`}
+                        >
+                            <span
+                                className="text-[9px] text-orange-400 font-extrabold uppercase tracking-widest hover:text-orange-300 transition-colors"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRefreshBcv();
+                                }}
+                                title="Actualizar desde BCV"
+                            >
+                                {loadingBcv ? 'Cargando...' : 'Tasa'}
+                            </span>
+
+                            {isEditingRate ? (
+                                <input
+                                    autoFocus
+                                    className="bg-transparent text-lg font-black text-white font-mono w-24 outline-none border-b border-orange-500/50 text-center"
+                                    value={tempRate}
+                                    onChange={(e) => setTempRate(e.target.value)}
+                                    onBlur={handleSaveManualRate}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleSaveManualRate();
+                                        if (e.key === 'Escape') setIsEditingRate(false);
+                                    }}
+                                />
+                            ) : (
+                                <span
+                                    className="text-lg font-black text-white font-mono hover:scale-105 transition-transform"
+                                    onClick={() => {
+                                        setTempRate(data.exchangeRate.toString());
+                                        setIsEditingRate(true);
+                                    }}
+                                    title="Clic para editar manual"
+                                >
+                                    {formatAmount(data.exchangeRate, 'Bs', 2)}
+                                </span>
+                            )}
+
+                            <span className="text-[9px] text-orange-400/60 font-bold uppercase">Bs/$</span>
+                        </div>
+                    </div>
+                }
                 fullscreen={isMobile}
+                footer={
+                    <button
+                        className={`primary-button w-full py-4 text-xl font-black flex items-center justify-center gap-3 shadow-xl ${payments.length === 0 ? 'opacity-50 grayscale' : 'shadow-orange-600/20'}`}
+                        style={{ borderRadius: '12px' }}
+                        disabled={payments.length === 0}
+                        onClick={handleFinalizePayment}
+                    >
+                        <ShoppingBag size={24} />
+                        FINALIZAR VENTA
+                    </button>
+                }
             >
-                <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '1rem' }} className="animate-fade-in">
-                    {/* Main Content Area - Grid on Desktop */}
-                    <div className="flex flex-col md:flex-row gap-4 min-h-0 flex-1">
+                <div className="animate-fade-in text-white h-full flex flex-col no-scrollbar">
+                    <div className="flex-1 flex flex-col gap-4">
+                        {/* 1. TOP BANNER: SALDO PENDIENTE */}
+                        <div
+                            className="glass-panel p-5 text-center border-orange-500/40 bg-orange-500/10 relative overflow-hidden cursor-pointer active:scale-95 transition-transform"
+                            style={{ borderRadius: '18px' }}
+                            onClick={() => setPendingCurrency(c => c === 'USD' ? 'BS' : 'USD')}
+                        >
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 -mr-12 -mt-12 rounded-full"></div>
+                            <span className="text-[10px] text-orange-400 font-black uppercase tracking-[0.2em] block mb-2">SALDO PENDIENTE ({pendingCurrency})</span>
+                            {(() => {
+                                const discVal = parseFloat(discountValue) || 0;
+                                const tipVal = parseFloat(tipAmount) || 0;
+                                const rate = data.exchangeRate || 1;
 
-                        {/* LEFT COLUMN: Input and Form */}
-                        <div className="flex-1 flex flex-col gap-4">
-                            {/* Mobile-Friendly Totals Summary */}
-                            <div className="grid grid-cols-2 gap-2">
-                                <div className="glass-panel p-3 text-center border-blue-500/20" style={{ background: 'rgba(59, 130, 246, 0.05)' }}>
-                                    <span className="text-[10px] text-blue-400 font-bold uppercase tracking-wider block mb-1">Total USD</span>
-                                    <span className="text-2xl font-black text-white">${total.toFixed(2)}</span>
-                                </div>
-                                <div className="glass-panel p-3 text-center border-green-500/20" style={{ background: 'rgba(34, 197, 94, 0.05)' }}>
-                                    <span className="text-[10px] text-green-400 font-bold uppercase tracking-wider block mb-1">Total BS</span>
-                                    <span className="text-2xl font-black text-white">{(total * data.exchangeRate).toFixed(2)}</span>
-                                </div>
-                            </div>
+                                let finalDiscount = 0;
+                                if (discountType === 'percent') finalDiscount = total * (discVal / 100);
+                                else if (discountType === 'USD') finalDiscount = discVal;
+                                else if (discountType === 'BS') finalDiscount = discVal / rate;
 
-                            {/* Payment Entry Form */}
-                            <div className="glass-panel p-4 border-blue-500/30 bg-blue-500/5 relative overflow-hidden" style={{ borderRadius: '16px' }}>
-                                <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
-                                <label className="text-xs font-bold text-blue-400 mb-3 block flex items-center gap-2">
-                                    <div className="bg-blue-500/20 p-1 rounded-full"><Plus size={14} /></div>
-                                    REGISTRAR PAGO
-                                </label>
+                                let finalTip = 0;
+                                if (tipType === 'percent') finalTip = total * (tipVal / 100);
+                                else if (tipType === 'USD') finalTip = tipVal;
+                                else if (tipType === 'BS') finalTip = tipVal / rate;
 
-                                <div className="flex flex-col gap-4">
-                                    <div className="flex flex-col sm:flex-row gap-2">
-                                        <div className="relative flex-1">
-                                            <input
-                                                type="number"
-                                                className="glass-input w-full text-3xl font-black p-4 text-center"
-                                                style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px' }}
-                                                value={currentPaymentAmount}
-                                                onChange={e => setCurrentPaymentAmount(e.target.value)}
-                                                placeholder="0.00"
-                                                autoFocus
-                                            />
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-xl">$</div>
+                                const totalNeto = total - finalDiscount + finalTip;
+                                const yaPagado = payments.reduce((sum, p) => sum + (p.currency === 'USD' ? p.amount : p.amount / p.rate), 0);
+                                const pendingUSD = Math.max(0, totalNeto - yaPagado);
+
+                                return (
+                                    <>
+                                        <h2 className="text-5xl font-black text-white flex items-center justify-center gap-2">
+                                            {pendingCurrency === 'USD' ? (
+                                                <><span className="text-2xl text-orange-500/60">$</span>{pendingUSD.toFixed(2)}</>
+                                            ) : (
+                                                <><span className="text-2xl text-orange-500/60 font-mono">Bs</span>{formatAmount(pendingUSD * rate, 'Bs', 2)}</>
+                                            )}
+                                        </h2>
+
+                                        <div className="flex flex-col items-center gap-1 mt-4 pt-3 border-t border-white/5">
+                                            <div className="text-xs flex items-center gap-2">
+                                                <span className="text-orange-400 font-bold uppercase tracking-widest">Base:</span>
+                                                <span className="text-white font-bold">${total.toFixed(2)} / Bs {formatAmount(total * rate, 'Bs', 2)}</span>
+                                            </div>
+                                            {finalDiscount > 0 && (
+                                                <div className="text-xs flex items-center gap-2">
+                                                    <span className="text-red-400 font-bold uppercase tracking-widest">Descuento:</span>
+                                                    <span className="text-white font-bold">-${finalDiscount.toFixed(2)} / -Bs {formatAmount(finalDiscount * rate, 'Bs', 2)}</span>
+                                                </div>
+                                            )}
+                                            {finalTip > 0 && (
+                                                <div className="text-xs flex items-center gap-2">
+                                                    <span className="text-green-400 font-bold uppercase tracking-widest">Propina:</span>
+                                                    <span className="text-white font-bold">${finalTip.toFixed(2)} / Bs {formatAmount(finalTip * rate, 'Bs', 2)}</span>
+                                                </div>
+                                            )}
+                                            <div className="text-xs flex items-center gap-2">
+                                                <span className="text-orange-400 font-bold uppercase tracking-widest">Total Neto:</span>
+                                                <span className="text-white font-black">${totalNeto.toFixed(2)} / Bs {formatAmount(totalNeto * rate, 'Bs', 2)}</span>
+                                            </div>
                                         </div>
-                                        <select
-                                            className="glass-input h-auto px-4 text-base font-bold sm:w-44"
-                                            style={{ borderRadius: '12px' }}
-                                            value={currentPaymentMethod}
-                                            onChange={e => setCurrentPaymentMethod(e.target.value)}
-                                        >
-                                            <option value="">Método...</option>
-                                            {paymentMethods.map(m => (
-                                                <option key={m.id} value={m.label}>{m.label}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    {/* Quick Amount Buttons - Fixed Overflow */}
-                                    <div className="flex flex-wrap gap-2 justify-center">
-                                        {[1, 5, 10, 20, 50, 100].map(v => (
-                                            <button
-                                                key={v}
-                                                className="glass-button flex-1 text-sm font-bold py-2 border-white/5 bg-white/5 active:scale-95 transition-transform"
-                                                style={{ minWidth: '60px' }}
-                                                onClick={() => setCurrentPaymentAmount(v.toString())}
-                                            >
-                                                +${v}
-                                            </button>
-                                        ))}
-                                        <button
-                                            className="glass-button text-sm font-bold py-2 border-green-500/40 text-green-400 bg-green-500/5 hover:bg-green-500/10 active:scale-95 transition-transform"
-                                            style={{ flex: '2', minWidth: '80px' }}
-                                            onClick={() => {
-                                                const falta = Math.max(0, (total - (discountType === 'percent' ? (total * (parseFloat(discountValue) / 100 || 0)) : (parseFloat(discountValue) || 0))) - payments.reduce((sum, p) => sum + (p.currency === 'USD' ? p.amount : p.amount / p.rate), 0));
-                                                setCurrentPaymentAmount(falta.toFixed(2));
-                                            }}
-                                        >
-                                            Saldar Falta
-                                        </button>
-                                    </div>
-
-                                    <button
-                                        className="primary-button p-4 text-lg font-black flex items-center justify-center gap-2 group shadow-lg shadow-blue-500/20"
-                                        style={{ borderRadius: '12px' }}
-                                        onClick={() => {
-                                            if (!currentPaymentAmount || !currentPaymentMethod) return;
-                                            const method = currentPaymentMethod;
-                                            const isBs = method.toLowerCase().includes('bs') || method.toLowerCase().includes('punto') || method.toLowerCase().includes('pago movil');
-                                            setPayments([...payments, {
-                                                id: Date.now(),
-                                                method,
-                                                amount: parseFloat(currentPaymentAmount),
-                                                currency: isBs ? 'BS' : 'USD',
-                                                rate: data.exchangeRate
-                                            }]);
-                                            setCurrentPaymentAmount('');
-                                        }}
-                                    >
-                                        <div className="group-hover:translate-y-[-2px] transition-transform">AGREGAR PAGO</div>
-                                        <Check size={20} className="group-hover:scale-125 transition-transform" />
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Discount & Tip Section - Compact */}
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="glass-panel p-3 border-white/10 bg-white/5">
-                                    <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Descuento</label>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="number"
-                                            className="glass-input p-1.5 flex-1 text-sm text-center"
-                                            style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)', borderRadius: 0 }}
-                                            value={discountValue}
-                                            onChange={e => setDiscountValue(e.target.value)}
-                                            placeholder="0"
-                                        />
-                                        <button
-                                            className={`w-8 h-8 flex items-center justify-center rounded-full font-bold text-xs transition-colors ${discountType === 'percent' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400'}`}
-                                            onClick={() => setDiscountType(t => t === 'percent' ? 'amount' : 'percent')}
-                                        >
-                                            {discountType === 'percent' ? '%' : '$'}
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="glass-panel p-3 border-white/10 bg-white/5">
-                                    <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Propina $</label>
-                                    <div className="flex items-center">
-                                        <div className="text-gray-500 mr-1">$</div>
-                                        <input
-                                            type="number"
-                                            className="glass-input p-1.5 w-full text-sm text-center"
-                                            style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)', borderRadius: 0 }}
-                                            value={tipAmount}
-                                            onChange={e => setTipAmount(e.target.value)}
-                                            placeholder="0.00"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+                                    </>
+                                );
+                            })()}
                         </div>
 
-                        {/* RIGHT COLUMN: Summary & Pending Status */}
-                        <div className="flex-1 flex flex-col gap-4 min-h-0">
-                            {/* Status Panel: PENDING / CHANGE */}
-                            <div className="glass-panel p-5 text-center border-orange-500/40 bg-orange-500/10 relative overflow-hidden" style={{ borderRadius: '16px' }}>
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/5 -mr-8 -mt-8 rounded-full"></div>
-                                <span className="text-xs text-orange-400 font-bold uppercase tracking-[0.2em] block mb-2">SALDO PENDIENTE</span>
-                                <h2 className="text-5xl font-black text-white flex items-center justify-center gap-1">
-                                    <span className="text-2xl text-orange-500/70">$</span>
-                                    {Math.max(0, (total - (discountType === 'percent' ? (total * (parseFloat(discountValue) / 100 || 0)) : (parseFloat(discountValue) || 0))) - payments.reduce((sum, p) => sum + (p.currency === 'USD' ? p.amount : p.amount / p.rate), 0)).toFixed(2)}
-                                </h2>
-                            </div>
-
-                            {/* List of added payments - Auto Scroll */}
-                            <div className="flex flex-col gap-2 flex-1 overflow-y-auto pr-1 no-scrollbar min-h-0">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block sticky top-0 bg-[#1e1e1e] py-1 z-10">PAGOS REGISTRADOS ({payments.length})</label>
-                                {payments.length === 0 ? (
-                                    <div className="glass-panel p-10 flex flex-col items-center justify-center text-gray-600 border-dashed border-2">
-                                        <Wallet size={40} className="mb-2 opacity-20" />
-                                        <span className="text-sm font-medium">No se han añadido pagos</span>
-                                    </div>
-                                ) : (
-                                    payments.map(p => (
-                                        <div key={p.id} className="glass-panel p-3 flex justify-between items-center bg-gradient-to-r from-white/5 to-transparent border-white/5 hover:border-white/20 transition-colors group">
-                                            <div className="flex items-center gap-3">
-                                                <div className="bg-white/5 p-2 rounded-lg text-gray-400 group-hover:text-blue-400 transition-colors">
-                                                    {p.method.toLowerCase().includes('efectivo') ? <Banknote size={20} /> : <CreditCard size={20} />}
-                                                </div>
-                                                <div>
-                                                    <span className="text-sm font-bold block text-white">{p.method}</span>
-                                                    <span className="text-[10px] text-gray-500 font-medium">
-                                                        {p.currency === 'BS' ? `Tasa: ${p.rate}` : 'Ref: Divisa'}
-                                                    </span>
+                        {/* 2. MAIN GRID */}
+                        <div className="flex flex-col md:flex-row gap-4 min-h-0">
+                            <div className="flex-[1.2] flex flex-col gap-4">
+                                {/* Form: Registrar Pago */}
+                                <div className="glass-panel p-4 border-orange-500/20 bg-orange-500/5 relative overflow-hidden" style={{ borderRadius: '16px' }}>
+                                    <label className="text-[10px] font-bold text-orange-400 mb-3 block uppercase tracking-widest">Registrar Pago</label>
+                                    <div className="flex flex-col gap-3">
+                                        <div className="flex flex-col sm:flex-row gap-2">
+                                            <div className="relative flex-1">
+                                                <input
+                                                    type="number"
+                                                    className="glass-input w-full text-3xl font-black p-4 text-center ring-inset focus:ring-1 ring-orange-500/50"
+                                                    style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px' }}
+                                                    value={currentPaymentAmount}
+                                                    onChange={e => setCurrentPaymentAmount(e.target.value)}
+                                                    placeholder="0.00"
+                                                />
+                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-black text-lg">
+                                                    {(() => {
+                                                        const methodObj = paymentMethods.find(m => m.label === currentPaymentMethod);
+                                                        return (methodObj?.label.toLowerCase().includes('bs') || methodObj?.label.toLowerCase().includes('punto') || methodObj?.label.toLowerCase().includes('movil')) ? 'Bs' : '$';
+                                                    })()}
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-4">
-                                                <div className="text-right">
-                                                    <span className="text-lg font-black text-white italic">{p.currency === 'BS' ? 'Bs' : '$'} {p.amount.toFixed(2)}</span>
-                                                    {p.currency === 'BS' && (
-                                                        <span className="text-[10px] text-gray-500 block">≈ ${(p.amount / p.rate).toFixed(2)}</span>
-                                                    )}
+                                            <select
+                                                className="glass-input h-auto px-4 text-sm font-bold sm:w-44 bg-white/5"
+                                                style={{ borderRadius: '12px' }}
+                                                value={currentPaymentMethod}
+                                                onChange={e => setCurrentPaymentMethod(e.target.value)}
+                                            >
+                                                <option value="">Método...</option>
+                                                {paymentMethods.map(m => (
+                                                    <option key={m.id} value={m.label}>{m.label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="flex gap-2">
+                                            <button
+                                                className="glass-button flex-1 text-[10px] font-bold py-3 border-green-500/30 text-green-400 bg-green-500/5"
+                                                style={{ borderRadius: '10px' }}
+                                                onClick={() => {
+                                                    const discVal = parseFloat(discountValue) || 0;
+                                                    const tipVal = parseFloat(tipAmount) || 0;
+                                                    const rate = data.exchangeRate || 1;
+                                                    let finalDiscount = 0;
+                                                    if (discountType === 'percent') finalDiscount = total * (discVal / 100);
+                                                    else if (discountType === 'USD') finalDiscount = discVal;
+                                                    else if (discountType === 'BS') finalDiscount = discVal / rate;
+
+                                                    let finalTip = 0;
+                                                    if (tipType === 'percent') finalTip = total * (tipVal / 100);
+                                                    else if (tipType === 'USD') finalTip = tipVal;
+                                                    else if (tipType === 'BS') finalTip = tipVal / rate;
+
+                                                    const totalNeto = total - finalDiscount + finalTip;
+                                                    const yaPagado = payments.reduce((sum, p) => sum + (p.currency === 'USD' ? p.amount : p.amount / p.rate), 0);
+                                                    const faltaUSD = Math.max(0, totalNeto - yaPagado);
+                                                    setCurrentPaymentAmount(pendingCurrency === 'BS' ? (faltaUSD * rate).toFixed(2) : faltaUSD.toFixed(2));
+                                                }}
+                                            >
+                                                Monto Pendiente
+                                            </button>
+                                            <button
+                                                className="primary-button flex-[2] p-3 text-lg font-black flex items-center justify-center gap-2 shadow-lg"
+                                                style={{ borderRadius: '10px' }}
+                                                onClick={() => {
+                                                    if (!currentPaymentAmount || !currentPaymentMethod) return;
+                                                    const method = currentPaymentMethod;
+                                                    const isBs = method.toLowerCase().includes('bs') || method.toLowerCase().includes('punto') || method.toLowerCase().includes('pago movil');
+                                                    const amount = parseFloat(currentPaymentAmount);
+
+                                                    if (method.toLowerCase().includes('efectivo')) {
+                                                        const discVal = parseFloat(discountValue) || 0;
+                                                        const tipVal = parseFloat(tipAmount) || 0;
+                                                        const rate = data.exchangeRate || 1;
+                                                        let finalDiscount = 0;
+                                                        if (discountType === 'percent') finalDiscount = total * (discVal / 100);
+                                                        else if (discountType === 'USD') finalDiscount = discVal;
+                                                        else if (discountType === 'BS') finalDiscount = discVal / rate;
+
+                                                        let finalTip = 0;
+                                                        if (tipType === 'percent') finalTip = total * (tipVal / 100);
+                                                        else if (tipType === 'USD') finalTip = tipVal;
+                                                        else if (tipType === 'BS') finalTip = tipVal / rate;
+
+                                                        const totalNeto = total - finalDiscount + finalTip;
+                                                        const yaPagado = payments.reduce((sum, p) => sum + (p.currency === 'USD' ? p.amount : p.amount / p.rate), 0);
+                                                        const pendingDebt = Math.max(0, totalNeto - yaPagado);
+
+                                                        setPendingPaymentData({
+                                                            method,
+                                                            amount,
+                                                            debtAmount: pendingDebt,
+                                                            currency: isBs ? 'BS' : 'USD',
+                                                            rate: data.exchangeRate
+                                                        });
+                                                        setIsCashModalOpen(true);
+                                                    } else {
+                                                        setPayments([...payments, {
+                                                            id: Date.now(),
+                                                            method,
+                                                            amount,
+                                                            currency: isBs ? 'BS' : 'USD',
+                                                            rate: data.exchangeRate
+                                                        }]);
+                                                        setCurrentPaymentAmount('');
+                                                    }
+                                                }}
+                                            >
+                                                AGREGAR PAGO <Check size={20} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Quick Amounts (Denominaciones) */}
+                                <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-3 py-2">
+                                    {[1, 5, 10, 20, 50, 100].map(v => (
+                                        <button
+                                            key={v}
+                                            className="glass-panel py-3 text-sm font-black border-white/5 bg-white/5 hover:bg-orange-600/20 hover:border-orange-500/40 active:scale-95 transition-all text-gray-400 hover:text-white"
+                                            style={{ borderRadius: '14px' }}
+                                            onClick={() => setCurrentPaymentAmount(v.toString())}
+                                        >
+                                            +${v}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Adjustments */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div className="glass-panel p-4 border-white/10 bg-white/5 flex flex-col">
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase mb-2 block tracking-widest">Descuento</label>
+                                        <div className="flex gap-2 mt-auto">
+                                            <input
+                                                type="number"
+                                                className="glass-input p-2 flex-1 text-base font-black text-center bg-transparent border-b border-white/10"
+                                                style={{ border: 'none', borderBottom: '2px solid rgba(255,255,255,0.05)', borderRadius: 0 }}
+                                                value={discountValue}
+                                                onChange={e => setDiscountValue(e.target.value)}
+                                                placeholder="0"
+                                            />
+                                            <div className="flex bg-black/20 rounded-xl p-1 border border-white/5">
+                                                {['percent', 'USD', 'BS'].map((type) => (
+                                                    <button
+                                                        key={type}
+                                                        className={`w-9 h-9 flex items-center justify-center rounded-lg font-black text-[10px] transition-all duration-200 active:scale-95 ${discountType === type ? 'bg-orange-600 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
+                                                        onClick={() => setDiscountType(type)}
+                                                    >
+                                                        {type === 'percent' ? '%' : type === 'USD' ? '$' : 'Bs'}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="glass-panel p-4 border-white/10 bg-white/5 flex flex-col">
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase mb-2 block tracking-widest">Propina</label>
+                                        <div className="flex gap-2 mt-auto">
+                                            <input
+                                                type="number"
+                                                className="glass-input p-2 flex-1 text-base font-black text-center bg-transparent border-b border-white/10"
+                                                style={{ border: 'none', borderBottom: '2px solid rgba(255,255,255,0.05)', borderRadius: 0 }}
+                                                value={tipAmount}
+                                                onChange={e => setTipAmount(e.target.value)}
+                                                placeholder="0.00"
+                                            />
+                                            <div className="flex bg-black/20 rounded-xl p-1 border border-white/5">
+                                                {['percent', 'USD', 'BS'].map((type) => (
+                                                    <button
+                                                        key={type}
+                                                        className={`w-9 h-9 flex items-center justify-center rounded-lg font-black text-[10px] transition-all duration-200 active:scale-95 ${tipType === type ? 'bg-orange-600 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
+                                                        onClick={() => setTipType(type)}
+                                                    >
+                                                        {type === 'percent' ? '%' : type === 'USD' ? '$' : 'Bs'}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* RIGHT COLUMN: Payments */}
+                            <div className="flex-1 flex flex-col gap-3 min-h-[300px]">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Pagos Registrados ({payments.length})</label>
+                                <div className="flex-1 overflow-y-auto flex flex-col gap-2 no-scrollbar p-1">
+                                    {payments.length === 0 ? (
+                                        <div className="flex-1 flex flex-col items-center justify-center text-gray-700 border-2 border-dashed border-white/5 rounded-2xl opacity-40">
+                                            <Wallet size={40} className="mb-2" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Sin pagos registrados</span>
+                                        </div>
+                                    ) : (
+                                        payments.map(p => (
+                                            <div key={p.id} className="glass-panel p-3 flex justify-between items-center bg-white/5 border-white/5">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="bg-orange-500/10 p-2.5 rounded-xl text-orange-400">
+                                                        {p.method.toLowerCase().includes('efectivo') ? <Banknote size={20} /> : <CreditCard size={20} />}
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-[9px] text-gray-500 font-bold uppercase block tracking-tighter">{p.method}</span>
+                                                        <span className="text-lg font-black text-white italic">
+                                                            {p.currency === 'BS' ? 'Bs' : '$'} {formatAmount(p.amount, p.currency, 2)}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                                 <button
-                                                    className="w-10 h-10 flex items-center justify-center text-red-500 bg-red-500/0 hover:bg-red-500/10 rounded-full transition-colors"
+                                                    className="w-10 h-10 flex items-center justify-center text-red-400 bg-red-400/0 hover:bg-red-400/10 rounded-full"
                                                     onClick={() => setPayments(prev => prev.filter(pay => pay.id !== p.id))}
                                                 >
                                                     <Trash2 size={18} />
                                                 </button>
                                             </div>
-                                        </div>
-                                    ))
-                                )}
+                                        ))
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Final Actions Area */}
-                    <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-white/10 bg-[#1e1e1e] sticky bottom-0">
-                        <button
-                            className="glass-button py-4 px-6 text-sm font-bold uppercase tracking-widest text-gray-400 hover:text-white"
-                            style={{ borderRadius: '12px' }}
-                            onClick={() => setIsPaymentModalOpen(false)}
-                        >
-                            Volver al Carrito
-                        </button>
-                        <button
-                            className={`primary-button flex-1 py-4 text-xl font-black flex items-center justify-center gap-3 shadow-xl ${payments.length === 0 ? 'opacity-50 grayscale' : 'shadow-blue-600/20'}`}
-                            style={{ borderRadius: '12px' }}
-                            disabled={payments.length === 0}
-                            onClick={handleFinalizePayment}
-                        >
-                            <ShoppingBag size={24} />
-                            FINALIZAR VENTA
-                        </button>
+                        {/* DESIGNS: Volver al Carrito as a large body button */}
+                        <div className="mt-2">
+                            <button
+                                className="glass-button w-full py-3.5 text-sm font-black uppercase tracking-widest text-gray-500 hover:text-gray-300 border-white/5 hover:bg-white/5"
+                                style={{ borderRadius: '14px' }}
+                                onClick={() => setIsPaymentModalOpen(false)}
+                            >
+                                VOLVER AL CARRITO
+                            </button>
+                        </div>
                     </div>
                 </div>
             </Modal>
@@ -752,6 +963,33 @@ export const POSPage = () => {
                     </button>
                 </div>
             </Modal>
+
+            {/* Cash Denomination Modal */}
+            <CashDenominationModal
+                isOpen={isCashModalOpen}
+                onClose={() => setIsCashModalOpen(false)}
+                amount={pendingPaymentData?.amount || 0}
+                debtAmount={pendingPaymentData?.currency === 'BS' ? (pendingPaymentData.debtAmount * pendingPaymentData.rate) : pendingPaymentData?.debtAmount}
+                currency={pendingPaymentData?.currency}
+                denominationsConfig={pendingPaymentData?.currency === 'BS' ? data.denominationsBS : data.denominationsUSD}
+                onConfirm={(breakdown, totalReceived, changeAmount, changeMethod) => {
+                    const amountToPay = pendingPaymentData?.amount || 0;
+                    const effectiveAmount = Math.min(totalReceived, amountToPay);
+
+                    setPayments([...payments, {
+                        ...pendingPaymentData,
+                        id: Date.now(),
+                        amount: effectiveAmount,
+                        denominations: breakdown,
+                        received: totalReceived,
+                        change: changeAmount,
+                        changeMethod: changeMethod
+                    }]);
+                    setIsCashModalOpen(false);
+                    setPendingPaymentData(null);
+                    setCurrentPaymentAmount('');
+                }}
+            />
 
             {/* Client Search Modal Wrapper */}
             <ClientSearchModal

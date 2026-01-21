@@ -7,6 +7,8 @@
 // This script runs on the frontend (WebView) and starts the Node.js background process.
 
 console.log('[Node.js Init] nodejs-init.js loaded');
+// ALERT FOR DEBUGGING
+// alert('NodeJS Init Loaded!'); 
 
 // Force verbose logging
 

@@ -13,6 +13,7 @@
  */
 
 import React from 'react';
+import { APP_VERSION } from '../config/version';
 import { NavLink } from 'react-router-dom';
 import {
     ShoppingCart, Package, Users, Truck, Settings, ChevronLeft, ChevronRight,
@@ -165,7 +166,7 @@ const Sidebar = () => {
                 position: isMobile ? 'fixed' : 'relative',
                 bottom: isMobile ? 0 : 'auto',
                 left: isMobile ? 0 : 'auto',
-                zIndex: 1000
+                zIndex: 40
             }}
         >
             {/* Alerta de Seguridad Crítica */}
@@ -201,13 +202,13 @@ const Sidebar = () => {
                         className="glass-button"
                         onClick={toggleSidebar}
                         style={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            padding: '0.5rem',
-                            color: 'var(--text-secondary)'
-                        }}
-                        title={isCollapsed ? "Expandir" : "Contraer"}
+                            <div className="flex flex-col">
+                        <span className="text-[10px] text-gray-500 font-mono">v2.3.1</span>
+                        <span className="text-[10px] text-gray-600 font-mono uppercase tracking-tighter">
+                            {data.serverInfo?.version || '2.3.1'}-stable
+                        </span>
+                    </div>
+    title={isCollapsed ? "Expandir" : "Contraer"}
                     >
                         {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
                     </button>
@@ -243,8 +244,9 @@ const Sidebar = () => {
                             zIndex: 200,
                             background: '#1a1a1a', // Solid dark background
                             border: '1px solid var(--glass-border)',
-                            minWidth: '200px',
-                            boxShadow: '0 -5px 20px rgba(0,0,0,0.5)'
+                            minWidth: '280px', // Increased from 200px
+                            boxShadow: '0 -5px 20px rgba(0,0,0,0.5)',
+                            left: 'auto' // Ensure it anchors right
                         }}
                     >
                         {/* Server Info Card */}
@@ -260,12 +262,10 @@ const Sidebar = () => {
                                 <Wifi size={14} color={isLocalServerConnected ? 'var(--accent-green)' : 'var(--accent-red)'} />
                                 <span style={{ fontWeight: '600' }}>Servidor Local: {isLocalServerConnected ? 'Activo' : 'Offline'}</span>
                             </div>
-                            {serverInfo && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: 0.8 }}>
-                                    <Globe size={14} />
-                                    <span>IP: {serverInfo.ip}:{serverInfo.port}</span>
-                                </div>
-                            )}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: 1, color: 'var(--accent-blue)', fontWeight: 'bold' }}>
+                                <Globe size={14} />
+                                <span>{serverInfo ? `${serverInfo.ip}:${serverInfo.port}` : suggestedUrl.replace('http://', '').replace('/', '')}</span>
+                            </div>
                         </div>
 
                         {overflowItems.map(item => renderNavLink(item, true))}
@@ -286,15 +286,33 @@ const Sidebar = () => {
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '0.75rem',
-                                padding: '0.75rem',
+                                padding: '1rem', // Increased padding
                                 justifyContent: 'flex-start',
                                 color: 'var(--accent-red)',
-                                width: '100%'
+                                width: '100%',
+                                marginBottom: '0.5rem' // More space
                             }}
                         >
-                            <LogOut size={20} />
-                            <span style={{ fontSize: '0.9rem' }}>Cerrar Sesión</span>
+                            <LogOut size={22} />
+                            <span style={{ fontSize: '1rem', fontWeight: 'bold' }}>Cerrar Sesión</span>
                         </button>
+
+                        {/* Mobile About Section */}
+                        <div style={{
+                            marginTop: '0.5rem',
+                            padding: '1rem 0.5rem',
+                            fontSize: '0.85rem', // Increased significantly
+                            color: 'var(--text-secondary)',
+                            textAlign: 'center',
+                            borderTop: '1px solid var(--glass-border)',
+                            opacity: 0.9 // More visible
+                        }}>
+                            <p style={{ margin: '0 0 0.5rem 0', fontWeight: 'bold' }}>ERP La Auténtica v{APP_VERSION}</p>
+                            <p style={{ fontWeight: '500', color: 'var(--accent-blue)', lineHeight: '1.4' }}>
+                                Desarrollado con las últimas tecnologías por <br />
+                                <span style={{ fontWeight: '700', fontSize: '0.95rem' }}>Luvin Rafael Bustillos</span>
+                            </p>
+                        </div>
                     </div>
                 </>
             )}
@@ -341,7 +359,6 @@ const Sidebar = () => {
                         style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '0.75rem',
                             padding: isCollapsed ? '0.5rem 0' : '0.5rem 0.75rem',
                             justifyContent: isCollapsed ? 'center' : 'flex-start',
                             color: 'var(--accent-red)',
@@ -390,8 +407,11 @@ const Sidebar = () => {
                     marginTop: isCollapsed ? '0' : 'auto',
                     opacity: 0.7
                 }}>
-                    <p style={{ margin: 0 }}>ERP La Auténtica v{serverInfo?.version || '2.1.13'}</p>
-                    <p style={{ fontWeight: '600', color: 'var(--accent-blue)', marginTop: '0.2rem' }}>Por Luvin Rafael Bustillos Diaz</p>
+                    <p style={{ margin: 0 }}>ERP La Auténtica v{APP_VERSION}</p>
+                    <p style={{ fontWeight: '500', color: 'var(--accent-blue)', marginTop: '0.2rem' }}>
+                        Desarrollado con las últimas tecnologías por <br />
+                        <span style={{ fontWeight: '700' }}>Luvin Rafael Bustillos</span>
+                    </p>
                 </div>
             )}
 

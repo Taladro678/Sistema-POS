@@ -11,6 +11,7 @@
 @media (max-width: 480px) {
   :root {
     font-size: 13px;
+    touch-action: manipulation;
   }
 
   .hide-on-very-small {
@@ -607,6 +608,66 @@ textarea {
   background-color: var(--accent-blue);
 }
 
+.text-orange-400 {
+  color: #fb923c;
+}
+
+.text-orange-500 {
+  color: #f97316;
+}
+
+.bg-orange-400 {
+  background-color: #fb923c;
+}
+
+.bg-orange-500 {
+  background-color: #f97316;
+}
+
+.bg-orange-600 {
+  background-color: #ea580c;
+}
+
+.bg-orange-500\/5 {
+  background-color: rgba(249, 115, 22, 0.05);
+}
+
+.bg-orange-500\/10 {
+  background-color: rgba(249, 115, 22, 0.1);
+}
+
+.bg-orange-500\/20 {
+  background-color: rgba(249, 115, 22, 0.2);
+}
+
+.bg-orange-500\/40 {
+  background-color: rgba(249, 115, 22, 0.4);
+}
+
+.bg-orange-500\/60 {
+  background-color: rgba(249, 115, 22, 0.6);
+}
+
+.text-orange-400\/60 {
+  color: rgba(251, 146, 60, 0.6);
+}
+
+.border-orange-500\/20 {
+  border-color: rgba(249, 115, 22, 0.2);
+}
+
+.border-orange-500\/40 {
+  border-color: rgba(249, 115, 22, 0.4);
+}
+
+.shadow-orange-600\/20 {
+  box-shadow: 0 10px 15px -3px rgba(234, 88, 12, 0.2), 0 4px 6px -2px rgba(234, 88, 12, 0.1);
+}
+
+.ring-orange-500\/50:focus {
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.5);
+}
+
 .bg-red-500 {
   background-color: var(--accent-red);
 }
@@ -902,4 +963,18 @@ textarea {
     padding-top: 0.5rem !important;
     padding-bottom: 0.5rem !important;
   }
+}
+
+/* TOUCH RESPONSE OPTIMIZATION */
+button,
+a,
+input,
+select,
+textarea,
+[role="button"],
+.glass-panel,
+.category-tab,
+.ProductCard {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }

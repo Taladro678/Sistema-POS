@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useData } from '../context/DataContext';
+import { useData, formatAmount } from '../context/DataContext';
 import { useSearchParams } from 'react-router-dom';
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
@@ -12,32 +12,18 @@ import {
 } from 'lucide-react';
 import Modal from '../components/Modal';
 
-const mapMethodLabel = (method) => {
+const mapMethodLabel = (method, paymentMethods = []) => {
+    // Check if the method is one of the dynamic methods
+    const dynamicMethod = paymentMethods.find(m => m.id === method || m.name === method);
+    if (dynamicMethod) return dynamicMethod.name;
+
     const labels = {
-        'bancaribe': 'Punto Bancaribe',
-        'Bancaribe': 'Punto Bancaribe',
-        'Bancaribe (Punto)': 'Punto Bancaribe',
-        'banplus': 'Punto Banplus',
-        'Banplus': 'Punto Banplus',
-        'Banplus (Punto)': 'Punto Banplus',
-        'banesco': 'Punto Banesco',
-        'Banesco': 'Punto Banesco',
-        'Banesco (Punto)': 'Punto Banesco',
-        'pm_banesco_ps': 'Pago Movil Banesco PS',
-        'pm_banesco_raquel': 'Pago Movil Banesco Raquel',
-        'pm_bdv_ps': 'Pago Movil BDV PS',
-        'pm_banplus': 'Pago Movil Banplus',
-        'zelle': 'Zelle (Divisas)',
-        'Zelle': 'Zelle (Divisas)',
+        'efectivo_usd': 'Efectivo $',
         'efectivo_bs': 'Efectivo Bs',
-        'Efectivo Bs': 'Efectivo Bs',
-        'usd': 'Efectivo USD',
-        'USD ($)': 'Efectivo USD',
+        'zelle': 'Zelle',
+        'pm_banesco': 'Pago Móvil Banesco',
         'punto': 'Punto de Venta',
-        'Otro Punto': 'Punto de Venta',
-        'punto_venta': 'Punto de Venta',
-        'credito': 'Crédito (Fiado)',
-        'Crédito (Fiado)': 'Crédito (Fiado)'
+        'credito': 'Crédito'
     };
     return labels[method] || method || 'Otro';
 };
@@ -128,7 +114,7 @@ const ReportsPage = () => {
             if (sale.payments && Array.isArray(sale.payments) && sale.payments.length > 0) {
                 sale.payments.forEach(p => {
                     const amount = parseFloat(p.amount);
-                    const label = mapMethodLabel(p.method);
+                    const label = mapMethodLabel(p.method, data.paymentMethods);
                     const amountInUSD = p.currency === 'USD' ? amount : (amount / (p.rate || exchangeRate));
 
                     if (!methodTotals[label]) {
@@ -141,15 +127,16 @@ const ReportsPage = () => {
                     else totalBs += amount;
 
                     totalConverted += amountInUSD;
-                    if (label.includes('Fiado')) totalReceivable += amountInUSD;
+                    if (label.toLowerCase().includes('credito') || label.toLowerCase().includes('fiado')) totalReceivable += amountInUSD;
                 });
             } else {
                 const amount = parseFloat(sale.total);
-                const label = mapMethodLabel(sale.paymentMethod);
-                const isBs = ['Punto Bancaribe', 'Punto Banplus', 'Punto Banesco', 'Pago Movil Banesco PS', 'Pago Movil Banesco Raquel', 'Pago Movil BDV PS', 'Pago Movil Banplus', 'Efectivo Bs', 'Punto de Venta'].includes(label);
+                // Find method definition
+                const methodId = sale.paymentMethod;
+                const methodDef = (data.paymentMethods || []).find(m => m.id === methodId || m.name === methodId);
+                const currency = methodDef ? methodDef.currency : (label.toLowerCase().includes('bs') || label.toLowerCase().includes('punto') || label.toLowerCase().includes('pago movil') ? 'Bs' : 'USD');
 
-                const currency = isBs ? 'Bs' : 'USD';
-                const amountNative = isBs ? (amount * exchangeRate) : amount;
+                const amountNative = currency === 'Bs' ? (amount * exchangeRate) : amount;
                 const amountUSD = amount;
 
                 if (!methodTotals[label]) {
@@ -162,7 +149,7 @@ const ReportsPage = () => {
                 else totalUSD += amount;
 
                 totalConverted += amountUSD;
-                if (label.includes('Fiado')) totalReceivable += amountUSD;
+                if (label.toLowerCase().includes('credito') || label.toLowerCase().includes('fiado')) totalReceivable += amountUSD;
             }
         });
 
@@ -171,24 +158,39 @@ const ReportsPage = () => {
                 name,
                 value: data.usd, // For the Pie chart (proportional)
                 nativeValue: data.native,
+                usdValue: data.usd, // Explicit USD value
                 currency: data.currency,
                 percentage: (data.usd / (totalConverted || 1)) * 100,
-                color: name.includes('Banesco') ? '#1d6335' :
-                    name.includes('Bancaribe') ? '#0054a6' :
-                        name.includes('Banplus') ? '#8dc63f' :
-                            name.includes('BDV') ? '#e74c3c' :
-                                name.includes('Zelle') ? '#9b59b6' :
-                                    name.includes('Efectivo USD') ? '#27ae60' :
-                                        name.includes('Efectivo Bs') ? '#7f8c8d' : '#3498db'
+                color: (data.paymentMethods || []).find(m => m.name === name)?.color || '#3498db'
             }))
             .sort((a, b) => b.value - a.value);
 
-        totalExpenses = (data.expenses || []).reduce((acc, exp) => acc + (exp.amount || 0), 0);
-        totalDebts = (data.debts || []).reduce((acc, debt) => acc + (debt.amount || 0), 0);
+        // Supplier Data Aggregation
+        const supplierDebts = (data.suppliers || []).reduce((acc, s) => acc + (s.debt || 0), 0);
+        let supplierPaymentsInRange = 0;
+        (data.suppliers || []).forEach(s => {
+            (s.transactions || []).forEach(t => {
+                if (t.type === 'Pago' && isWithinRange(t.date, timeRange)) {
+                    supplierPaymentsInRange += t.amount;
+                }
+            });
+        });
+
+        // Combine with generic expenses/debts - Unified tracking via expenses table
+        totalExpenses = (data.expenses || [])
+            .filter(exp => !exp.date || isWithinRange(exp.date, timeRange))
+            .reduce((acc, exp) => acc + (exp.amount || 0), 0);
+
+        totalDebts = (data.debts || []).reduce((acc, debt) => acc + (debt.amount || 0), 0) + supplierDebts;
+
         totalReceivable += (data.accountsReceivable || []).reduce((acc, rec) => acc + (rec.amount || 0), 0);
 
-        return { totalUSD, totalBs, totalConverted, totalReceivable, totalExpenses, totalDebts, allPaymentsChartData, departmentTotals };
-    }, [filteredSales, exchangeRate, data.expenses, data.debts, data.accountsReceivable]);
+        return {
+            totalUSD, totalBs, totalConverted, totalReceivable,
+            totalExpenses, totalDebts, allPaymentsChartData,
+            departmentTotals, supplierDebts, supplierPaymentsInRange
+        };
+    }, [filteredSales, exchangeRate, data.expenses, data.debts, data.accountsReceivable, data.suppliers, timeRange]);
 
     return (
         <div style={{
@@ -255,26 +257,34 @@ const ReportsPage = () => {
             </div>
 
             {/* KPI Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 2fr) repeat(2, 1fr)', gap: '0.75rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr) repeat(3, 1fr)', gap: '0.75rem' }}>
                 <div className="glass-panel" style={{ padding: '0.75rem', borderLeft: '4px solid var(--accent-orange)', background: 'rgba(255, 165, 0, 0.05)' }}>
                     <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>RESTAURANTE</p>
-                    <h2 style={{ margin: '0.25rem 0 0 0', fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 'bold', color: '#fff' }}>${financials.departmentTotals['Restaurante'].toFixed(2)}</h2>
+                    <h2 style={{ margin: '0.25rem 0 0 0', fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 'bold', color: '#fff' }}>{formatAmount(financials.departmentTotals['Restaurante'], '$')}</h2>
                 </div>
                 <div className="glass-panel" style={{ padding: '0.75rem', borderLeft: '4px solid #f1c40f', background: 'rgba(241, 196, 15, 0.05)' }}>
                     <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>QUESERA</p>
-                    <h2 style={{ margin: '0.25rem 0 0 0', fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 'bold', color: '#fff' }}>${(financials.departmentTotals['Quesera'] || 0).toFixed(2)}</h2>
+                    <h2 style={{ margin: '0.25rem 0 0 0', fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 'bold', color: '#fff' }}>{formatAmount(financials.departmentTotals['Quesera'] || 0, '$')}</h2>
                 </div>
                 <div className="glass-panel" style={{ padding: '0.75rem', borderLeft: '4px solid var(--accent-green)', background: 'rgba(39, 174, 96, 0.05)' }}>
                     <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>VENTA TOTAL</p>
-                    <h2 style={{ margin: '0.25rem 0 0 0', fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 'bold', color: '#fff' }}>${financials.totalConverted.toFixed(2)}</h2>
+                    <h2 style={{ margin: '0.25rem 0 0 0', fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 'bold', color: '#fff' }}>{formatAmount(financials.totalConverted, '$')}</h2>
+                </div>
+                <div className="glass-panel" style={{ padding: '0.75rem', borderLeft: '4px solid #e74c3c', background: 'rgba(231, 76, 60, 0.05)' }}>
+                    <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>PAGOS PROV.</p>
+                    <h2 style={{ margin: '0.25rem 0 0 0', fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 'bold', color: '#e74c3c' }}>{formatAmount(financials.supplierPaymentsInRange, '$')}</h2>
+                </div>
+                <div className="glass-panel" style={{ padding: '0.75rem', borderLeft: '4px solid #9b59b6', background: 'rgba(155, 89, 182, 0.05)' }}>
+                    <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>DEUDA PROV.</p>
+                    <h2 style={{ margin: '0.25rem 0 0 0', fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 'bold', color: '#9b59b6' }}>{formatAmount(financials.supplierDebts, '$')}</h2>
                 </div>
                 <div className="glass-panel" style={{ padding: '0.75rem', borderLeft: '4px solid #27ae60' }}>
                     <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>DIVISAS ($)</p>
-                    <h2 style={{ margin: '0.25rem 0 0 0', fontSize: isMobile ? '1rem' : '1.2rem', fontWeight: 'bold', color: '#27ae60' }}>${financials.totalUSD.toFixed(2)}</h2>
+                    <h2 style={{ margin: '0.25rem 0 0 0', fontSize: isMobile ? '1rem' : '1.2rem', fontWeight: 'bold', color: '#27ae60' }}>{formatAmount(financials.totalUSD, '$')}</h2>
                 </div>
                 <div className="glass-panel" style={{ padding: '0.75rem', borderLeft: '4px solid #3498db' }}>
                     <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>BOLÍVARES</p>
-                    <h2 style={{ margin: '0.25rem 0 0 0', fontSize: isMobile ? '1rem' : '1.2rem', fontWeight: 'bold', color: '#3498db' }}>Bs {financials.totalBs.toLocaleString()}</h2>
+                    <h2 style={{ margin: '0.25rem 0 0 0', fontSize: isMobile ? '1rem' : '1.2rem', fontWeight: 'bold', color: '#3498db' }}>{formatAmount(financials.totalBs, 'Bs')}</h2>
                 </div>
             </div>
 
@@ -334,11 +344,11 @@ const ReportsPage = () => {
                                         <tr key={sale.id} onClick={() => setSelectedSale(sale)} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', cursor: 'pointer', background: 'transparent' }} onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
                                             <td style={{ padding: '0.75rem 1rem' }}>{new Date(sale.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
                                             <td style={{ padding: '0.75rem 1rem', fontWeight: 'bold', color: 'var(--accent-green)' }}>
-                                                ${parseFloat(sale.total).toFixed(2)}
-                                                {isMobile && <div style={{ fontSize: '0.65rem', color: '#ccc', fontWeight: 'normal' }}>{sale.payments ? sale.payments.map(p => mapMethodLabel(p.method).split(' ')[0]).join(', ') : mapMethodLabel(sale.paymentMethod).split(' ')[0]}</div>}
+                                                {formatAmount(sale.total, '$')}
+                                                {isMobile && <div style={{ fontSize: '0.65rem', color: '#ccc', fontWeight: 'normal' }}>{sale.payments ? sale.payments.map(p => mapMethodLabel(p.method, data.paymentMethods).split(' ')[0]).join(', ') : mapMethodLabel(sale.paymentMethod, data.paymentMethods).split(' ')[0]}</div>}
                                             </td>
                                             {!isMobile && <td style={{ padding: '0.75rem 1rem', color: '#ccc' }}>
-                                                {sale.payments ? sale.payments.map(p => mapMethodLabel(p.method)).join(', ') : mapMethodLabel(sale.paymentMethod)}
+                                                {sale.payments ? sale.payments.map(p => mapMethodLabel(p.method, data.paymentMethods)).join(', ') : mapMethodLabel(sale.paymentMethod, data.paymentMethods)}
                                             </td>}
                                             {!isMobile && <td style={{ padding: '0.75rem 1rem', color: 'var(--text-secondary)' }}>{sale.cashier || 'Cajero 1'}</td>}
                                         </tr>
@@ -411,8 +421,9 @@ const ReportsPage = () => {
                                         <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: item.color, boxShadow: `0 0 10px ${item.color}44` }}></div>
                                         <div>
                                             <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#fff' }}>{item.name}</div>
-                                            <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>
-                                                {item.currency === 'Bs' ? `Bs ${item.nativeValue.toLocaleString()}` : `$${item.nativeValue.toFixed(2)}`}
+                                            <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column' }}>
+                                                <span>{item.currency === 'Bs' ? `Bs ${item.nativeValue.toLocaleString()}` : `$${item.nativeValue.toFixed(2)}`}</span>
+                                                {item.currency === 'Bs' && <span style={{ color: 'var(--accent-green)' }}>(${item.usdValue.toFixed(2)})</span>}
                                             </div>
                                         </div>
                                     </div>
@@ -428,11 +439,11 @@ const ReportsPage = () => {
                         <div style={{ marginTop: isMobile ? '1rem' : 'auto', paddingTop: '1rem', borderTop: '2px dashed rgba(255,255,255,0.05)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                                 <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 'bold' }}>TOTAL BOLÍVARES</span>
-                                <span style={{ color: '#3498db', fontSize: '0.85rem', fontWeight: 'bold' }}>Bs {financials.totalBs.toLocaleString()}</span>
+                                <span style={{ color: '#3498db', fontSize: '0.85rem', fontWeight: 'bold' }}>{formatAmount(financials.totalBs, 'Bs')}</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                 <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 'bold' }}>TOTAL DIVISAS</span>
-                                <span style={{ color: '#27ae60', fontSize: '0.85rem', fontWeight: 'bold' }}>$ {financials.totalUSD.toFixed(2)}</span>
+                                <span style={{ color: '#27ae60', fontSize: '0.85rem', fontWeight: 'bold' }}>{formatAmount(financials.totalUSD, '$')}</span>
                             </div>
                         </div>
                     </div>
@@ -456,14 +467,14 @@ const ReportsPage = () => {
                                 {selectedSale.items?.map((item, i) => (
                                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', padding: '0.4rem 0', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
                                         <span>{item.quantity}x {item.name}</span>
-                                        <span style={{ fontWeight: 'bold' }}>${(item.price * item.quantity).toFixed(2)}</span>
+                                        <span style={{ fontWeight: 'bold' }}>{formatAmount(item.price * item.quantity, '$')}</span>
                                     </div>
                                 ))}
                             </div>
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.5rem', fontWeight: 'bold', fontSize: '1.1rem' }}>
                                 <span>TOTAL VENTA</span>
-                                <span style={{ color: 'var(--accent-green)' }}>${parseFloat(selectedSale.total).toFixed(2)}</span>
+                                <span style={{ color: 'var(--accent-green)' }}>{formatAmount(selectedSale.total, '$')}</span>
                             </div>
                         </div>
 
@@ -473,17 +484,17 @@ const ReportsPage = () => {
                                 {selectedSale.payments ? selectedSale.payments.map((p, i) => (
                                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                         <div>
-                                            <div style={{ fontWeight: 'bold', fontSize: '0.85rem' }}>{mapMethodLabel(p.method)}</div>
+                                            <div style={{ fontWeight: 'bold', fontSize: '0.85rem' }}>{mapMethodLabel(p.method, data.paymentMethods)}</div>
                                             {p.note && <div style={{ fontSize: '0.7rem', color: 'var(--accent-orange)' }}>{p.note}</div>}
                                         </div>
                                         <div style={{ fontWeight: 'bold', color: p.currency === 'Bs' ? '#3498db' : '#27ae60' }}>
-                                            {p.currency === 'Bs' ? `Bs ${p.amount.toLocaleString()}` : `$${p.amount.toFixed(2)}`}
+                                            {formatAmount(p.amount, p.currency === 'Bs' ? 'Bs' : '$')}
                                         </div>
                                     </div>
                                 )) : (
                                     <div style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: '8px' }}>
-                                        <div style={{ fontWeight: 'bold' }}>{mapMethodLabel(selectedSale.paymentMethod)}</div>
-                                        <div style={{ fontWeight: 'bold' }}>${parseFloat(selectedSale.total).toFixed(2)}</div>
+                                        <div style={{ fontWeight: 'bold' }}>{mapMethodLabel(selectedSale.paymentMethod, data.paymentMethods)}</div>
+                                        <div style={{ fontWeight: 'bold' }}>{formatAmount(selectedSale.total, '$')}</div>
                                     </div>
                                 )}
                             </div>

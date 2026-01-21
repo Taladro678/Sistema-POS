@@ -4,12 +4,12 @@ import { useDialog } from '../context/DialogContext';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import ExcelImporter from '../components/ExcelImporter';
-import { Plus, Upload, Edit, Trash2, ShoppingCart, Package, Camera, Search, DollarSign, FileSpreadsheet, Sparkles, X } from 'lucide-react';
+import { Plus, Upload, Edit, Trash2, ShoppingCart, Package, Camera, Search, DollarSign, FileSpreadsheet, Sparkles, X, Star } from 'lucide-react';
 import { suggestCategory } from '../services/categorySuggestion';
 import { CategoriesPage } from './CategoriesPage';
 
 export const ProductsPage = () => {
-    const { data, addItem, updateItem, deleteItem, updateData } = useData();
+    const { data, addItem, updateItem, deleteItem, updateData, uploadToDrive } = useData();
     const { confirm, alert } = useDialog();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
@@ -30,11 +30,13 @@ export const ProductsPage = () => {
     const [formData, setFormData] = useState({
         name: '',
         price: '',
-        costPrice: '', // Precio de costo
-        stock: '', // Cantidad disponible
+        costPrice: '',
+        stock: '',
         category: '',
+        supplierId: '', // Added supplier integration
         image: '',
-        showInPOS: true // true = se vende en POS, false = materia prima
+        showInPOS: true,
+        isFavorite: false
     });
 
 
@@ -49,8 +51,10 @@ export const ProductsPage = () => {
             costPrice: product.costPrice || '',
             stock: product.stock !== undefined ? product.stock : '',
             category: product.category,
+            supplierId: product.supplierId || '', // Handle editing supplier
             image: product.image || '',
-            showInPOS: product.showInPOS !== undefined ? product.showInPOS : true
+            showInPOS: product.showInPOS !== undefined ? product.showInPOS : true,
+            isFavorite: product.isFavorite || false
         });
         setSuggestedCategory(null); // Clear suggestion when editing
         setIsModalOpen(true);
@@ -89,8 +93,16 @@ export const ProductsPage = () => {
 
         if (photoFile) {
             setIsUploading(true);
-            const result = await data.uploadToDrive(photoFile, 'Fotos Productos');
-            setIsUploading(false);
+            let result;
+            try {
+                result = await uploadToDrive(photoFile, 'ERP La Autentica', 'Fotos Productos');
+            } catch (error) {
+                console.error('Product upload error:', error);
+                await alert({ title: 'Error de Red', message: 'No se pudo subir la foto a Drive.' });
+                // We don't return here because we might want to continue without the photo as the existing logic suggests
+            } finally {
+                setIsUploading(false);
+            }
 
             if (result && result.webViewLink) {
                 imageLink = result.webViewLink;
@@ -109,7 +121,9 @@ export const ProductsPage = () => {
             costPrice: formData.costPrice ? parseFloat(formData.costPrice) : 0,
             stock: formData.stock ? parseInt(formData.stock) : 0,
             category: formData.category,
+            supplierId: formData.supplierId || null, // Include supplier ID
             showInPOS: formData.showInPOS,
+            isFavorite: formData.isFavorite,
             image: imageLink
         };
 
@@ -153,42 +167,75 @@ export const ProductsPage = () => {
             stock: '',
             category: '',
             image: '',
-            showInPOS: true
+            showInPOS: true,
+            isFavorite: false
         });
         setPhotoFile(null);
         setSuggestedCategory(null);
     };
 
     const handleAutoCategorizeAll = async () => {
-        const productsWithoutCategory = (data.products || []).filter(p => !p.category);
-        if (productsWithoutCategory.length === 0) {
-            return await alert({ title: 'Aviso', message: 'Todos los productos ya tienen una categoría asignada.' });
-        }
+        const totalProducts = (data.products || []).length;
+        if (totalProducts === 0) return await alert({ title: 'Aviso', message: 'No hay productos para categorizar.' });
 
-        const ok = await confirm({
-            title: 'Categorización Inteligente Masiva',
-            message: `¿Deseas intentar categorizar automáticamente ${productsWithoutCategory.length} productos sin categoría?\n\nSe usarán las palabras clave definidas en tus categorías.`
+        const productsWithoutCategory = (data.products || []).filter(p => !p.category);
+
+        const choice = await confirm({
+            title: 'Limpieza de Categorías',
+            message: `¿Qué deseas hacer?\n\n` +
+                `1. Categorizar solo los ${productsWithoutCategory.length} productos SIN categoría.\n` +
+                `2. Re-evaluar los ${totalProducts} productos (Corrige errores previos).`,
+            confirmLabel: 'Re-evaluar TODO',
+            cancelLabel: 'Solo sin categoría'
         });
 
-        if (ok) {
-            let count = 0;
-            const updatedProducts = data.products.map(p => {
-                if (!p.category) {
-                    const suggestion = suggestCategory(p.name, data.categories);
-                    if (suggestion && suggestion.confidence !== 'low') {
-                        count++;
-                        return { ...p, category: suggestion.id };
-                    }
-                }
-                return p;
-            });
+        const processAll = choice;
+        const productsToProcess = processAll ? data.products : productsWithoutCategory;
 
-            if (count > 0) {
-                updateData('products', updatedProducts);
-                await alert({ title: 'Éxito', message: `Se categorizaron ${count} productos correctamente.` });
-            } else {
-                await alert({ title: 'Aviso', message: 'No se encontraron coincidencias con alta confianza. Prueba agregando palabras clave a tus categorías.' });
+        if (productsToProcess.length === 0) return;
+
+        let count = 0;
+        let corrected = 0;
+
+        const updatedProducts = data.products.map(p => {
+            const shouldProcess = processAll || !p.category;
+            if (!shouldProcess) return p;
+
+            const suggestion = suggestCategory(p.name, data.categories);
+
+            // Caso A: Coincidencia de alta/media confianza
+            if (suggestion && suggestion.confidence !== 'low') {
+                if (p.category !== suggestion.id) {
+                    if (p.category) corrected++;
+                    else count++;
+                    return { ...p, category: suggestion.id };
+                }
             }
+            // Caso B: No hay coincidencia pero estamos re-evaluando todo
+            // Esto limpia items mal categorizados previamente (ej: "Chocolate" en "Bebidas")
+            else if (processAll && p.category) {
+                corrected++;
+                return { ...p, category: '' }; // Limpiar categoría incierta/incorrecta
+            }
+
+            return p;
+        });
+
+        if (count > 0 || corrected > 0) {
+            updateData('products', updatedProducts);
+            // Pequeño delay para que el contexto se actualice antes del alert
+            setTimeout(() => {
+                alert({
+                    title: 'Limpieza Completada',
+                    message: `✅ Proceso finalizado:\n\n` +
+                        `- Nuevas categorías: ${count}\n` +
+                        `- Errores corregidos/limpiados: ${corrected}\n\n` +
+                        `Productos como Aceite y Galletas deberían haberse movido a sus nuevas secciones.\n\n` +
+                        `**IMPORTANTE:** Si todavía ves productos mal ubicados en el POS, por favor recarga la página (F5).`
+                });
+            }, 500);
+        } else {
+            await alert({ title: 'Aviso', message: 'No se encontraron cambios necesarios con las reglas actuales.' });
         }
     };
 
@@ -303,6 +350,30 @@ export const ProductsPage = () => {
 
     const columns = [
         {
+            header: '',
+            accessor: 'isFavorite',
+            width: '40px',
+            render: (row) => (
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        updateItem('products', row.id, { ...row, isFavorite: !row.isFavorite });
+                    }}
+                    style={{
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: row.isFavorite ? '#fb923c' : 'rgba(255,255,255,0.2)',
+                        transition: 'all 0.2s',
+                        padding: '4px'
+                    }}
+                    className="hover-scale"
+                >
+                    <Star size={18} fill={row.isFavorite ? '#fb923c' : 'none'} />
+                </button>
+            )
+        },
+        {
             header: 'Imagen',
             accessor: 'image',
             render: (row) => (
@@ -331,6 +402,22 @@ export const ProductsPage = () => {
                     {(data.categories || []).find(c => c.id === row.category)?.label || row.category}
                 </span>
             )
+        },
+        {
+            header: 'Proveedor',
+            accessor: 'supplierId',
+            render: (row) => {
+                const supplier = (data.suppliers || []).find(s => s.id === row.supplierId);
+                return (
+                    <span style={{
+                        color: supplier ? 'var(--text-primary)' : 'var(--text-secondary)',
+                        fontSize: '0.85rem',
+                        fontStyle: supplier ? 'normal' : 'italic'
+                    }}>
+                        {supplier ? supplier.name : 'Sin asignar'}
+                    </span>
+                );
+            }
         },
         {
             header: 'Precio Venta',
@@ -504,7 +591,7 @@ export const ProductsPage = () => {
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <span>Valor:</span>
                                     <span style={{ color: 'var(--accent-green)', fontWeight: 'bold' }}>
-                                        ${(data.products || []).reduce((acc, curr) => acc + curr.price, 0).toFixed(2)}
+                                        ${(data.products || []).reduce((acc, curr) => acc + (curr.price * Math.max(0, curr.stock || 0)), 0).toFixed(2)}
                                     </span>
                                 </div>
                             </div>
@@ -707,6 +794,20 @@ export const ProductsPage = () => {
                                         ))}
                                     </select>
                                 </div>
+
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Proveedor</label>
+                                    <select
+                                        className="glass-input"
+                                        value={formData.supplierId}
+                                        onChange={(e) => setFormData({ ...formData, supplierId: e.target.value })}
+                                    >
+                                        <option value="">-- Seleccionar Proveedor --</option>
+                                        {(data.suppliers || []).sort((a, b) => a.name.localeCompare(b.name)).map(sup => (
+                                            <option key={sup.id} value={sup.id}>{sup.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
 
                             <div>
@@ -802,17 +903,39 @@ export const ProductsPage = () => {
                                         <div style={{ flex: 1 }}>
                                             <div style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>📦 Materia Prima</div>
                                             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                                                NO se muestra en POS. Solo para inventario (ej: Cochino en canal)
+                                                Solo para inventario interno, no aparecerá en el POS
+                                            </div>
+                                        </div>
+                                    </label>
+
+                                    {/* isFavorite Toggle in Modal */}
+                                    <label style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.75rem',
+                                        cursor: 'pointer',
+                                        padding: '0.75rem',
+                                        background: formData.isFavorite ? 'rgba(251, 146, 60, 0.1)' : 'rgba(255,255,255,0.03)',
+                                        borderRadius: '8px',
+                                        border: `2px solid ${formData.isFavorite ? '#ea580c' : 'rgba(255,255,255,0.1)'} `,
+                                        transition: 'all 0.2s',
+                                        marginTop: '0.5rem'
+                                    }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.isFavorite}
+                                            onChange={(e) => setFormData({ ...formData, isFavorite: e.target.checked })}
+                                            style={{ width: '18px', height: '18px' }}
+                                        />
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>⭐ Acceso Rápido (Favorito)</div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                                Aparecerá en la pantalla principal del POS para carga ultra-rápida
                                             </div>
                                         </div>
                                     </label>
                                 </div>
 
-                                {!formData.showInPOS && (
-                                    <div style={{ marginTop: '0.75rem', padding: '0.5rem', background: 'rgba(255, 165, 0, 0.1)', borderRadius: '6px', fontSize: '0.75rem' }}>
-                                        💡 <strong>Ejemplo:</strong> "Cochino en canal" es materia prima. Luego vendes productos finales como "Cochino Frito" o "Cochino en Brasa"
-                                    </div>
-                                )}
                             </div>
 
 

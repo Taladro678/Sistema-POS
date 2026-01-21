@@ -3,19 +3,25 @@ import { io } from "socket.io-client";
 // AUTOMATIC DISCOVERY:
 // If running on localhost, use localhost:3001
 // If accessed via Network IP (e.g. 192.168.1.15:5173), assume API is on same IP (192.168.1.15:3001)
-const getAutoServerUrl = () => {
+export const getAutoServerUrl = () => {
+    // 1. Manually overridden Server URL (from Multi-Device Auto-Discovery)
+    const remoteIp = localStorage.getItem('remote_server_ip');
+    if (remoteIp) {
+        return `http://${remoteIp}:3001`;
+    }
+
     const savedUrl = localStorage.getItem('pos_server_url');
     if (savedUrl) return savedUrl;
 
     // Check if running inside Capacitor (Native App)
     const isNative = window.Capacitor?.isNative || window.location.protocol === 'capacitor:' || window.location.protocol === 'file:';
     if (isNative) {
-        return `http://127.0.0.1:3001`;
+        return `http://127.0.0.1:3001`; // Standardize on 3001 as defined in server/index.js
     }
 
     const protocol = window.location.protocol;
     const hostname = window.location.hostname;
-    return `${protocol}//${hostname}:3001`;
+    return `${protocol}//${hostname}:3001`; // Standardize on 3001
 };
 
 const SERVER_URL = getAutoServerUrl();
@@ -91,6 +97,28 @@ class LocalSyncService {
         this.socket.on("remote_cart_update", (data) => {
             this.notifySubscribers('remote_cart_update', data);
         });
+
+        this.socket.on("encryption_required", (data) => {
+            console.log("🔒 Server is LOCKED. Master Key required.");
+            this.notifySubscribers('encryption_required', data);
+        });
+
+        this.socket.on("encryption_unlock_success", () => {
+            this.notifySubscribers('encryption_unlock_success', null);
+        });
+
+        this.socket.on("encryption_unlock_error", (err) => {
+            console.error("❌ Encryption error:", err.message);
+            this.notifySubscribers('encryption_unlock_error', err);
+        });
+
+        this.socket.on("encryption_key_accepted", () => {
+            this.notifySubscribers('encryption_key_accepted', null);
+        });
+
+        this.socket.on("encryption_key_changed", () => {
+            this.notifySubscribers('encryption_key_changed', null);
+        });
     }
 
     // Subscribe to events
@@ -109,6 +137,14 @@ class LocalSyncService {
     sendActiveCartUpdate(cartData) {
         if (this.socket && this.isConnected) {
             this.socket.emit("active_cart_update", cartData);
+            return true;
+        }
+        return false;
+    }
+
+    sendExchangeRate(rate) {
+        if (this.socket && this.isConnected) {
+            this.socket.emit("update_exchange_rate", rate);
             return true;
         }
         return false;
@@ -141,6 +177,22 @@ class LocalSyncService {
     sendFullStateUpdate(state) {
         if (this.socket && this.isConnected) {
             this.socket.emit("full_state_update", state);
+            return true;
+        }
+        return false;
+    }
+
+    sendEncryptionKey(key) {
+        if (this.socket && this.isConnected) {
+            this.socket.emit("provide_encryption_key", key);
+            return true;
+        }
+        return false;
+    }
+
+    changeMasterKey(oldKey, newKey) {
+        if (this.socket && this.isConnected) {
+            this.socket.emit("change_master_key", { oldKey, newKey });
             return true;
         }
         return false;

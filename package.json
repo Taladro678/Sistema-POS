@@ -1,11 +1,11 @@
 {
   "name": "sistemapos",
   "private": true,
-  "version": "2.2.6",
+  "version": "2.4.0",
   "type": "module",
   "main": "electron-main.cjs",
   "scripts": {
-    "dev": "vite --host",
+    "dev": "concurrently \"vite --host\" \"node server/index.js\"",
     "build": "vite build",
     "start": "node server/index.js",
     "lint": "eslint .",
@@ -20,6 +20,7 @@
     "@capacitor/core": "^7.0.0",
     "@vladmandic/face-api": "^1.7.12",
     "adm-zip": "^0.5.16",
+    "cordova-plugin-android-permissions": "^1.1.5",
     "cors": "^2.8.5",
     "crypto-js": "^4.2.0",
     "express": "^4.21.2",

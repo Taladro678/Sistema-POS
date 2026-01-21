@@ -2,25 +2,33 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { useDialog } from '../context/DialogContext';
-import { UserCircle, Plus, Edit, Trash2, Phone, Mail, MapPin, CreditCard, BarChart2 } from 'lucide-react';
+import { UserCircle, Plus, Edit, Trash2, Phone, Mail, MapPin, CreditCard, BarChart2, Search, Loader2 } from 'lucide-react';
 import Modal from '../components/Modal';
 import ExcelImporter from '../components/ExcelImporter';
 
 export const CustomersPage = () => {
     const { data, addItem, updateItem, deleteItem } = useData();
+    const customers = data.customers || [];
     const { confirm, alert } = useDialog();
     const navigate = useNavigate();
-    const customers = data.customers || [];
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    React.useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState(null);
     const [formData, setFormData] = useState({
+        idNumber: '',
         name: '',
         phone: '',
         email: '',
         address: '',
         creditLimit: 0
     });
+    const [isSearching, setIsSearching] = useState(false);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -33,12 +41,58 @@ export const CustomersPage = () => {
 
         setIsModalOpen(false);
         setEditingCustomer(null);
-        setFormData({ name: '', phone: '', email: '', address: '', creditLimit: 0 });
+        setFormData({ idNumber: '', name: '', phone: '', email: '', address: '', creditLimit: 0 });
+    };
+
+    const handleLookup = async () => {
+        if (!formData.idNumber) return;
+
+        setIsSearching(true);
+        try {
+            // Check if already in local state first to save time/API
+            const localMatch = customers.find(c => c.idNumber === formData.idNumber);
+            if (localMatch) {
+                setFormData({
+                    ...formData,
+                    name: localMatch.name,
+                    phone: localMatch.phone || formData.phone,
+                    address: localMatch.address || formData.address,
+                    email: localMatch.email || formData.email
+                });
+                setIsSearching(false);
+                return;
+            }
+
+            // Consult server proxy
+            const response = await fetch(`${window.location.protocol}//${window.location.hostname}:3001/api/lookup/cedula/${formData.idNumber}`);
+            const result = await response.json();
+
+            if (result.success) {
+                setFormData({
+                    ...formData,
+                    name: result.name
+                });
+            } else {
+                await alert({
+                    title: 'No Encontrado',
+                    message: result.error || 'No se pudo obtener información para este ID.'
+                });
+            }
+        } catch (e) {
+            console.error('Error lookup:', e);
+            await alert({
+                title: 'Error de Consulta',
+                message: 'No hay conexión con el servicio de búsqueda.'
+            });
+        } finally {
+            setIsSearching(false);
+        }
     };
 
     const handleEdit = (customer) => {
         setEditingCustomer(customer);
         setFormData({
+            idNumber: customer.idNumber || '',
             name: customer.name,
             phone: customer.phone || '',
             email: customer.email || '',
@@ -60,7 +114,7 @@ export const CustomersPage = () => {
 
     const handleNew = () => {
         setEditingCustomer(null);
-        setFormData({ name: '', phone: '', email: '', address: '', creditLimit: 0 });
+        setFormData({ idNumber: '', name: '', phone: '', email: '', address: '', creditLimit: 0 });
         setIsModalOpen(true);
     };
 
@@ -90,6 +144,7 @@ export const CustomersPage = () => {
             }
 
             const newCustomer = {
+                idNumber: (row[getKey('cedula')] || row[getKey('rif')] || row[getKey('id')])?.toString() || '',
                 name: name,
                 phone: (row[getKey('telefono')] || row[getKey('phone')] || row[getKey('celular')])?.toString() || '',
                 email: (row[getKey('email')] || row[getKey('correo')])?.toString() || '',
@@ -137,6 +192,7 @@ export const CustomersPage = () => {
                     <table className="w-full">
                         <thead>
                             <tr className="border-b border-gray-700">
+                                <th className="text-left p-4 text-gray-300 font-semibold">Cédula/RIF</th>
                                 <th className="text-left p-4 text-gray-300 font-semibold">Cliente</th>
                                 <th className="text-left p-4 text-gray-300 font-semibold">Teléfono</th>
                                 <th className="text-left p-4 text-gray-300 font-semibold">Correo Electrónico</th>
@@ -148,6 +204,9 @@ export const CustomersPage = () => {
                         <tbody>
                             {customers.map(customer => (
                                 <tr key={customer.id} className="border-b border-gray-800 hover:bg-white/5">
+                                    <td className="p-4">
+                                        <span className="text-gray-400 font-mono text-sm">{customer.idNumber || '---'}</span>
+                                    </td>
                                     <td className="p-4">
                                         <div className="flex items-center gap-2">
                                             <UserCircle size={20} color="var(--accent-blue)" />
@@ -227,6 +286,28 @@ export const CustomersPage = () => {
                 </h2>
                 <form onSubmit={handleSubmit}>
                     <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-semibold mb-2">Cédula / RIF</label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    className="glass-input flex-1"
+                                    value={formData.idNumber}
+                                    onChange={(e) => setFormData({ ...formData, idNumber: e.target.value })}
+                                    placeholder="V-12345678"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleLookup}
+                                    disabled={!formData.idNumber || isSearching}
+                                    className="glass-button primary p-2"
+                                    title="Buscar datos"
+                                >
+                                    {isSearching ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
+                                </button>
+                            </div>
+                        </div>
+
                         <div>
                             <label className="block text-sm font-semibold mb-2">Nombre *</label>
                             <input

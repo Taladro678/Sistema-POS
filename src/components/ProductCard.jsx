@@ -1,67 +1,150 @@
 import React from 'react';
+import { Plus, Minus } from 'lucide-react';
 
-const ProductCard = ({ product, onAdd, priceDisplay }) => {
+const ProductCard = React.memo(({ product, onAdd, onRemove, onLongPress, priceDisplay }) => {
     // Helper to sanitize name for filenames
-    // Replace non-alphanumeric chars with underscore, lowercase
     const safeName = React.useMemo(() => {
         return product.name
             .toLowerCase()
-            .replace(/ñ/g, 'n')
-            .replace(/[áäà]/g, 'a')
-            .replace(/[éëè]/g, 'e')
-            .replace(/[íïì]/g, 'i')
-            .replace(/[óöò]/g, 'o')
-            .replace(/[úüù]/g, 'u')
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
             .replace(/[^a-z0-9]/g, '_')
             .replace(/_+/g, '_')
             .replace(/^_|_$/g, '');
     }, [product.name]);
 
-    // Use a ref to check if local image failed, to avoid infinite loop or flicker if handled poorly
-    // Simpler approach: use generic onError
     const [imgSrc, setImgSrc] = React.useState(product.image || `/products/${safeName}.jpg`);
+    const longPressTimer = React.useRef(null);
+    const [isPressing, setIsPressing] = React.useState(false);
+    const pointerStartPos = React.useRef({ x: 0, y: 0 });
 
-    // Reset when product changes
     React.useEffect(() => {
-        setImgSrc(product.image || `/products/${safeName}.jpg`);
-    }, [product, safeName]);
+        const newSrc = product.image || `/products/${safeName}.jpg`;
+        setImgSrc(prev => prev !== newSrc ? newSrc : prev);
+    }, [product.image, safeName]);
+
+    // LONG PRESS LOGIC WITH POINTER EVENTS
+    const handlePointerDown = React.useCallback((e) => {
+        // Only trigger on main click/pointer
+        if (e.button !== 0 && e.pointerType === 'mouse') return;
+
+        pointerStartPos.current = { x: e.clientX, y: e.clientY };
+        setIsPressing(true);
+
+        longPressTimer.current = setTimeout(() => {
+            if (onLongPress) {
+                onLongPress(product);
+                setIsPressing(false);
+            }
+        }, 500);
+    }, [onLongPress, product]);
+
+    const handlePointerUp = React.useCallback((e) => {
+        if (longPressTimer.current) {
+            clearTimeout(longPressTimer.current);
+            longPressTimer.current = null;
+
+            if (isPressing) {
+                onAdd(product);
+            }
+        }
+        setIsPressing(false);
+    }, [isPressing, onAdd, product]);
+
+    const handlePointerMove = React.useCallback((e) => {
+        if (!isPressing) return;
+
+        const moveX = Math.abs(e.clientX - pointerStartPos.current.x);
+        const moveY = Math.abs(e.clientY - pointerStartPos.current.y);
+
+        if (moveX > 15 || moveY > 15) { // Slightly larger threshold for pointer movement
+            if (longPressTimer.current) {
+                clearTimeout(longPressTimer.current);
+                longPressTimer.current = null;
+            }
+            setIsPressing(false);
+        }
+    }, [isPressing]);
+
+    const handlePointerCancel = React.useCallback(() => {
+        if (longPressTimer.current) {
+            clearTimeout(longPressTimer.current);
+            longPressTimer.current = null;
+        }
+        setIsPressing(false);
+    }, []);
 
     return (
         <div
-            className="glass-panel"
-            onClick={() => onAdd(product)}
+            className={`glass-panel group ProductCard ${isPressing ? 'scale-95' : ''}`}
+            onPointerDown={handlePointerDown}
+            onPointerUp={handlePointerUp}
+            onPointerMove={handlePointerMove}
+            onPointerCancel={handlePointerCancel}
             style={{
-                padding: '0.5rem',
+                padding: '0.4rem',
                 cursor: 'pointer',
-                transition: 'all 0.2s',
+                transition: 'transform 0.1s ease-out, border 0.2s ease, background 0.2s ease',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.5rem',
-                height: '100%' // Ensure card takes full height of grid cell
+                gap: '0.4rem',
+                position: 'relative',
+                overflow: 'hidden',
+                border: product.quantity > 0 ? '2px solid #fb923c' : '1px solid rgba(255, 255, 255, 0.1)',
+                background: product.quantity > 0 ? 'rgba(251, 146, 60, 0.1)' : undefined,
+                touchAction: 'pan-y', // Allow native vertical scrolling
+                userSelect: 'none',
+                WebkitUserSelect: 'none'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
             title={product.name}
         >
+            {/* Quantity Indicator Badge */}
+            {product.quantity > 0 && (
+                <div style={{
+                    position: 'absolute',
+                    top: '6px',
+                    right: '6px',
+                    background: '#fb923c',
+                    color: 'white',
+                    borderRadius: '50%',
+                    width: '30px',
+                    height: '30px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.2rem',
+                    fontWeight: '950',
+                    zIndex: 10,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                    border: '2px solid rgba(255,255,255,0.4)'
+                }}>
+                    {product.quantity}
+                </div>
+            )}
+
             <div style={{
                 width: '100%',
-                height: '100px', // Fixed height for image area
-                borderRadius: '6px',
+                height: '80px',
+                borderRadius: '8px',
                 overflow: 'hidden',
                 position: 'relative',
-                flexShrink: 0 // Prevent image from shrinking
+                flexShrink: 0,
+                backgroundColor: 'rgba(0,0,0,0.2)'
             }}>
                 {imgSrc ? (
                     <img
                         src={imgSrc}
                         alt={product.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        loading="lazy"
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            opacity: product.quantity > 0 ? 0.7 : 1,
+                            transition: 'opacity 0.2s ease'
+                        }}
                         onError={(e) => {
                             e.target.style.display = 'none';
                             e.currentTarget.parentElement.classList.add('image-error');
-                        }}
-                        onLoad={(e) => {
-                            e.currentTarget.parentElement.classList.remove('image-error');
                         }}
                     />
                 ) : null}
@@ -78,69 +161,34 @@ const ProductCard = ({ product, onAdd, priceDisplay }) => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        padding: '0.25rem',
-                        background: `hsl(${(product.name.charCodeAt(0) * 10) % 360}, 60%, 25%)`,
-                        color: 'rgba(255,255,255,0.95)',
-                        // Dynamic Font Size for Placeholder
-                        fontSize: product.name.length > 50 ? '0.55rem'
-                            : product.name.length > 30 ? '0.65rem'
-                                : product.name.length > 15 ? '0.75rem'
-                                    : '0.9rem',
-                        lineHeight: '1.2',
-                        fontWeight: '700',
-                        textAlign: 'center',
-                        textTransform: 'uppercase',
-                        overflowWrap: 'break-word',
-                        wordBreak: 'break-word',
-                        hyphens: 'auto',
-                        flexDirection: 'column',
+                        background: `hsl(${(product.name.charCodeAt(0) * 15) % 360}, 40%, 15%)`,
                     }}
                 >
-                    {product.name}
+                    <div style={{ opacity: 0.2, fontSize: '2rem' }}>📦</div>
                 </div>
-                {product.quantity > 0 && (
-                    <div style={{
-                        position: 'absolute',
-                        top: '4px',
-                        right: '4px',
-                        background: 'var(--accent-red)',
-                        color: 'white',
-                        borderRadius: '50%',
-                        width: '24px',
-                        height: '24px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.8rem',
-                        fontWeight: 'bold',
-                        boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
-                        border: '1px solid rgba(255,255,255,0.2)'
-                    }}>
-                        {product.quantity}
-                    </div>
-                )}
             </div>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', gap: '0.1rem' }}>
+
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0px', textAlign: 'center', justifyContent: 'center' }}>
                 <h3 style={{
-                    fontSize: '0.8rem',
-                    fontWeight: '600',
-                    marginBottom: '0',
-                    wordWrap: 'break-word',
-                    overflowWrap: 'break-word',
-                    lineHeight: '1.2',
+                    fontSize: '0.75rem',
+                    fontWeight: '800',
+                    color: 'white',
+                    lineHeight: '1.1',
                     display: '-webkit-box',
-                    WebkitLineClamp: 3,
+                    WebkitLineClamp: 2,
                     WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    margin: 0,
+                    padding: '0 2px'
                 }}>
                     {product.name}
                 </h3>
-                <p style={{ color: 'var(--accent-orange)', fontWeight: 'bold', fontSize: '0.9rem', marginTop: '0' }}>
+                <p style={{ color: '#fb923c', fontWeight: '950', fontSize: '1.1rem', margin: 0, marginTop: '2px' }}>
                     {priceDisplay || `$${product.price.toFixed(2)}`}
                 </p>
             </div>
         </div>
     );
-};
+});
 
 export default ProductCard;

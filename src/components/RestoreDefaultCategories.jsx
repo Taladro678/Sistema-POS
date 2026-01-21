@@ -25,7 +25,7 @@ const RestoreDefaultCategories = ({ compact = false }) => {
         {
             id: 'drinks',
             label: 'Bebidas',
-            keywords: ['bebida', 'refresco', 'jugo', 'agua', 'energizante', 'cola', 'pepsi', 'fanta', 'sprite', 'malta', 'te', 'cafe', 'limonada', 'naranja', 'manzana', 'batido', 'smoothie', 'soda']
+            keywords: ['bebida', 'refresco', 'jugo', 'agua', 'energizante', 'cola', 'pepsi', 'fanta', 'sprite', 'malta', 'te', 'cafe', 'limonada', 'naranja', 'manzana', 'batido', 'smoothie', 'soda', 'polar', 'tercio', 'cerveza', 'licor']
         },
         {
             id: 'sides',
@@ -35,7 +35,7 @@ const RestoreDefaultCategories = ({ compact = false }) => {
         {
             id: 'soups',
             label: 'Sopas',
-            keywords: ['sopa', 'caldo', 'consomé', 'crema', 'sancocho', 'mondongo', 'hervido', 'fosforera', 'pollo', 'res', 'gallina', 'pescado', 'mariscos']
+            keywords: ['sopa', 'caldo', 'consomé', 'crema', 'sancocho', 'mondongo', 'hervido', 'fosforera', 'pollo', 'res', 'gallina', 'pescado', 'mariscos', 'asopado']
         },
         {
             id: 'pasta',
@@ -43,14 +43,14 @@ const RestoreDefaultCategories = ({ compact = false }) => {
             keywords: ['pasta', 'espagueti', 'spaghetti', 'fettuccine', 'lasagna', 'ravioli', 'macarrones', 'penne', 'tallarines', 'carbonara', 'bolognesa', 'alfredo']
         },
         {
-            id: 'meals',
-            label: 'Platos Principales',
-            keywords: ['pollo', 'carne', 'pescado', 'cerdo', 'cochino', 'chuleta', 'asado', 'guisado', 'frito', 'parrilla', 'plancha', 'brasa', 'filete', 'lomo', 'costilla', 'pechuga']
+            id: 'comida',
+            label: 'Comida',
+            keywords: ['pollo', 'carne', 'pescado', 'cerdo', 'cochino', 'chuleta', 'asado', 'guisado', 'frito', 'parrilla', 'plancha', 'brasa', 'filete', 'lomo', 'costilla', 'pechuga', 'bollo', 'bollito', 'cachapa', 'calamares']
         },
         {
             id: 'desserts',
             label: 'Postres',
-            keywords: ['postre', 'dulce', 'helado', 'torta', 'pastel', 'cake', 'flan', 'gelatina', 'brownie', 'pie', 'mousse', 'quesillo', 'tres leches', 'marquesa', 'tiramisu']
+            keywords: ['postre', 'dulce', 'helado', 'torta', 'pastel', 'cake', 'flan', 'gelatina', 'brownie', 'pie', 'mousse', 'quesillo', 'tres leches', 'marquesa', 'tiramisu', 'alfajores', 'miel']
         },
         {
             id: 'salads',
@@ -60,7 +60,7 @@ const RestoreDefaultCategories = ({ compact = false }) => {
         {
             id: 'snacks',
             label: 'Snacks',
-            keywords: ['snack', 'aperitivo', 'tequeño', 'empanada', 'pastelito', 'cachapa', 'arepa', 'deditos', 'nuggets', 'alitas', 'wings', 'nachos']
+            keywords: ['snack', 'aperitivo', 'tequeño', 'empanada', 'pastelito', 'arepa', 'deditos', 'nuggets', 'alitas', 'wings', 'nachos']
         }
     ];
 

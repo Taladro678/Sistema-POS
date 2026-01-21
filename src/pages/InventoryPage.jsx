@@ -19,6 +19,7 @@ import { Plus, AlertTriangle, CheckCircle, Camera, Trash2, X } from 'lucide-reac
 
 export const InventoryPage = () => {
     const { data, addItem, deleteItem, updateItem, uploadToDrive } = useData();
+    const inventory = data.inventory || [];
     const { confirm, alert } = useDialog();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [photoFile, setPhotoFile] = useState(null);

@@ -7,8 +7,16 @@ import ExcelImporter from '../components/ExcelImporter';
 import { UserPlus, FileText, DollarSign, Trash2, Gift, Upload } from 'lucide-react';
 
 export const PersonnelPage = () => {
-    const { data, addItem, deleteItem, distributeTips, updateItem } = useData();
+    const { data, addItem, deleteItem, distributeTips, updateItem, uploadToDrive } = useData();
+    const personnel = data.personnel || [];
     const { confirm, alert } = useDialog();
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    React.useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isTipsModalOpen, setIsTipsModalOpen] = useState(false);
     const [showImportModal, setShowImportModal] = useState(false);
@@ -133,35 +141,84 @@ export const PersonnelPage = () => {
 
         let receiptLink = 'N/A';
 
+        // Create expense entry for secondary record
+        const transactionId = Date.now();
+        const expenseId = transactionId + 200; // Offset for personnel
+        const previewUrl = paymentFile ? URL.createObjectURL(paymentFile) : null;
+
+        addItem('expenses', {
+            id: expenseId,
+            date: new Date().toISOString(),
+            description: `Pago Nómina: ${selectedEmployee.name}`,
+            category: 'Nómina',
+            amount: selectedEmployee.salary,
+            method: 'Caja Chica',
+            proof: paymentFile ? '⏳ Subiendo...' : 'N/A',
+            localProof: previewUrl,
+            personnelId: selectedEmployee.id
+        });
+
+        // 3. Background Upload (LOCAL + DRIVE)
         if (paymentFile) {
-            setIsUploading(true);
-            const result = await data.uploadToDrive(paymentFile, 'Comprobantes Nómina'); // Assuming uploadToDrive is available in data or context
-            setIsUploading(false);
+            (async () => {
+                let finalLocalLink = null;
+                let finalCloudLink = null;
 
-            if (result && result.webViewLink) {
-                receiptLink = result.webViewLink;
-            } else {
-                // If upload failed but we proceed, or if we want to block. 
-                // For now let's alert and return if upload was expected but failed.
-                const ok = await confirm({
-                    title: 'Error de comprobante',
-                    message: 'No se pudo subir el comprobante. ¿Deseas registrar el pago sin comprobante?'
-                });
-                if (!ok) return;
-            }
+                // Step A: Local Server Upload
+                try {
+                    const formData = new FormData();
+                    formData.append('proof', paymentFile);
+                    const serverUrl = localStorage.getItem('pos_server_url') || `${window.location.protocol}//${window.location.hostname}:3001`;
+                    const response = await fetch(`${serverUrl}/api/upload-proof`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const localResult = await response.json();
+                    if (localResult.success) {
+                        finalLocalLink = localResult.url;
+                        // Fast update with local link
+                        updateItem('expenses', expenseId, { proof: finalLocalLink });
+                    }
+                } catch (err) {
+                    console.error('Local personnel upload failed:', err);
+                }
+
+                // Step B: Google Drive Upload
+                try {
+                    const result = await uploadToDrive(paymentFile, 'ERP La Autentica', 'Comprobantes Nómina');
+                    if (result && result.webViewLink) {
+                        finalCloudLink = result.webViewLink;
+                        updateItem('expenses', expenseId, { proof: finalCloudLink });
+                    } else if (!finalLocalLink) {
+                        updateItem('expenses', expenseId, { proof: '❌ Falló subida' });
+                    }
+                } catch (err) {
+                    console.error('Cloud personnel upload failed:', err);
+                    if (!finalLocalLink) {
+                        updateItem('expenses', expenseId, { proof: '❌ Falló subida' });
+                    }
+                }
+            })();
         }
-
-        // Update employee last payment date
-        const today = new Date().toLocaleDateString();
-        // Here we would ideally record a transaction in a 'expenses' or 'payments' collection
-        // For now, we update the employee record
-        updateItem('personnel', selectedEmployee.id, { lastPayment: today });
 
         await alert({
             title: 'Pago Registrado',
-            message: `Pago registrado para ${selectedEmployee.name}. Comprobante: ${receiptLink !== 'N/A' ? 'Subido a Drive' : 'No adjuntado'}`
+            message: `Pago registrado para ${selectedEmployee.name}. Se está procesando el comprobante en segundo plano.`
         });
         setIsPaymentModalOpen(false);
+    };
+
+    const sharePersonnelPaymentWhatsApp = (employee, receiptLink) => {
+        const message = `*Pago de Nómina - La Auténtica POS*\n\n` +
+            `📅 *Fecha:* ${new Date().toLocaleDateString()}\n` +
+            `👤 *Empleado:* ${employee.name}\n` +
+            `💵 *Monto:* $${employee.salary.toFixed(2)}\n` +
+            (receiptLink && receiptLink !== 'N/A' ? `📄 *Comprobante:* ${receiptLink}\n\n` : '\n') +
+            `¡Gracias por tu trabajo!`;
+
+        const encoded = encodeURIComponent(message);
+        const phone = employee.phone?.replace(/\D/g, '') || '';
+        window.open(`https://wa.me/${phone}?text=${encoded}`, '_blank');
     };
 
     const handleImportPayroll = async (excelData) => {

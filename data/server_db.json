@@ -1,0 +1,4276 @@
+{
+  "inventory": [],
+  "products": [
+    {
+      "id": 1768823427331000,
+      "name": "ACEITE DE OLIVA COSTA 500ML",
+      "price": 15.517241379310345,
+      "costPrice": 8.19827586206897,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427331001,
+      "name": "AFEITADORA",
+      "price": 0.8620689655172413,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427332002,
+      "name": "AGUA  EVA  AZUL",
+      "price": 1,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427332003,
+      "name": "AGUA 1.5L MINALBA",
+      "price": 2.5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427332004,
+      "name": "AGUA 330ML MINALBA",
+      "price": 1.2,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427332005,
+      "name": "AGUA 350 ML",
+      "price": 1.293103448275862,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427332006,
+      "name": "AGUA 5 LITROS",
+      "price": 5.172413793103448,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427332007,
+      "name": "AGUA 600ML MINALBA",
+      "price": 1.6,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427332008,
+      "name": "AGUA 600ML RESTAURANTE",
+      "price": 1.72413793103448,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427333009,
+      "name": "AGUA EL PLACER 500ML",
+      "price": 0.8620689655172413,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427333010,
+      "name": "AGUA PLACER 1500 ML",
+      "price": 2,
+      "costPrice": 0.939655172413793,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427333011,
+      "name": "AGUA PLACER 500 ML",
+      "price": 1,
+      "costPrice": 0.422413793103448,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427333012,
+      "name": "AGUA PLACER 5000 ML",
+      "price": 3.4482758620689653,
+      "costPrice": 2.37931034482759,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427333013,
+      "name": "AGUA PLACER SODA",
+      "price": 1.7241379310344827,
+      "costPrice": 0.78448275862069,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427333014,
+      "name": "AGUACATE",
+      "price": 2,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427333015,
+      "name": "ALCOHOL 120ML",
+      "price": 3,
+      "costPrice": 1.6,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427333016,
+      "name": "ALCOHOL 240 ML",
+      "price": 3.4482758620689653,
+      "costPrice": 1.37931034482759,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427333017,
+      "name": "ALFAJORES",
+      "price": 1.7241379310344827,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "desserts",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427333018,
+      "name": "ALMUERZO CRIOLLO",
+      "price": 16,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427333019,
+      "name": "ALMUERZO DEL DIA",
+      "price": 12.931034482758621,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427333020,
+      "name": "AREPA CALAMAR",
+      "price": 12.068965517241379,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "snacks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427333021,
+      "name": "AREPA CAMARON",
+      "price": 11.206896551724139,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "snacks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427333022,
+      "name": "AREPA CARNE EN VARA Y QUESO",
+      "price": 12.068965517241379,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "burgers",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427333023,
+      "name": "AREPA CAZON",
+      "price": 9.482758620689655,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "snacks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427334024,
+      "name": "AREPA COCHINO Y QUESO",
+      "price": 9.482758620689655,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "snacks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427334025,
+      "name": "AREPA CON ATUN",
+      "price": 11,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "snacks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427334026,
+      "name": "AREPA CON CAMARON",
+      "price": 12,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "snacks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427334027,
+      "name": "AREPA CON CARNE",
+      "price": 9.48275862068966,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "snacks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427334028,
+      "name": "AREPA CON COCHINO",
+      "price": 10,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "snacks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427334029,
+      "name": "AREPA CON PEPITONA",
+      "price": 11,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "snacks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427334030,
+      "name": "AREPA CON POLLO",
+      "price": 11,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "snacks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427334031,
+      "name": "AREPA CON QUESO",
+      "price": 7.75862068965517,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "snacks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427334032,
+      "name": "AREPA SIERRA",
+      "price": 13.793103448275861,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "snacks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427334033,
+      "name": "AREPA VIUDA",
+      "price": 1,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "snacks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427334034,
+      "name": "AREPAS FRITAS",
+      "price": 6.0344827586206895,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "sides",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427334035,
+      "name": "ARROZ A LA MARINERA",
+      "price": 18.96551724137931,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "sides",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427334036,
+      "name": "ARROZ CON LECHE",
+      "price": 3,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "sides",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427334037,
+      "name": "ARROZ PRIMOR",
+      "price": 1.5517241379310345,
+      "costPrice": 1.07758620689655,
+      "stock": 0,
+      "category": "sides",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427334038,
+      "name": "ASADO CRIOLLO",
+      "price": 15.5172413793103,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "meals",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427334039,
+      "name": "ASOPADO DE MARISCOS",
+      "price": 22.4137931034483,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "soups",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427335040,
+      "name": "BAILEYS LICOR",
+      "price": 34.48275862068966,
+      "costPrice": 21.9827586206897,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427335041,
+      "name": "BESOS DE COCO",
+      "price": 2,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427335042,
+      "name": "BIC MAXI YESQUERO EMCENDEDOR",
+      "price": 2.1551724137931036,
+      "costPrice": 1.29310344827586,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427335043,
+      "name": "BISTEC ENCEBOLLADO",
+      "price": 16.3793103448276,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "sides",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427335044,
+      "name": "BOCADILLO DE GUAYABA",
+      "price": 1,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427335045,
+      "name": "BOCADILLO DE PLATANO (3Unds.)",
+      "price": 1,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "sides",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427335046,
+      "name": "BOLLITO CHICHARRON",
+      "price": 2.1551724137931036,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427335047,
+      "name": "BOLLITO CON QUESO",
+      "price": 6,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427335048,
+      "name": "BOLLITO MAIZ",
+      "price": 2.1551724137931036,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427335049,
+      "name": "BOLLO CHICHARRON",
+      "price": 2.5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427335050,
+      "name": "BOLLO CON QUESO",
+      "price": 5.17241379310345,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427335051,
+      "name": "BOLLO DE CHICHARRON",
+      "price": 2.5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427335052,
+      "name": "BOLLO DE MAIZ",
+      "price": 2,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427335053,
+      "name": "BOLSA BOLLITO X5",
+      "price": 6.896551724137931,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427335054,
+      "name": "BOLSA DE HIELO",
+      "price": 2.5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427336055,
+      "name": "BOLSA DE HIELO PEQUEÑA",
+      "price": 1,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427336056,
+      "name": "BOTELLA DE REFRESCO",
+      "price": 0.862068965517241,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427336057,
+      "name": "CACHAPA CON QUESO",
+      "price": 9.48275862068966,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "comida",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427336058,
+      "name": "CACHAPA DOBLE QUESO",
+      "price": 12.068965517241379,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "burgers",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427336059,
+      "name": "CACHAPA QUESO LLEVAR",
+      "price": 8,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "comida",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427336060,
+      "name": "CACHAPA QUESO Y CARNE",
+      "price": 16.38,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "burgers",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427336061,
+      "name": "CACHAPA QUESO Y COCHINO",
+      "price": 16.379310344827587,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "comida",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427336062,
+      "name": "CACHAPA QUESO Y POLLO",
+      "price": 16.379310344827587,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "comida",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427336063,
+      "name": "CACHAPA SOLA",
+      "price": 5.17241379310345,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "comida",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427336064,
+      "name": "CACHAPA SOLA LLEVAR",
+      "price": 4,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "comida",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427336065,
+      "name": "CAFE CON LECHE PEQUEÑO",
+      "price": 2.5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427336066,
+      "name": "CAFE EXPRESO DOBLE",
+      "price": 2.586206896551724,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427336067,
+      "name": "CAFE NEGRO GRANDE",
+      "price": 2.1551724137931,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427336068,
+      "name": "CAFE NEGRO PEQUEÑO",
+      "price": 1.5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427336069,
+      "name": "CAFEBOCONES 250GR",
+      "price": 6,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427337070,
+      "name": "CAJA",
+      "price": 17.24137931034483,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427337071,
+      "name": "CALAMARES REBOSADOS",
+      "price": 17.24137931034483,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "comida",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427337072,
+      "name": "CAMARONES AL AJILLO",
+      "price": 22.4137931034483,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427337073,
+      "name": "CAMARONES REBOSADOS",
+      "price": 22.4137931034483,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427337074,
+      "name": "CARITE FRITO",
+      "price": 17.24137931034483,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "meals",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427337075,
+      "name": "CARNE EN VARA 1 KG",
+      "price": 43.1034482758621,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "meals",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427337076,
+      "name": "CARNE EN VARA 1/2 KG",
+      "price": 24.137931034482758,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "meals",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427337077,
+      "name": "CARNE EN VARA 1/4 Kg",
+      "price": 12.931034482758621,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "meals",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427337078,
+      "name": "CARNE EN VARA/ COCHINO EN VARA",
+      "price": 43.10344827586207,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "meals",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427337079,
+      "name": "CASABE BOLSA",
+      "price": 2.5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427337080,
+      "name": "CASABE GRANDE",
+      "price": 4,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427337081,
+      "name": "CATALANA",
+      "price": 19.8275862068966,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427337082,
+      "name": "CATALINA GRANDE",
+      "price": 2.58620689655172,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427337083,
+      "name": "CATALINA PEQUEÑA",
+      "price": 3,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427337084,
+      "name": "CAVA  ANIME GRANDE",
+      "price": 15.52,
+      "costPrice": 10.3448275862069,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427337085,
+      "name": "CAVA  ANIME MEDIANA",
+      "price": 10.344827586206897,
+      "costPrice": 6,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427338086,
+      "name": "CENA CRIOLLA",
+      "price": 17.24,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427338087,
+      "name": "CERVEZA BOTELLITA",
+      "price": 1.5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427338088,
+      "name": "CERVEZA BUDWEISER",
+      "price": 1.7241379310344827,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427338089,
+      "name": "CERVEZA CORONA",
+      "price": 2.1551724137931036,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427338090,
+      "name": "CERVEZA DE LATA",
+      "price": 2.1551724138,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427338091,
+      "name": "CERVEZA HEINEKEN",
+      "price": 1.724137931,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427338092,
+      "name": "CERVEZA NEGRA/LIGH",
+      "price": 1.2931034483,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427338093,
+      "name": "CERVEZA POKER",
+      "price": 1.7241379310344827,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427338094,
+      "name": "CHICHA CRIOLLA  V2",
+      "price": 4,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427338095,
+      "name": "CHICHA CRIOLLA P3",
+      "price": 9,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427338096,
+      "name": "CHICHA CRIOLLA V1",
+      "price": 3.5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427338097,
+      "name": "CHICHA CRIOLLA v2",
+      "price": 4,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427338098,
+      "name": "CHICHA GRANDE P2",
+      "price": 8,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427338099,
+      "name": "CHICHA VASO V5",
+      "price": 1.2,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427338100,
+      "name": "CHICHARRON",
+      "price": 40,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427338101,
+      "name": "CHOCOLATE BIANCHI",
+      "price": 1.7241379310344827,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427339102,
+      "name": "CIGARRO BELMONT GRANDE",
+      "price": 3.4482758620689653,
+      "costPrice": 2,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427339103,
+      "name": "CIGARRO BELMONT PEQUEÑA",
+      "price": 2.1551724137931036,
+      "costPrice": 1.00862068965517,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427339104,
+      "name": "CIGARRO LUCKY STRIKE GRANDE",
+      "price": 4.310344827586207,
+      "costPrice": 2.39655172413793,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427339105,
+      "name": "COCHINO 1/2 Kg",
+      "price": 24.1379310344828,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "meals",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427339106,
+      "name": "COCHINO 1/4 Kg",
+      "price": 12.931034482758621,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "meals",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427339107,
+      "name": "COCHINO EN VARA",
+      "price": 43.10344827586207,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "meals",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427339108,
+      "name": "COCHINO FRITO",
+      "price": 13.793103448275861,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "meals",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427339109,
+      "name": "COCOSETTE",
+      "price": 1.7241379310344827,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427339110,
+      "name": "COJINUA",
+      "price": 18,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427339111,
+      "name": "COLGATE CREMA DENTAL LUMINOUS WHITE 75 ML",
+      "price": 3.8793103448275863,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "sopas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427339112,
+      "name": "COMIDA CRIOLLA",
+      "price": 0,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427339113,
+      "name": "CONFITERIA",
+      "price": 0.8620689655172413,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427339114,
+      "name": "CONSERVA DE COCO",
+      "price": 3.44827586206897,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427339115,
+      "name": "CONSERVA DE LECHE",
+      "price": 2.58620689655172,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427339116,
+      "name": "CONSERVAS DE COCO",
+      "price": 3.44827586206897,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427340117,
+      "name": "COPA VINO",
+      "price": 3.4482758620689653,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427340118,
+      "name": "COSTILLA CERDO",
+      "price": 7.758620689655173,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "meals",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427340119,
+      "name": "DESAYUNO CRIOLLO",
+      "price": 12.0689655172414,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427340120,
+      "name": "DESAYUNO MARGARITEÑO",
+      "price": 12.068965517241379,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427340121,
+      "name": "DESODORANTE DOVE BARRA",
+      "price": 4.741379310344827,
+      "costPrice": 3.76724137931034,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427340122,
+      "name": "DULCE CRIOLLO",
+      "price": 3.8793103448275863,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "dulces",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427340123,
+      "name": "DULCE DE GUAYABA 3Und.",
+      "price": 0.862068965517241,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "dulces",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427340124,
+      "name": "DULCE DE LECHE AREQUIPE",
+      "price": 4.5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "dulces",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427340125,
+      "name": "DULCE DE LECHE CON FRUTA",
+      "price": 5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "dulces",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427340126,
+      "name": "DULCE DE LECHE CONSERVA GRANDE",
+      "price": 4.310344827586207,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "dulces",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427340127,
+      "name": "DULCE DE LECHE CONSERVA PEQ",
+      "price": 3,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "dulces",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427340128,
+      "name": "DULCE DE LECHE CORTADO",
+      "price": 4.5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "dulces",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427340129,
+      "name": "DULCE DE TAMARINDO",
+      "price": 1,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "dulces",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427340130,
+      "name": "DULCE EN ALMIBAR LECHOZA",
+      "price": 6.896551724137931,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "dulces",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427340131,
+      "name": "EMPANADA",
+      "price": 2.58620689655172,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "snacks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427341132,
+      "name": "EMPANADA CALAMAR",
+      "price": 4.310344827586207,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "snacks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427341133,
+      "name": "EMPANADA CAMARON",
+      "price": 3.4482758620689653,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "snacks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427341134,
+      "name": "ENSALADA RAYADA",
+      "price": 8,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "salads",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427341135,
+      "name": "ENVASE",
+      "price": 0.8620689655,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427341136,
+      "name": "EUFORIA",
+      "price": 2.586206896551724,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427341137,
+      "name": "EUFORIA BEBIDA ENERGIZANTE",
+      "price": 2.586206896551724,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427341138,
+      "name": "FILET PUERTO RICO",
+      "price": 25.862068965517242,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427341139,
+      "name": "FRIJOL",
+      "price": 2.1551724137931036,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427341140,
+      "name": "GALLETA BELVITA KRAKER",
+      "price": 0.8620689655,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427341141,
+      "name": "GALLETA CLUB SOCIAL",
+      "price": 0.8620689655172413,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427341142,
+      "name": "GALLETA DE SODA CARABOBO",
+      "price": 0.8620689655,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427341143,
+      "name": "GALLETA ELITE",
+      "price": 1.293103448275862,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427341144,
+      "name": "GATORADE",
+      "price": 3.44827586206897,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427341145,
+      "name": "GELATINA",
+      "price": 1.5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "desserts",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427342146,
+      "name": "GOLFEADO",
+      "price": 3,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427342147,
+      "name": "GUAYAMANO GRANDE",
+      "price": 16,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427342148,
+      "name": "GUAYAMANO LA  AUTENTICA",
+      "price": 8.5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427342149,
+      "name": "HELADO PALETA FRESH PICOLE",
+      "price": 0.8620689655172413,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "dulces",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427342150,
+      "name": "HELADO SANDWICH",
+      "price": 3.0172413793103448,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "dulces",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427342151,
+      "name": "HELADOS PALETA CREMOSOS NATURALES",
+      "price": 1.7241379310344827,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "dulces",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427342152,
+      "name": "HELADOS PALETA MAGNUN PICOLE",
+      "price": 3.0172413793103448,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "dulces",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427342153,
+      "name": "HELADOS PALETA YOGURT",
+      "price": 2.586206896551724,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "dulces",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427342154,
+      "name": "Highland Cup STANDAR",
+      "price": 12.068965517241379,
+      "costPrice": 7.75862068965517,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427342155,
+      "name": "JALEA DE MANGO",
+      "price": 4.5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427342156,
+      "name": "JARRA DE LIMONADA",
+      "price": 18,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427342157,
+      "name": "JARRA DE PAPELON",
+      "price": 19,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427342158,
+      "name": "JARRA DE PAPELON (MEDIA)",
+      "price": 10.344827586206897,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427342159,
+      "name": "JARRA DE PARCHITA",
+      "price": 18,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427343160,
+      "name": "JARRA JUGO",
+      "price": 18,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427343161,
+      "name": "JUGO DE FRESA",
+      "price": 4,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427343162,
+      "name": "JUGO DE GUANABANA",
+      "price": 4,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427343163,
+      "name": "JUGO DE GUAYABA",
+      "price": 4,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427343164,
+      "name": "JUGO DE MELON",
+      "price": 4,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427343165,
+      "name": "JUGO DE NARANJA",
+      "price": 3.44827586206897,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427343166,
+      "name": "JUGO DE PARCHITA",
+      "price": 4,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427343167,
+      "name": "JUGO DE PATILLA",
+      "price": 4,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427343168,
+      "name": "JUGO DE PIÑA",
+      "price": 4,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427343169,
+      "name": "JUGO NATURAL",
+      "price": 4,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427343170,
+      "name": "LEBRANCHE",
+      "price": 28,
+      "costPrice": 16,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427343171,
+      "name": "LIMONADA",
+      "price": 3.44827586206897,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427343172,
+      "name": "LIPTON  TE",
+      "price": 2.58620689655172,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427343173,
+      "name": "MALTA  1.5L",
+      "price": 2.58620689655172,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427343174,
+      "name": "MALTA DE LATA",
+      "price": 2.58620689655172,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427344175,
+      "name": "MALTA RETORNABLE",
+      "price": 0.862068965517241,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427344176,
+      "name": "MANJARETE",
+      "price": 3.4482758620689653,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427344177,
+      "name": "MASA MAIZ",
+      "price": 4.310344827586207,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427344178,
+      "name": "MAYONESA 910G",
+      "price": 8.189655172413794,
+      "costPrice": 5.10775862068966,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427344179,
+      "name": "MAZEITE 1L",
+      "price": 4.051724137931035,
+      "costPrice": 2.70474137931034,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427344180,
+      "name": "MEDIA PASTA BOLOGÑA",
+      "price": 8,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "pasta",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427344181,
+      "name": "MEDIA SOPA DE PESCADO",
+      "price": 9,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "soups",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427344182,
+      "name": "MEDIA SOPA PESCADO",
+      "price": 9,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "soups",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427344183,
+      "name": "MEDIA SOPA RES",
+      "price": 9,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "soups",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427344184,
+      "name": "MEDIO ASOPADO",
+      "price": 18,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "sopas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427344185,
+      "name": "MEDIO CONSOME",
+      "price": 2.58620689655172,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "soups",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427344186,
+      "name": "MENU ARTURO",
+      "price": 12.9310344827586,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427344187,
+      "name": "MENU EJECUTIVO CON BEBIDAS",
+      "price": 12.9310344827586,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427344188,
+      "name": "MERMELADA GUAYABA",
+      "price": 3,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427344189,
+      "name": "MIEL BOSQUE ALTO 200G",
+      "price": 6.0344827586206895,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427345190,
+      "name": "MIEL BOSQUE ALTO 400",
+      "price": 12.068965517241379,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427345191,
+      "name": "MIEL BOTELLA",
+      "price": 17.24137931034483,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427345192,
+      "name": "MIEL BOTELLAS",
+      "price": 0,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427345193,
+      "name": "MIEL CON JENGIBRE 400G",
+      "price": 10.344827586206897,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427345194,
+      "name": "MIEL GRANDE FLORES MASTRANTO Y ACACIA MANGIUM WILD",
+      "price": 21.551724137931,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "desserts",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427345195,
+      "name": "MIEL PQ FLORES MASTRANTO Y ACACIA MANGIUM WILD",
+      "price": 12.0689655172,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "desserts",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427345196,
+      "name": "MIGURT 250G",
+      "price": 2.1551724137931036,
+      "costPrice": 1.35991379310345,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427345197,
+      "name": "NATILLA GRANDE",
+      "price": 4.31034482758621,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427345198,
+      "name": "NATILLA LLANERA",
+      "price": 5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427345199,
+      "name": "NUCITA TUBITO 35G",
+      "price": 1.7241379310344827,
+      "costPrice": 1,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427345200,
+      "name": "OBLEAS",
+      "price": 2.5862068966,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427345201,
+      "name": "OVEJO",
+      "price": 11.206896551724139,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427345202,
+      "name": "PABELLON CRIOLLO",
+      "price": 15.5172413793103,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427345203,
+      "name": "PALETAS DE MADERA ARTESANAL",
+      "price": 4.310344827586207,
+      "costPrice": 3.76724137931034,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427345204,
+      "name": "PALMERITAS",
+      "price": 3,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427345205,
+      "name": "PAN DE GUAYABA",
+      "price": 4,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427346206,
+      "name": "PAN DE LECHE",
+      "price": 3,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427346207,
+      "name": "PAN DULCE",
+      "price": 3,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "dulces",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427346208,
+      "name": "PAPELON CON LIMON",
+      "price": 3.5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427346209,
+      "name": "PARGO FRITO",
+      "price": 19.8275862068966,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "meals",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427346210,
+      "name": "PARGUITO",
+      "price": 16.379310344827587,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427346211,
+      "name": "PARRILLA  MAR Y TIERRA",
+      "price": 40.5172413793103,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "meals",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427346212,
+      "name": "PARRILLA ESPECIAL",
+      "price": 33.6206896551724,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "meals",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427346213,
+      "name": "PARRILLA MIXTA",
+      "price": 26.7241379310345,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "meals",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427346214,
+      "name": "PASTA  LA BOLOÑA",
+      "price": 12.0689655172414,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "pasta",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427346215,
+      "name": "PASTA 1KG PRIMOR",
+      "price": 3.2327586206896552,
+      "costPrice": 2.1551724137931,
+      "stock": 0,
+      "category": "pasta",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427346216,
+      "name": "PASTA A LA MARINERA",
+      "price": 21.551724137931,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "pasta",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427346217,
+      "name": "PASTA LA AUTENTICA",
+      "price": 24.1379310344828,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "pasta",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427346218,
+      "name": "PAÑAL HUGGIES ACTIVE SEC M|2",
+      "price": 10.344827586206897,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427347219,
+      "name": "PAÑAL HUGGIES ACTIVE SEC XXG|4",
+      "price": 12.931034482758621,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427347220,
+      "name": "PEPITO",
+      "price": 1.7241379310344827,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427347221,
+      "name": "PERRIER 330 ML",
+      "price": 3.4482758620689653,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427347222,
+      "name": "PESCADO FRITO",
+      "price": 12.931034482758621,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "meals",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427347223,
+      "name": "PIRILIN CHOCO AVELLANA 16G",
+      "price": 0.8620689655172413,
+      "costPrice": 0.431034482758621,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427347224,
+      "name": "PIRILIN CHOCOLATE DISPENSADOR 4 UND",
+      "price": 3.4482758620689653,
+      "costPrice": 1.81034482758621,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427347225,
+      "name": "PIRILIN CHOCOLATE LATA 12 UND",
+      "price": 8.620689655172415,
+      "costPrice": 4.60344827586207,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427347226,
+      "name": "PLATO NAVIDEÑO",
+      "price": 15.517241379310345,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427347227,
+      "name": "POLAR TERCIO RESTAURANTE",
+      "price": 2.58620689655172,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427347228,
+      "name": "POLLO A LA PLANCHA",
+      "price": 16.3793103448276,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "meals",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427348229,
+      "name": "POLLO ASADO",
+      "price": 15.517241379310345,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "meals",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427348230,
+      "name": "POLLO EN BRASA",
+      "price": 18.96551724137931,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "meals",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427348231,
+      "name": "POLVOROSAS",
+      "price": 4.310344827586207,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427348232,
+      "name": "POSTRE",
+      "price": 4.310344827586207,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "dulces",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427348233,
+      "name": "PRINGLES",
+      "price": 5.172413793103448,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427348234,
+      "name": "PRINGLES PEQUEÑO",
+      "price": 3.4482758620689653,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427348235,
+      "name": "QUESO ALINADO",
+      "price": 6,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427348236,
+      "name": "QUESO DE AÑO BANDEJA",
+      "price": 3,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427348237,
+      "name": "QUESO DE CABRA",
+      "price": 18,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427349238,
+      "name": "QUESO DE MANO",
+      "price": 9.5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427349239,
+      "name": "QUESO DURO",
+      "price": 9.31034482758621,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427349240,
+      "name": "QUESO GUAYANES",
+      "price": 8.3,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427349241,
+      "name": "QUESO MADURADO",
+      "price": 16,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427349242,
+      "name": "QUESO MADURADO PIMIENTA",
+      "price": 18.8,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427349243,
+      "name": "QUESO MOZARELLA",
+      "price": 15.5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427349244,
+      "name": "QUESO PALMITO",
+      "price": 12,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427349245,
+      "name": "QUESO SEMI DURO",
+      "price": 10.8,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427349246,
+      "name": "QUESO TELITA",
+      "price": 9.5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427349247,
+      "name": "RACION CASABE GRATINADO",
+      "price": 4.310344827586207,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427349248,
+      "name": "RACION CHORIZO",
+      "price": 6.896551724137931,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427349249,
+      "name": "RACION DE AREPA FRITAS",
+      "price": 6.03448275862069,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "sides",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427349250,
+      "name": "RACION DE BOLLITO CON QUESO",
+      "price": 6,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427349251,
+      "name": "RACION DE BOLLITO DE CHICHARRON",
+      "price": 5.172413793103448,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427350252,
+      "name": "RACION DE BOLLITO DE MAIZ",
+      "price": 5.17241379310345,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427350253,
+      "name": "RACION DE CHICHARRON",
+      "price": 34.48275862068966,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427350254,
+      "name": "RACION DE COCHINO",
+      "price": 31.0344827586207,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "meals",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427350255,
+      "name": "RACION DE EMPANADA",
+      "price": 12,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "snacks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427350256,
+      "name": "RACION DE ENSALADA RALLADA",
+      "price": 4.310344827586207,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "salads",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427350257,
+      "name": "RACION DE PAPAS AL VAPOR",
+      "price": 6.896551724137931,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "sides",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427350258,
+      "name": "RACION DE PAPAS FRITAS",
+      "price": 6.03448275862069,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "sides",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427350259,
+      "name": "RACION DE QUESO A LA PLANCHA",
+      "price": 2.58620689655172,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427350260,
+      "name": "RACION DE QUESO DE MANO",
+      "price": 7,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427350261,
+      "name": "RACION DE TAJADAS",
+      "price": 6.03448275862069,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "sides",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427350262,
+      "name": "RACION DE YUCA FRITA",
+      "price": 7,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "sides",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427350263,
+      "name": "RACION PATACON",
+      "price": 7.758620689655173,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427350264,
+      "name": "RACION PLATANO SANCOCHADO",
+      "price": 5.172413793103448,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "sides",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427350265,
+      "name": "RACION QUESO",
+      "price": 7,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427351266,
+      "name": "RED BULL",
+      "price": 4.310344827586207,
+      "costPrice": 1.77586206896552,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427351267,
+      "name": "REFRESCO 1 LITRO",
+      "price": 2.586206896551724,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427351268,
+      "name": "REFRESCO 1.5L",
+      "price": 2.1551724137931036,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427351269,
+      "name": "REFRESCO 2.L",
+      "price": 6.03448275862069,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427351270,
+      "name": "REFRESCO 2L",
+      "price": 3.4482758620689653,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427351271,
+      "name": "REFRESCO COCACOLA 2L CON SERVICIO",
+      "price": 6.0344827586,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427351272,
+      "name": "REFRESCO DE 1.5L",
+      "price": 4.31034482758621,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427351273,
+      "name": "REFRESCO DE BOTELLA",
+      "price": 1.724137931,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427351274,
+      "name": "REFRESCO DE LATA",
+      "price": 2.1551724137931036,
+      "costPrice": 0.718390804597701,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427351275,
+      "name": "RON CARUPANO 12 AÑOS",
+      "price": 18.96551724137931,
+      "costPrice": 10.9913793103448,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427351276,
+      "name": "RON CARUPANO 21 AÑOS",
+      "price": 43.10344827586207,
+      "costPrice": 26.5775862068966,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427351277,
+      "name": "RON CARUPANO 6 AÑOS",
+      "price": 12.068965517241379,
+      "costPrice": 6.46551724137931,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427351278,
+      "name": "RONCADOR CON TOSTONES ENSALADA MIXTA",
+      "price": 8.620689655172415,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "salads",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427352279,
+      "name": "ROSQUITAS",
+      "price": 1.7241379310344827,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427352280,
+      "name": "SIERRA FRITA",
+      "price": 18.9655172413793,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427352281,
+      "name": "SODA",
+      "price": 2.59,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427352282,
+      "name": "SODA CON LIMON",
+      "price": 3.01724137931034,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427352283,
+      "name": "SODA LATA MINALBA",
+      "price": 2.58612247265625,
+      "costPrice": 0.844827586206897,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427352284,
+      "name": "SOLERA  AZUL",
+      "price": 1.72413793103448,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427352285,
+      "name": "SOLOMO TIPO MARIPOSA",
+      "price": 13.7931034482759,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "meals",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427352286,
+      "name": "SOPA DE PESCADO",
+      "price": 16,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "soups",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427352287,
+      "name": "SOPA DE POLLO",
+      "price": 8.620689655172415,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "soups",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427352288,
+      "name": "SOPA DE RES",
+      "price": 12.931034482758621,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "soups",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427352289,
+      "name": "SOPA GALLINA",
+      "price": 8.620689655172415,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "soups",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427352290,
+      "name": "SPARTAN",
+      "price": 1.7241379310344827,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427352291,
+      "name": "SUSPIROS ANA B",
+      "price": 2.5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427352292,
+      "name": "Sangría Caroreña",
+      "price": 8.620689655172415,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427353293,
+      "name": "TAJADAS",
+      "price": 6.0344827586206895,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "sides",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427353294,
+      "name": "TE",
+      "price": 3.0172413793103448,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427353295,
+      "name": "TE LIPTON",
+      "price": 2.58620689655172,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427353296,
+      "name": "TOALLAS FEMENINAS KOTEK NORMAL",
+      "price": 1.7241379310344827,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427353297,
+      "name": "TOALLAS HUMEDAS CHICCO 24UND",
+      "price": 2.1551724138,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427353298,
+      "name": "TOALLIN",
+      "price": 1.7241379310344827,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427353299,
+      "name": "TOALLITAS HUMEDAS DAVEY 50 UND",
+      "price": 3.8793103448275863,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427353300,
+      "name": "TORTA",
+      "price": 1.72413793103448,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "dulces",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427353301,
+      "name": "TOSTON",
+      "price": 1.72413793103448,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427353302,
+      "name": "TRAGO DE WISKY 12 AÑOS",
+      "price": 5.603448275862069,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427353303,
+      "name": "TRAGO DE WISKY ETIQUETA NEGRA 12 AÑOS",
+      "price": 6.4655172413793105,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427353304,
+      "name": "TRULULU",
+      "price": 2.586206896551724,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427353305,
+      "name": "TURRON AJONJOLI",
+      "price": 1.7241379310344827,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427353306,
+      "name": "TURRON BLANCO",
+      "price": 0.8620689655172413,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427353307,
+      "name": "VASELINA",
+      "price": 4.310344827586207,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427354308,
+      "name": "VASELINA TUBO",
+      "price": 3.4482758620689653,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427354309,
+      "name": "VASO CON HIELO",
+      "price": 0.2500738989062962,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427354310,
+      "name": "VINO BLANCO COSTA",
+      "price": 8.620689655172415,
+      "costPrice": 4.66379310344828,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427354311,
+      "name": "VIVERES",
+      "price": 5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "varios",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427354312,
+      "name": "WHISKY BLACK & WHITE 0.75L",
+      "price": 17.24,
+      "costPrice": 12.0689655172414,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427354313,
+      "name": "WHISKY HIGHLAND CUP 12 AÑOS",
+      "price": 22.413793103448278,
+      "costPrice": 17.1551724137931,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427354314,
+      "name": "WHISKY HIGHLAND CUP 8 AÑOS.",
+      "price": 11.2068965517,
+      "costPrice": 7.78448275862069,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427354315,
+      "name": "WHISKY SPEYMHOR",
+      "price": 25.8620689655,
+      "costPrice": 19.4827586206897,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427354316,
+      "name": "Whisky Buchanan's 12 Años 750ML",
+      "price": 31.03448275862069,
+      "costPrice": 26.8620689655172,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427354317,
+      "name": "Whisky OLD PARR 12",
+      "price": 28.448275862068964,
+      "costPrice": 26,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427354318,
+      "name": "YUCA AL AJILLO",
+      "price": 6.0344827586206895,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "sides",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427354319,
+      "name": "YUKERY 1.5 L",
+      "price": 4.310344827586207,
+      "costPrice": 2.80172413793103,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427354320,
+      "name": "YUKERY 250ML",
+      "price": 1.7241379310344829,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427354321,
+      "name": "ALMENDRAS DE CHOCOLATE CORAZON",
+      "price": 3.4482758620689653,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427355322,
+      "name": "AREPA CON PERICO Y QUESO",
+      "price": 8.62,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "snacks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427355323,
+      "name": "BARAJAS o NAIPES",
+      "price": 4.310344827586207,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427355324,
+      "name": "CAFE CON LECHE GRANDE",
+      "price": 3.02,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427355325,
+      "name": "CAFEBOCONES 500GR",
+      "price": 9.482758620689655,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427355326,
+      "name": "CASABE BULTO PEQ",
+      "price": 3,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427355327,
+      "name": "CERVEZA TERCIO",
+      "price": 2.1551724138,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "bebidas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427355328,
+      "name": "CHICLE CHAO 5 LINEAS (4Unds)",
+      "price": 0.8620689655,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427355329,
+      "name": "CHICLE DOUBLEMINT",
+      "price": 0.86,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427355330,
+      "name": "CHICLE FREEGELLS",
+      "price": 0.86,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427355331,
+      "name": "CHOCOLATE CACAO",
+      "price": 4,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427355332,
+      "name": "COLGATE CREMA DENTAL PLAX 100 ML",
+      "price": 2.8,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "sopas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427355333,
+      "name": "COLGATE CREMA DENTAL TRIPLE ACCION 60 ML",
+      "price": 1.72,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "sopas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427356334,
+      "name": "COLGATE ENGUAJE BUCAL PLAX 250 ML",
+      "price": 3.8793103448275863,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427356335,
+      "name": "COLGATE ENGUAJE BUCAL PLAX 500 ML",
+      "price": 6.47,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427356336,
+      "name": "CONSOME",
+      "price": 6,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "soups",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427356337,
+      "name": "DESODORANTE DOVE AEROSOL 150ML",
+      "price": 6.03,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427356338,
+      "name": "DULCE DE LECHE BANDEJA",
+      "price": 5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "dulces",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427356339,
+      "name": "DULCE DE LECHOZA MEDIANO",
+      "price": 6,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "dulces",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427356340,
+      "name": "DULCE DE LECHOZA PEQUEÑO",
+      "price": 4.5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "dulces",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427356341,
+      "name": "DULCE DE PLATANO 3Und.",
+      "price": 0.8620689655172413,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "dulces",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427356342,
+      "name": "GALLETA HONY BRAN",
+      "price": 0.8620689655172413,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427356343,
+      "name": "HUEVO ADICIONAL",
+      "price": 2,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427356344,
+      "name": "LANGOSTINOS",
+      "price": 24.137931034482758,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427356345,
+      "name": "MALTA 250ML",
+      "price": 1.72413793103448,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427356346,
+      "name": "MALTA DE BOTELLA REST",
+      "price": 1.72413793103448,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427357347,
+      "name": "MANI GRAPIÑADOS",
+      "price": 2.5862068966,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427357348,
+      "name": "MANI SALADO",
+      "price": 2.59,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427357349,
+      "name": "MEDIA PARRILLA MIXTA",
+      "price": 18,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "salads",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427357350,
+      "name": "MEDIA RACION DE QUESO DE MANO",
+      "price": 3,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427357351,
+      "name": "MEREY SALADO",
+      "price": 2.59,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427357352,
+      "name": "NATILLA PEQUEÑA",
+      "price": 1.72413793103448,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427357353,
+      "name": "PAN ACEMITAS",
+      "price": 3,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427357354,
+      "name": "PAN ANDINO",
+      "price": 3,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427357355,
+      "name": "PANELA",
+      "price": 3,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427357356,
+      "name": "PICANTE LA DIABLA",
+      "price": 5.17241379310345,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427357357,
+      "name": "PISTACHO EN CONCHA",
+      "price": 2.586206896551724,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427357358,
+      "name": "PLATANITO",
+      "price": 2.5,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427357359,
+      "name": "PONCHE CREMA",
+      "price": 17.24137931034483,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "sopas",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427357360,
+      "name": "PRODUCTO PRUEBA ACTULIZACION DE SISTEMA",
+      "price": 0.8620689655172413,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427358361,
+      "name": "QUESILLO",
+      "price": 4.31034482758621,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "desserts",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427358362,
+      "name": "QUESO DE MANO PEQUENO",
+      "price": 4,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "cheeses",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427358363,
+      "name": "RACION DE ARROZ",
+      "price": 3,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "sides",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427358364,
+      "name": "RACION DE CASABE",
+      "price": 4.31034482758621,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427358365,
+      "name": "RACION DE TOSTONES",
+      "price": 4.310344827586207,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "sides",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427358366,
+      "name": "ROLLITO DE GUAYABA CON LECHE",
+      "price": 2.499852202187408,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427358367,
+      "name": "SUSPIROS ANDINOS",
+      "price": 3,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427358368,
+      "name": "TOALLAS FEMENINAS ELLAS NORMAL",
+      "price": 1.293103448275862,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427358369,
+      "name": "TOALLAS FEMENINAS KOTEK DISCRETA",
+      "price": 2.1551724137931036,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427358370,
+      "name": "TOALLAS HUMEDAS CHICCO 48UNDS",
+      "price": 4.31,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427358371,
+      "name": "TOBLERONE 35Gr",
+      "price": 3.02,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427359372,
+      "name": "VASO PLASTICO CON HIELO",
+      "price": 0.21551724137931033,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427359373,
+      "name": "VELAS DE CUMPLEAÑOS",
+      "price": 2.1551724137931036,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427359374,
+      "name": "VINO BLANCO CASTEL GANDOLFO",
+      "price": 6.896551724137931,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427359375,
+      "name": "VINO BLANCO TERRA-ANDINA",
+      "price": 8.620689655172415,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "drinks",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427359376,
+      "name": "VINO BLANCO VICE - VERSA",
+      "price": 12.068965517241379,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427359377,
+      "name": "VINO TINTO COSTA",
+      "price": 8.620689655172415,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    },
+    {
+      "id": 1768823427359378,
+      "name": "YESQUERO o ENCENDEDOR",
+      "price": 0.8620689655172413,
+      "costPrice": 0,
+      "stock": 0,
+      "category": "",
+      "image": "",
+      "showInPOS": true
+    }
+  ],
+  "suppliers": [],
+  "personnel": [],
+  "users": [
+    {
+      "id": "u1",
+      "name": "Administrador",
+      "role": "admin",
+      "pin": "123"
+    },
+    {
+      "id": "u2",
+      "name": "Cajero",
+      "role": "cashier",
+      "pin": "123"
+    },
+    {
+      "id": "u3",
+      "name": "Cocina",
+      "role": "kitchen",
+      "pin": "123"
+    },
+    {
+      "id": "u4",
+      "name": "Barra",
+      "role": "bar",
+      "pin": "123"
+    },
+    {
+      "id": "u5",
+      "name": "Mesero",
+      "role": "waiter",
+      "pin": "123"
+    }
+  ],
+  "categories": [
+    {
+      "id": "burgers",
+      "label": "Hamburguesas",
+      "department": "Restaurante",
+      "keywords": [
+        "hamburguesa",
+        "burger",
+        "carne",
+        "doble",
+        "triple",
+        "bacon",
+        "queso",
+        "bbq",
+        "angus",
+        "wagyu",
+        "cheeseburger"
+      ]
+    },
+    {
+      "id": "cheeses",
+      "label": "Quesos",
+      "department": "Quesera",
+      "keywords": [
+        "queso",
+        "cheese",
+        "cheddar",
+        "mozzarella",
+        "parmesano",
+        "gouda",
+        "mano",
+        "telita",
+        "guayanes",
+        "fundido",
+        "gratinado"
+      ]
+    },
+    {
+      "id": "drinks",
+      "label": "Bebidas",
+      "department": "Restaurante",
+      "keywords": [
+        "bebida",
+        "refresco",
+        "jugo",
+        "agua",
+        "energizante",
+        "cola",
+        "pepsi",
+        "fanta",
+        "sprite",
+        "malta",
+        "te",
+        "cafe",
+        "limonada",
+        "naranja",
+        "manzana",
+        "batido",
+        "smoothie",
+        "soda",
+        "polar",
+        "tercio",
+        "cerveza",
+        "licor"
+      ]
+    },
+    {
+      "id": "sides",
+      "label": "Contornos",
+      "department": "Restaurante",
+      "keywords": [
+        "contorno",
+        "papas",
+        "fritas",
+        "yuca",
+        "aros",
+        "cebolla",
+        "pure",
+        "arroz",
+        "platano",
+        "tostones",
+        "tajadas",
+        "arepas"
+      ]
+    },
+    {
+      "id": "soups",
+      "label": "Sopas",
+      "department": "Restaurante",
+      "keywords": [
+        "sopa",
+        "caldo",
+        "consomé",
+        "crema",
+        "sancocho",
+        "mondongo",
+        "hervido",
+        "fosforera",
+        "pollo",
+        "res",
+        "gallina",
+        "pescado",
+        "mariscos",
+        "asopado"
+      ]
+    },
+    {
+      "id": "pasta",
+      "label": "Pasta",
+      "department": "Restaurante",
+      "keywords": [
+        "pasta",
+        "espagueti",
+        "spaghetti",
+        "fettuccine",
+        "lasagna",
+        "ravioli",
+        "macarrones",
+        "penne",
+        "tallarines",
+        "carbonara",
+        "bolognesa",
+        "alfredo"
+      ]
+    },
+    {
+      "id": "comida",
+      "label": "Comida",
+      "department": "Restaurante",
+      "keywords": [
+        "pollo",
+        "carne",
+        "pescado",
+        "cerdo",
+        "cochino",
+        "chuleta",
+        "asado",
+        "guisado",
+        "frito",
+        "parrilla",
+        "plancha",
+        "brasa",
+        "filete",
+        "lomo",
+        "costilla",
+        "pechuga",
+        "bollo",
+        "bollito",
+        "cachapa",
+        "calamares"
+      ]
+    },
+    {
+      "id": "desserts",
+      "label": "Postres",
+      "department": "Restaurante",
+      "keywords": [
+        "postre",
+        "dulce",
+        "helado",
+        "torta",
+        "pastel",
+        "cake",
+        "flan",
+        "gelatina",
+        "brownie",
+        "pie",
+        "mousse",
+        "quesillo",
+        "tres leches",
+        "marquesa",
+        "tiramisu",
+        "alfajores",
+        "miel"
+      ]
+    },
+    {
+      "id": "salads",
+      "label": "Ensaladas",
+      "department": "Restaurante",
+      "keywords": [
+        "ensalada",
+        "verde",
+        "cesar",
+        "mixta",
+        "lechuga",
+        "tomate",
+        "vegetales",
+        "verduras",
+        "fresca"
+      ]
+    },
+    {
+      "id": "snacks",
+      "label": "Snacks",
+      "department": "Restaurante",
+      "keywords": [
+        "snack",
+        "aperitivo",
+        "tequeño",
+        "empanada",
+        "pastelito",
+        "arepa",
+        "deditos",
+        "nuggets",
+        "alitas",
+        "wings",
+        "nachos"
+      ]
+    },
+    {
+      "id": "groceries",
+      "label": "Víveres/Bodega",
+      "department": "Venta",
+      "keywords": [
+        "aceite",
+        "arroz",
+        "harina",
+        "leche",
+        "azucar",
+        "sal",
+        "vinagre",
+        "mayonesa",
+        "salsa",
+        "viveres",
+        "grano",
+        "enlatado",
+        "atun"
+      ]
+    },
+    {
+      "id": "hygiene",
+      "label": "Higiene/Aseo",
+      "department": "Venta",
+      "keywords": [
+        "desodorante",
+        "jabon",
+        "shampoo",
+        "crema",
+        "dental",
+        "colgate",
+        "cepillo",
+        "aseo",
+        "higiene",
+        "papel",
+        "toalla",
+        "detergente",
+        "limpieza"
+      ]
+    }
+  ],
+  "customers": [],
+  "sales": [],
+  "heldOrders": [],
+  "kitchenOrders": [],
+  "barOrders": [],
+  "tables": [
+    {
+      "id": 1,
+      "name": "Mesa 1",
+      "status": "available",
+      "area": "Restaurante"
+    },
+    {
+      "id": 2,
+      "name": "Mesa 2",
+      "status": "available",
+      "area": "Restaurante"
+    },
+    {
+      "id": 3,
+      "name": "Mesa 3",
+      "status": "available",
+      "area": "Restaurante"
+    },
+    {
+      "id": 4,
+      "name": "Mesa 4",
+      "status": "available",
+      "area": "Restaurante"
+    },
+    {
+      "id": 5,
+      "name": "Mesa 5",
+      "status": "available",
+      "area": "Restaurante"
+    },
+    {
+      "id": 6,
+      "name": "Mesa 6",
+      "status": "available",
+      "area": "Restaurante"
+    },
+    {
+      "id": 7,
+      "name": "Mesa 7",
+      "status": "available",
+      "area": "Restaurante"
+    },
+    {
+      "id": 8,
+      "name": "Mesa 8",
+      "status": "available",
+      "area": "Restaurante"
+    },
+    {
+      "id": 9,
+      "name": "Mesa 9",
+      "status": "available",
+      "area": "Restaurante"
+    },
+    {
+      "id": 10,
+      "name": "Mesa 10",
+      "status": "available",
+      "area": "Restaurante"
+    }
+  ],
+  "cancelledOrders": [],
+  "tips": 0,
+  "tipHistory": [],
+  "tipDistributions": [],
+  "exchangeRate": 347.2631,
+  "rateHistory": [
+    {
+      "id": 1768961968509,
+      "rate": 347.2631,
+      "date": "2026-01-21T02:19:28.509Z"
+    },
+    {
+      "id": 1768959285891,
+      "rate": 347.26,
+      "date": "2026-01-21T01:34:45.891Z"
+    },
+    {
+      "id": 1768959279352,
+      "rate": 347.26,
+      "date": "2026-01-21T01:34:39.352Z"
+    },
+    {
+      "id": 1768959271216,
+      "rate": 347.26,
+      "date": "2026-01-21T01:34:31.216Z"
+    },
+    {
+      "id": 1768958727310,
+      "rate": 344.51,
+      "date": "2026-01-21T01:25:27.310Z"
+    },
+    {
+      "id": 1768958726638,
+      "rate": 344.51,
+      "date": "2026-01-21T01:25:26.638Z"
+    },
+    {
+      "id": 1768958726527,
+      "rate": 344.51,
+      "date": "2026-01-21T01:25:26.527Z"
+    },
+    {
+      "id": 1768958724714,
+      "rate": 347.26,
+      "date": "2026-01-21T01:25:24Z"
+    }
+  ],
+  "cashRegister": {
+    "isOpen": false,
+    "status": "closed",
+    "openingBalanceBs": 0,
+    "openingBalanceUsd": 0
+  },
+  "defaultForeignCurrencyDiscountPercent": 0,
+  "lastModified": "2026-01-21T02:42:33.865Z",
+  "cancelledKitchenOrders": [],
+  "cancelledBarOrders": [],
+  "pendingPayment": [],
+  "inventoryEntries": [],
+  "expenses": [],
+  "debts": [],
+  "accountsReceivable": [],
+  "serverInfo": null,
+  "cashRegisterHistory": [],
+  "paymentMethods": [
+    {
+      "id": "pm_1",
+      "name": "Efectivo $",
+      "currency": "USD",
+      "color": "#22c55e",
+      "native": true
+    },
+    {
+      "id": "pm_2",
+      "name": "Efectivo Bs",
+      "currency": "Bs",
+      "color": "#4ade80",
+      "native": true
+    },
+    {
+      "id": "pm_3",
+      "name": "Zelle",
+      "currency": "USD",
+      "color": "#a78bfa",
+      "native": true
+    },
+    {
+      "id": "pm_4",
+      "name": "Punto Banesco",
+      "currency": "Bs",
+      "color": "#1d6335",
+      "native": true
+    },
+    {
+      "id": "pm_5",
+      "name": "Punto Bancaribe",
+      "currency": "Bs",
+      "color": "#0054a6",
+      "native": true
+    },
+    {
+      "id": "pm_6",
+      "name": "Punto Banplus",
+      "currency": "Bs",
+      "color": "#8dc63f",
+      "native": true
+    },
+    {
+      "id": "pm_7",
+      "name": "Pago Móvil Banesco",
+      "currency": "Bs",
+      "color": "#1d6335",
+      "native": true
+    },
+    {
+      "id": "pm_8",
+      "name": "Pago Móvil BDV",
+      "currency": "Bs",
+      "color": "#e74c3c",
+      "native": true
+    },
+    {
+      "id": "pm_9",
+      "name": "Pago Móvil Banplus",
+      "currency": "Bs",
+      "color": "#8dc63f",
+      "native": true
+    }
+  ]
+}

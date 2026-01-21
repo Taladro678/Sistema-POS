@@ -22,6 +22,24 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 
 import ErrorBoundary from './components/ErrorBoundary'
 
+// Request Permissions on Startup
+const requestAndroidPermissions = () => {
+  if (window.cordova && window.cordova.plugins && window.cordova.plugins.permissions) {
+    const permissions = window.cordova.plugins.permissions;
+    const list = [
+      permissions.WRITE_EXTERNAL_STORAGE,
+      permissions.READ_EXTERNAL_STORAGE
+    ];
+    permissions.checkPermission(list[0], (status) => {
+      if (!status.hasPermission) {
+        permissions.requestPermissions(list, (status) => {
+          if (!status.hasPermission) console.warn("Permissions denied");
+        }, (err) => console.error("Permission request failed", err));
+      }
+    });
+  }
+};
+
 // Protected Route Component
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { currentUser, hasPermission } = useAuth();
@@ -115,7 +133,7 @@ function App() {
           </AuthProvider>
         </DataProvider>
       </SettingsProvider>
-    </ErrorBoundary>
+    </ErrorBoundary >
   )
 }
 

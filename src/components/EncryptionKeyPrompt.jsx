@@ -36,24 +36,27 @@ const EncryptionKeyPrompt = ({ onUnlock }) => {
                 <div className="mb-6">
                     <span className="text-6xl">🔐</span>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Seguridad del Sistema</h2>
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">Acceso de Seguridad</h2>
                 <p className="text-gray-600 mb-6">
-                    Ingresa tu Clave Maestra para desencriptar los datos.
+                    Ingresa tu <b>Llave Maestra</b> para cifrar y proteger tus datos en este servidor.
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="text-left">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Clave de Encriptación</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Llave Maestra</label>
                         <input
                             type="password"
                             value={key}
                             onChange={(e) => setKey(e.target.value)}
                             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                            placeholder="Tu clave secreta..."
-                            autoComplete="current-password"
-                            name="encryption_key"
-                            id="encryption_key"
+                            placeholder="Tu llave secreta..."
+                            autoComplete="current-password" // Crucial for Password Managers
+                            name="password" // Standard name for password managers
+                            id="master_key_input"
                         />
+                        <p className="text-[10px] text-gray-400 mt-1">
+                            💡 Tip: Puedes guardar esta llave en tu Gestor de Contraseñas de Google.
+                        </p>
                     </div>
 
                     <div className="flex items-center justify-start">
@@ -65,7 +68,7 @@ const EncryptionKeyPrompt = ({ onUnlock }) => {
                             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                         />
                         <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                            Recordar en este dispositivo
+                            Recordar permanentemente en este móvil
                         </label>
                     </div>
 
@@ -73,7 +76,7 @@ const EncryptionKeyPrompt = ({ onUnlock }) => {
                         type="submit"
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors shadow-lg mb-4"
                     >
-                        Desbloquear Sistema
+                        Desbloquear y Entrar
                     </button>
 
                     <div className="relative flex py-2 items-center">
@@ -90,16 +93,16 @@ const EncryptionKeyPrompt = ({ onUnlock }) => {
                             }
                             onUnlock();
                         }}
-                        className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-lg transition-colors border border-gray-300"
+                        className="w-full bg-gray-50 hover:bg-gray-100 text-gray-600 font-semibold py-3 rounded-lg transition-colors border border-gray-200"
                     >
-                        Ingresar en Modo Local
-                        <span className="block text-xs font-normal text-gray-500 mt-1">
-                            (Sin Nube - Solo WiFi)
+                        Continuar en Modo Local
+                        <span className="block text-[10px] font-normal text-gray-400 mt-1">
+                            (Solo para ver datos básicos sin cifrado en la nube)
                         </span>
                     </button>
 
-                    <p className="text-xs text-gray-400 mt-4">
-                        * Si marcas "Recordar", no tendrás que ingresarla de nuevo en este dispositivo.
+                    <p className="text-[10px] text-gray-400 mt-4 leading-tight">
+                        * Tu llave es privada. Si la pierdes, no podremos recuperar tus ventas cifradas. Guárdala bien.
                     </p>
                 </form>
             </div>

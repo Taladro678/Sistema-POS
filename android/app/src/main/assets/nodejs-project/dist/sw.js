@@ -1,1 +1,25 @@
-if(!self.define){let e,i={};const n=(n,s)=>(n=new URL(n+".js",s).href,i[n]||new Promise(i=>{if("document"in self){const e=document.createElement("script");e.src=n,e.onload=i,document.head.appendChild(e)}else e=n,importScripts(n),i()}).then(()=>{let e=i[n];if(!e)throw new Error(`Module ${n} didn’t register its module`);return e}));self.define=(s,r)=>{const d=e||("document"in self?document.currentScript.src:"")||location.href;if(i[d])return;let o={};const t=e=>n(e,d),l={module:{uri:d},exports:o,require:t};i[d]=Promise.all(s.map(e=>l[e]||t(e))).then(e=>(r(...e),o))}}define(["./workbox-8c29f6e4"],function(e){"use strict";self.skipWaiting(),e.clientsClaim(),e.precacheAndRoute([{url:"registerSW.js",revision:"1872c500de691dce40960bb85481de07"},{url:"nodejs-init.js",revision:"b8819fc8d5bd89f6563d19be4aeadd7a"},{url:"index.html",revision:"10e9af48d3060b55fb354eb038df8399"},{url:"assets/index-DZGK5bU8.js",revision:null},{url:"assets/index-COXbmCfD.css",revision:null},{url:"favicon.png",revision:"6cd75e6162dcd2169be94f57a47d2a63"},{url:"pwa-192x192.png",revision:"6cd75e6162dcd2169be94f57a47d2a63"},{url:"pwa-512x512.png",revision:"6cd75e6162dcd2169be94f57a47d2a63"},{url:"manifest.webmanifest",revision:"5d917ab78724f397362f7a03e22eb9a6"}],{}),e.cleanupOutdatedCaches(),e.registerRoute(new e.NavigationRoute(e.createHandlerBoundToURL("index.html")))});
+
+self.addEventListener('install', (e) => {
+  self.skipWaiting();
+});
+self.addEventListener('activate', (e) => {
+  self.registration.unregister()
+    .then(() => self.clients.matchAll())
+    .then((clients) => {
+      clients.forEach((client) => {
+        if (client instanceof WindowClient)
+          client.navigate(client.url);
+      });
+      return Promise.resolve();
+    })
+    .then(() => {
+      self.caches.keys().then((cacheNames) => {
+        Promise.all(
+          cacheNames.map((cacheName) => {
+            return self.caches.delete(cacheName);
+          }),
+        );
+      })
+    });
+});
+    

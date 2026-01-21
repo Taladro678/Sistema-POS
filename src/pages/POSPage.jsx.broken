@@ -1,0 +1,1272 @@
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useData, formatAmount } from '../context/DataContext';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import { useDialog } from '../context/DialogContext';
+import ProductCard from '../components/ProductCard';
+import CartSidebar from '../components/CartSidebar';
+import Modal from '../components/Modal';
+import {
+    ShoppingBag, X, Search, ChevronDown, Clock, FileText,
+    DollarSign, Calendar, Coffee, UserPlus, User, Trash2,
+    AlertTriangle, Plus, Sparkles, Check, ChevronRight,
+    Banknote, CreditCard, Wallet, Coins, PlusCircle, Minus, Star, Grid
+} from 'lucide-react';
+
+import ClientSearchModal from '../components/ClientSearchModal';
+import CashDenominationModal from '../components/CashDenominationModal';
+
+export const POSPage = () => {
+    export const POSPage = () => {
+        const { currentUser } = useAuth();
+        const { addToast } = useToast();
+        const { confirm, alert, prompt } = useDialog();
+
+        // UI state states (rest of them will follow)
+        const [selectedCategory, setSelectedCategory] = useState('all');
+
+        const {
+            data: contextData,
+            updateData,
+            addItem,
+            updateItem,
+            deleteItem,
+            clearAllData,
+            holdOrder,
+            deleteHeldOrder,
+            cancelHeldOrder,
+            restoreCancelledOrder,
+            permanentlyDeleteOrder,
+            addTip,
+            sendOrderToProduction,
+            updateExchangeRate,
+            refreshBcvRate,
+            loadingBcv,
+            formatAmount,
+            sendLiveCartUpdate
+        } = useData();
+
+        // Mapping backwards for compatibility with local 'data' variable
+        const data = contextData;
+
+        const formatPrice = (amount) => {
+            if (displayCurrency === 'BS') {
+                const rate = data.exchangeRate || 1;
+                return `Bs. ${(amount * rate).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            }
+            return `$ ${amount.toFixed(2)}`;
+        };
+
+        const location = useLocation();
+        const navigate = useNavigate();
+        const searchParams = new URLSearchParams(location.search);
+        const tableId = searchParams.get('tableId');
+        const orderId = searchParams.get('orderId');
+
+        const [originalOrder, setOriginalOrder] = useState(null);
+        const tables = data.tables || [];
+        const currentTable = tableId ? tables.find(t => t.id === parseInt(tableId)) : null;
+
+        useEffect(() => {
+            if (currentTable && currentTable.status === 'occupied' && currentTable.currentOrderId) {
+                const existingOrder = data.heldOrders.find(o => o.id === currentTable.currentOrderId);
+                if (existingOrder) {
+                    setCart(existingOrder.items);
+                    setOriginalOrder(existingOrder);
+                    setOrderNote(existingOrder.note || '');
+                    setIsTakeaway(existingOrder.takeaway || false);
+                    setOrderPriority(existingOrder.priority || 'normal');
+                }
+            }
+        }, [tableId, currentTable, data.heldOrders]);
+
+        useEffect(() => {
+            if (orderId && !tableId) {
+                const existingOrder = data.heldOrders.find(o => o.id === parseInt(orderId) || o.id === orderId);
+                if (existingOrder) {
+                    setCart(existingOrder.items);
+                    setOriginalOrder(existingOrder);
+                    setOrderNote(existingOrder.note || '');
+                    setIsTakeaway(existingOrder.takeaway || false);
+                    setOrderPriority(existingOrder.priority || 'normal');
+                    if (existingOrder.customerId) setSelectedCustomerId(existingOrder.customerId);
+                }
+            }
+        }, [orderId, data.heldOrders, tableId]);
+
+        const addToCart = React.useCallback((product) => {
+            setCart(prevCart => {
+                const existingItemIndex = prevCart.findIndex(item => item.id === product.id);
+                if (existingItemIndex >= 0) {
+                    const newCart = [...prevCart];
+                    newCart[existingItemIndex] = {
+                        ...newCart[existingItemIndex],
+                        quantity: (newCart[existingItemIndex].quantity || 1) + 1
+                    };
+                    return newCart;
+                }
+                return [...prevCart, { ...product, quantity: 1 }];
+            });
+        }, []); // Empty dependency array as we use the functional update of setCart
+
+        const removeFromCart = React.useCallback((productId) => {
+            setCart(prevCart => {
+                const existingItemIndex = prevCart.findIndex(item => item.id === productId);
+                if (existingItemIndex >= 0) {
+                    const newCart = [...prevCart];
+                    if (newCart[existingItemIndex].quantity > 1) {
+                        newCart[existingItemIndex] = {
+                            ...newCart[existingItemIndex],
+                            quantity: newCart[existingItemIndex].quantity - 1
+                        };
+                        return newCart;
+                    }
+                    newCart.splice(existingItemIndex, 1);
+                    return newCart;
+                }
+                return prevCart;
+            });
+        }, []); // Empty dependency array
+
+        const handleSetQuantity = React.useCallback(async (product) => {
+            const currentQty = cart.find(item => item.id === product.id)?.quantity || 0;
+            const result = await prompt({
+                title: 'Ingresar Cantidad',
+                message: `Cantidad para "${product.name}":`,
+                defaultValue: currentQty > 0 ? currentQty.toString() : '1',
+                type: 'number'
+            });
+
+            if (result !== null) {
+                const qty = parseInt(result);
+                if (!isNaN(qty)) {
+                    setCart(prevCart => {
+                        const existingItemIndex = prevCart.findIndex(item => item.id === product.id);
+                        const newCart = [...prevCart];
+                        if (qty <= 0) {
+                            if (existingItemIndex >= 0) {
+                                newCart.splice(existingItemIndex, 1);
+                                return newCart;
+                            }
+                            return prevCart;
+                        }
+
+                        if (existingItemIndex >= 0) {
+                            newCart[existingItemIndex] = { ...newCart[existingItemIndex], quantity: qty };
+                            return newCart;
+                        } else {
+                            return [...prevCart, { ...product, quantity: qty }];
+                        }
+                    });
+                }
+            }
+        }, [cart, prompt]);
+
+        const clearCart = async () => {
+            if (cart.length === 0) return;
+            const ok = await confirm({
+                title: 'Vaciar Carrito',
+                message: '¿Estás seguro de que deseas vaciar el carrito?'
+            });
+            if (ok) {
+                setCart([]);
+                setOriginalOrder(null);
+                setOrderNote('');
+                setIsTakeaway(false);
+                setOrderPriority('normal');
+            }
+        };
+
+        const handleAddManualProduct = () => {
+            const price = parseFloat(manualPrice);
+            if (isNaN(price) || price <= 0) {
+                addToast("Monto inválido", 'error');
+                return;
+            }
+
+            if (!manualName.trim()) {
+                addToast("Ingresa un nombre", 'error');
+                return;
+            }
+
+            // Asegurar que existe la categoría "Varios"
+            const variosCategory = data.categories?.find(c => c.id === 'varios');
+            if (!variosCategory) {
+                addItem('categories', {
+                    id: 'varios',
+                    label: 'Varios',
+                    department: 'Restaurante',
+                    keywords: ['varios', 'personalizado', 'custom', 'manual', 'otro']
+                });
+            }
+
+            // Crear producto permanente
+            const newProduct = {
+                name: manualName.trim(),
+                price: price,
+                category: 'varios',
+                stock: 999, // Stock infinito para productos personalizados
+                department: 'Restaurante',
+                isManual: true
+            };
+
+            addItem('products', newProduct);
+
+            // Añadir al carrito automáticamente
+            addToCart({ ...newProduct, id: newProduct.id || Date.now() });
+
+            setIsManualModalOpen(false);
+            setManualPrice('');
+            setManualName('Varios');
+            addToast(`"${manualName}" creado y añadido al carrito`, 'success');
+        };
+
+        const total = useMemo(() => {
+            return cart.reduce((sum, item) => {
+                // Safe float math
+                return sum + (Math.round(item.price * 100) * item.quantity);
+            }, 0) / 100;
+        }, [cart]);
+
+        const handleHoldOrder = async () => {
+            if (cart.length === 0) return;
+            const note = await prompt({
+                title: 'Poner en Espera',
+                message: 'Nota para el pedido:',
+                defaultValue: orderNote
+            });
+            if (note !== null) {
+                const metadata = {
+                    isWaitList: true,
+                    takeaway: isTakeaway,
+                    priority: orderPriority,
+                    customerId: selectedCustomerId,
+                    createdBy: originalOrder?.createdBy || currentUser?.username || 'Cajero'
+                };
+                holdOrder(cart, note || 'Sin nota', metadata);
+                setCart([]);
+                setOrderNote('');
+                setIsCartOpen(false);
+                addToast("Orden en espera", 'info');
+                if (tableId || orderId) navigate('/');
+            }
+        };
+
+        const handleSendToKitchen = () => {
+            if (cart.length === 0) return;
+            setIsProductionModalOpen(true);
+        };
+
+        const confirmSendToProduction = () => {
+            const metadata = {
+                priority: orderPriority,
+                takeaway: isTakeaway,
+                customerId: selectedCustomerId,
+                tableId: currentTable?.id,
+                tableName: currentTable?.name
+            };
+            sendOrderToProduction(cart, orderNote || (currentTable ? `Mesa ${currentTable.name}` : 'Pedido Rápido'), metadata);
+            setCart([]);
+            setIsProductionModalOpen(false);
+            setIsCartOpen(false);
+            addToast("Pedido enviado a producción", 'success');
+            if (tableId) navigate('/tables');
+        };
+
+        const handleFinalizePayment = async () => {
+            if (payments.length === 0) {
+                await alert({ title: 'Error', message: 'Debe agregar al menos un pago.' });
+                return;
+            }
+
+            const discountNum = parseFloat(discountValue) || 0;
+            const discountAmount = discountType === 'percent' ? (total * (discountNum / 100)) : discountNum;
+            const finalTotal = total - discountAmount;
+
+            const paidAmount = payments.reduce((sum, p) => sum + (p.currency === 'USD' ? p.amount : p.amount / p.rate), 0);
+
+            if (paidAmount < (finalTotal - 0.01)) {
+                const ok = await confirm({
+                    title: 'Saldo Incompleto',
+                    message: `El monto pagado ($${paidAmount.toFixed(2)}) es menor al total ($${finalTotal.toFixed(2)}). ¿Desea procesar como venta parcial o crédito?`
+                });
+                if (!ok) return;
+            }
+
+            const newSale = {
+                id: Date.now(),
+                items: cart,
+                subtotal: total,
+                total: finalTotal,
+                discount: { type: discountType, value: discountNum, amount: discountAmount },
+                payments: payments,
+                tip: parseFloat(tipAmount) || 0,
+                date: new Date().toISOString(),
+                cashier: currentUser?.username || 'Cajero',
+                customerId: selectedCustomerId,
+                tableId: currentTable?.id
+            };
+
+            addItem('sales', newSale);
+
+            // --- AUTO-INVENTORY: Subtract stock for each item ---
+            if (cart && cart.length > 0) {
+                cart.forEach(item => {
+                    // Only subtract if it's a real product with a matching ID in global state
+                    const globalProduct = (data.products || []).find(p => p.id === item.id);
+                    if (globalProduct) {
+                        updateItem('products', item.id, prev => ({
+                            stock: Math.max(-999, (prev.stock || 0) - (item.quantity || 1))
+                        }));
+                    }
+                });
+            }
+            // ---------------------------------------------------
+
+            if (originalOrder) deleteHeldOrder(originalOrder.id);
+
+            setCart([]);
+            setPayments([]);
+            setDiscountValue('');
+            setTipAmount('');
+            setIsPaymentModalOpen(false);
+            setIsCartOpen(false);
+            addToast("Venta completada", 'success');
+            if (tableId) navigate('/tables');
+        };
+
+        const paymentMethods = data.paymentMethods || [];
+
+        const filteredProducts = useMemo(() => {
+            let res = data.products || [];
+            if (selectedCategory === 'favorites') {
+                res = res.filter(p => p.isFavorite);
+            } else if (selectedCategory !== 'all') {
+                res = res.filter(p => p.category === selectedCategory);
+            }
+
+            // Apply search
+            if (searchQuery) {
+                res = res.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+            }
+
+            // If "Todas" (all) is selected, sort by business priority
+            if (selectedCategory === 'all') {
+                const order = ['cheeses', 'cachapas', 'carne_en_vara', 'chichas', 'drinks', 'burgers'];
+                res = [...res].sort((a, b) => {
+                    const idxA = order.indexOf(a.category);
+                    const idxB = order.indexOf(b.category);
+                    const posA = idxA === -1 ? 999 : idxA;
+                    const posB = idxB === -1 ? 999 : idxB;
+                    return posA - posB;
+                });
+            }
+
+            return res;
+        }, [data.products, selectedCategory, searchQuery]);
+
+        const handleRecallOrder = (order) => {
+            setCart(order.items);
+            setOriginalOrder(order);
+            setOrderNote(order.note || '');
+            deleteHeldOrder(order.id);
+            setIsHeldOrdersModalOpen(false);
+            setIsCartOpen(true);
+        };
+
+        return (
+            <div className="pos-container" style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0a0a0a', color: 'white', overflow: 'hidden' }}>
+                {/* Header */}
+                {/* Header Grid Layout */}
+                <header style={{
+                    padding: isMobile ? '0.25rem 0.5rem' : '0.5rem 1rem',
+                    background: 'rgba(255,255,255,0.03)',
+                    borderBottom: '1px solid rgba(255,255,255,0.1)',
+                    display: 'grid',
+                    gridTemplateColumns: isMobile ? '36px 1fr auto' : 'auto 1fr auto',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    width: '100%'
+                }}>
+                    {/* 1. Search (Left) */}
+                    <div style={{ gridColumn: '1', display: 'flex', alignItems: 'center' }}>
+                        {isSearchExpanded ? (
+                            <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '20px', display: 'flex', alignItems: 'center', padding: '0 8px', border: '1px solid var(--accent-orange)', width: isMobile ? '120px' : '200px' }}>
+                                <Search size={14} />
+                                <input
+                                    autoFocus
+                                    className="glass-input"
+                                    style={{ border: 'none', background: 'transparent', width: '100%', padding: '6px', fontSize: '0.8rem' }}
+                                    placeholder="Buscar..."
+                                    value={searchQuery}
+                                    onChange={e => setSearchQuery(e.target.value)}
+                                    onBlur={() => !searchQuery && setIsSearchExpanded(false)}
+                                />
+                                <X size={14} onClick={() => { setIsSearchExpanded(false); setSearchQuery(''); }} style={{ cursor: 'pointer' }} />
+                            </div>
+                        ) : (
+                            <button className="glass-button" onClick={() => setIsSearchExpanded(true)} style={{ borderRadius: '50%', width: '36px', height: '36px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Search size={18} />
+                            </button>
+                        )}
+                    </div>
+
+                    {/* 2. Categories (Middle - Horizontal Tabs) */}
+                    <div style={{
+                        gridColumn: '2',
+                        minWidth: 0,
+                        display: isSearchExpanded && isMobile ? 'none' : 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: '0 4px',
+                        overflowX: 'auto',
+                        scrollbarWidth: 'none',
+                        msOverflowStyle: 'none',
+                    }} className="no-scrollbar">
+                        {/* Style for horizontal scrollability */}
+                        <style>{`
+                        .no-scrollbar::-webkit-scrollbar { display: none; }
+                        .category-tab {
+                            white-space: nowrap;
+                            padding: 6px 14px;
+                            border-radius: 99px;
+                            font-size: 0.8rem;
+                            font-weight: 800;
+                            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                            border: 1px solid rgba(255,255,255,0.05);
+                            background: rgba(255,255,255,0.02);
+                            color: #9ca3af;
+                            display: flex;
+                            alignItems: center;
+                            gap: 4px;
+                            flex-shrink: 0;
+                            min-width: fit-content;
+                        }
+                        .category-tab.active {
+                            background: #ea580c;
+                            color: white;
+                            border-color: #fb923c;
+                            box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
+                        }
+                        .category-picker-btn {
+                            background: rgba(251, 146, 60, 0.15) !important;
+                            border: 1px solid rgba(251, 146, 60, 0.4) !important;
+                            color: #fb923c !important;
+                        }
+                        .category-grid-item {
+                            padding: 1rem;
+                            border-radius: 12px;
+                            background: rgba(255,255,255,0.05);
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 0.5rem;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                            border: 1px solid rgba(255,255,255,0.05);
+                        }
+                        .category-grid-item:active { transform: scale(0.95); background: rgba(234, 88, 12, 0.2); }
+                        .category-grid-item.active { border-color: var(--accent-orange); background: rgba(234, 88, 12, 0.1); }
+                    `}</style>
+
+                        {isMobile ? (
+                            <button
+                                className="category-tab active"
+                                onClick={() => setShowAllCategories(true)}
+                                style={{
+                                    flex: 1,
+                                    justifyContent: 'space-between',
+                                    background: 'rgba(234, 88, 12, 0.1)',
+                                    border: '1px solid rgba(234, 88, 12, 0.3)',
+                                    color: 'white',
+                                    padding: '4px 10px',
+                                    minWidth: '80px',
+                                    maxWidth: '160px',
+                                    fontSize: '0.75rem',
+                                    margin: '0 auto'
+                                }}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
+                                    {selectedCategory === 'favorites' ? <Star size={12} fill="gold" color="gold" /> : <Grid size={12} color="#fb923c" />}
+                                    <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                                        {selectedCategory === 'all' ? 'Todas' : (displayCategories.find(c => c.id === selectedCategory)?.label || 'Categoría')}
+                                    </span>
+                                </div>
+                                <ChevronDown size={12} style={{ marginLeft: '2px', opacity: 0.7 }} />
+                            </button>
+                        ) : (
+                            <>
+                                <button
+                                    className={`category-tab ${selectedCategory === 'all' ? 'active' : ''}`}
+                                    onClick={() => selectedCategory === 'all' ? setShowAllCategories(true) : setSelectedCategory('all')}
+                                >
+                                    Todas
+                                </button>
+
+                                {displayCategories.map(cat => (
+                                    <button
+                                        key={cat.id}
+                                        className={`category-tab ${selectedCategory === cat.id ? 'active' : ''}`}
+                                        onClick={() => selectedCategory === cat.id ? setShowAllCategories(true) : setSelectedCategory(cat.id)}
+                                    >
+                                        {cat.id === 'favorites' && <Star size={12} fill="currentColor" />}
+                                        {cat.label}
+                                    </button>
+                                ))}
+
+                                <button
+                                    className="category-tab category-picker-btn"
+                                    onClick={() => setShowAllCategories(true)}
+                                    style={{ padding: '6px 10px' }}
+                                >
+                                    <Grid size={16} />
+                                    <span style={{ marginLeft: '4px' }}>Ver Todo</span>
+                                </button>
+                            </>
+                        )}
+                    </div>
+
+                    {/* 3. Actions (Right - Fixed) */}
+                    <div style={{ gridColumn: '3', display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+
+                        <button
+                            className="glass-button"
+                            onClick={() => setPriceCurrency(prev => prev === 'USD' ? 'BS' : 'USD')}
+                            style={{ padding: isMobile ? '8px 12px' : '0.5rem 1rem', minWidth: '44px', fontSize: isMobile ? '0.85rem' : '0.8rem', fontWeight: '900', color: priceCurrency === 'USD' ? '#4ade80' : '#fbbf24', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                        >
+                            {priceCurrency === 'USD' ? '$' : 'Bs'}
+                        </button>
+                        <button className="glass-button" onClick={() => setIsHeldOrdersModalOpen(true)} style={{ position: 'relative', padding: isMobile ? '8px' : '0.5rem' }}>
+                            <Clock size={isMobile ? 18 : 20} />
+                            {heldOrders.length > 0 && <span style={{ position: 'absolute', top: -3, right: -3, background: 'var(--accent-orange)', borderRadius: '50%', width: '14px', height: '14px', fontSize: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{heldOrders.length}</span>}
+                        </button>
+                        {!isMobile && <button className="glass-button" onClick={() => setIsSalesModalOpen(true)} style={{ padding: '0.5rem' }}><FileText size={20} /></button>}
+                        {isMobile && (
+                            <button className="primary-button" onClick={() => setIsCartOpen(true)} style={{ gap: '6px', padding: '8px 14px', fontSize: '0.9rem' }}>
+                                <ShoppingBag size={18} />
+                                <span className="font-bold">{formatPrice(total).replace('$ ', '$')}</span>
+                            </button>
+                        )}
+                    </div>
+                </header>
+
+                {/* Manual Product Modal */}
+                <Modal
+                    isOpen={isManualModalOpen}
+                    onClose={() => setIsManualModalOpen(false)}
+                    title="Venta Manual"
+                >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '0.5rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '0.5rem' }}>
+                            <div style={{
+                                backgroundColor: 'rgba(251, 146, 60, 0.2)',
+                                padding: '0.75rem',
+                                borderRadius: '1rem',
+                                color: '#fb923c',
+                                marginBottom: '0.75rem'
+                            }}>
+                                <PlusCircle size={28} />
+                            </div>
+                            <p style={{ fontSize: '10px', color: '#6b7280', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'center' }}>Ingresa nombre y precio para añadir un ítem personalizado</p>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                            <div>
+                                <label style={{ fontSize: '10px', color: '#9ca3af', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '0.375rem', display: 'block', marginLeft: '0.25rem', letterSpacing: '0.05em' }}>Descripción</label>
+                                <input
+                                    type="text"
+                                    className="glass-input"
+                                    style={{ width: '100%', fontSize: '0.875rem', fontWeight: 'bold', padding: '0.75rem' }}
+                                    placeholder="Nombre del producto..."
+                                    value={manualName}
+                                    onChange={(e) => setManualName(e.target.value)}
+                                    autoFocus
+                                />
+                            </div>
+                            <div>
+                                <label style={{ fontSize: '10px', color: '#9ca3af', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '0.375rem', display: 'block', marginLeft: '0.25rem', letterSpacing: '0.05em' }}>Precio (USD)</label>
+                                <div style={{ position: 'relative' }}>
+                                    <span style={{
+                                        position: 'absolute',
+                                        left: '1rem',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        color: '#fb923c',
+                                        fontWeight: '900',
+                                        fontSize: '1.25rem'
+                                    }}>$</span>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        className="glass-input"
+                                        style={{
+                                            width: '100%',
+                                            fontSize: '1.75rem',
+                                            fontWeight: '900',
+                                            paddingLeft: '2.5rem',
+                                            paddingRight: '1rem',
+                                            paddingTop: '0.75rem',
+                                            paddingBottom: '0.75rem',
+                                            textAlign: 'center'
+                                        }}
+                                        placeholder="0.00"
+                                        value={manualPrice}
+                                        onChange={(e) => setManualPrice(e.target.value)}
+                                        onKeyPress={(e) => e.key === 'Enter' && handleAddManualProduct()}
+                                    />
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={handleAddManualProduct}
+                                className="primary-button w-full py-4 text-lg font-black shadow-lg shadow-orange-600/20"
+                                style={{ marginTop: '0.5rem' }}
+                            >
+                                <Check size={20} /> AÑADIR AL CARRITO
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
+
+                {/* Category Selector Modal */}
+                <Modal
+                    isOpen={showAllCategories}
+                    onClose={() => setShowAllCategories(false)}
+                    title="Seleccionar Categoría"
+                >
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                        gap: '12px',
+                        padding: '0.5rem'
+                    }}>
+                        <div
+                            className={`category-grid-item ${selectedCategory === 'all' ? 'active' : ''}`}
+                            onClick={() => { setSelectedCategory('all'); setShowAllCategories(false); }}
+                        >
+                            <Grid size={24} />
+                            <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Todas</span>
+                        </div>
+
+                        {displayCategories.map(cat => (
+                            <div
+                                key={cat.id}
+                                className={`category-grid-item ${selectedCategory === cat.id ? 'active' : ''}`}
+                                onClick={() => { setSelectedCategory(cat.id); setShowAllCategories(false); }}
+                            >
+                                {cat.id === 'favorites' ? <Star size={24} fill="currentColor" color="gold" /> : <Coffee size={24} />}
+                                <span style={{ fontSize: '0.8rem', fontWeight: 'bold', textAlign: 'center' }}>{cat.label}</span>
+                            </div>
+                        ))}
+
+                        <div
+                            className="category-grid-item"
+                            onClick={() => { setIsManualModalOpen(true); setShowAllCategories(false); }}
+                            style={{ borderStyle: 'dashed', borderColor: '#fb923c', color: '#fb923c' }}
+                        >
+                            <PlusCircle size={24} />
+                            <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Manual</span>
+                        </div>
+                    </div>
+                </Modal>
+
+                {/* Main Area */}
+                <main style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+                    <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                        <div className="flex-1 overflow-y-auto pr-2 no-scrollbar" style={{ padding: '0.75rem', paddingBottom: isMobile ? '80px' : '1rem' }}>
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? '130px' : '170px'}, 1fr))`,
+                                gap: isMobile ? '0.6rem' : '1rem',
+                                alignContent: 'start'
+                            }}>
+                                {filteredProducts.map(p => (
+                                    <ProductCard
+                                        key={p.id}
+                                        product={{ ...p, quantity: cart.find(c => c.id === p.id)?.quantity || 0 }}
+                                        onAdd={addToCart}
+                                        onRemove={removeFromCart}
+                                        onLongPress={handleSetQuantity}
+                                        priceDisplay={priceCurrency === 'USD' ? formatPrice(p.price) : `Bs ${formatAmount(p.price * (data.exchangeRate || 1), 'Bs')}`}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {!isMobile && (
+                        <aside style={{ width: '350px', background: 'rgba(0,0,0,0.2)', borderLeft: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column' }}>
+                            <CartSidebar
+                                cart={cart} onRemove={removeFromCart} onAdd={addToCart} onClear={clearCart}
+                                onPay={() => setIsPaymentModalOpen(true)} total={total} onHold={handleHoldOrder}
+                                onSendToKitchen={handleSendToKitchen} currentTable={currentTable}
+                                formatPrice={formatPrice}
+                            />
+                        </aside>
+                    )}
+                </main>
+
+                {/* Mobile Cart Drawer */}
+                {
+                    isMobile && isCartOpen && (
+                        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)' }}>
+                            <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '90%', background: '#121212', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                                <div style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                                    <h2 style={{ fontWeight: 'bold' }}>Carrito ({cart.length})</h2>
+                                    <X size={24} onClick={() => setIsCartOpen(false)} />
+                                </div>
+                                <div style={{ flex: 1, minHeight: 0 }}>
+                                    <CartSidebar
+                                        cart={cart} onRemove={removeFromCart} onAdd={addToCart} onClear={clearCart}
+                                        onPay={() => setIsPaymentModalOpen(true)} total={total} onHold={handleHoldOrder}
+                                        onSendToKitchen={handleSendToKitchen} currentTable={currentTable}
+                                        formatPrice={formatPrice}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+    const handleRefreshBcv = async () => {
+        if (loadingBcv) return;
+                const newRate = await refreshBcvRate(true);
+                if (newRate) {
+                    // Success notification handled by UI state
+                }
+    };
+
+    const handleSaveManualRate = () => {
+        const val = parseFloat(tempRate);
+        if (val > 0) {
+                    updateExchangeRate(val);
+                setIsEditingRate(false);
+        }
+    };
+
+                {/* Payment Modal (Ultra-Responsive Redesign) */}
+                <Modal
+                    isOpen={isPaymentModalOpen}
+                    onClose={() => setIsPaymentModalOpen(false)}
+                    title={
+                        <div className="flex items-center justify-between w-full pr-4">
+                            <span className="text-lg font-black tracking-tight">Procesar Pago</span>
+                            <div
+                                className={`flex items-center gap-2 px-3 py-1 rounded-full border transition-all duration-300 ${loadingBcv
+                                    ? 'bg-orange-500/20 border-orange-500/50 animate-pulse'
+                                    : 'bg-orange-500/10 border-orange-500/20 hover:border-orange-500/40'
+                                    } shadow-sm cursor-pointer`}
+                            >
+                                <span
+                                    className="text-[9px] text-orange-400 font-extrabold uppercase tracking-widest hover:text-orange-300 transition-colors"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleRefreshBcv();
+                                    }}
+                                    title="Actualizar desde BCV"
+                                >
+                                    {loadingBcv ? 'Cargando...' : 'Tasa'}
+                                </span>
+
+                                {isEditingRate ? (
+                                    <input
+                                        autoFocus
+                                        className="bg-transparent text-lg font-black text-white font-mono w-24 outline-none border-b border-orange-500/50 text-center"
+                                        value={tempRate}
+                                        onChange={(e) => setTempRate(e.target.value)}
+                                        onBlur={handleSaveManualRate}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') handleSaveManualRate();
+                                            if (e.key === 'Escape') setIsEditingRate(false);
+                                        }}
+                                    />
+                                ) : (
+                                    <span
+                                        className="text-lg font-black text-white font-mono hover:scale-105 transition-transform"
+                                        onClick={() => {
+                                            setTempRate(data.exchangeRate.toString());
+                                            setIsEditingRate(true);
+                                        }}
+                                        title="Clic para editar manual"
+                                    >
+                                        {formatAmount(data.exchangeRate, 'Bs', 2)}
+                                    </span>
+                                )}
+
+                                <span className="text-[9px] text-orange-400/60 font-bold uppercase">Bs/$</span>
+                            </div>
+                        </div>
+                    }
+                    fullscreen={isMobile}
+                    footer={
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <button
+                                className={`primary-button flex-1 py-4 text-xl font-black flex items-center justify-center gap-3 shadow-xl ${payments.length === 0 ? 'opacity-50 grayscale' : 'shadow-orange-600/20'}`}
+                                style={{ borderRadius: '12px' }}
+                                disabled={payments.length === 0}
+                                onClick={handleFinalizePayment}
+                            >
+                                <ShoppingBag size={24} />
+                                FINALIZAR VENTA
+                            </button>
+                        </div>
+                    }
+                >
+                    <div className="animate-fade-in text-white h-full flex flex-col no-scrollbar">
+                        <div className="flex-1 flex flex-col gap-4">
+                            {/* 1. TOP BANNER: SALDO PENDIENTE - Full Width at the top */}
+                            <div
+                                className="glass-panel p-5 text-center border-orange-500/40 bg-orange-500/10 relative overflow-hidden cursor-pointer active:scale-95 transition-transform"
+                                style={{ borderRadius: '18px' }}
+                                onClick={() => setPendingCurrency(c => c === 'USD' ? 'BS' : 'USD')}
+                            >
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 -mr-12 -mt-12 rounded-full"></div>
+                                <span className="text-[10px] text-orange-400 font-black uppercase tracking-[0.2em] block mb-2">SALDO PENDIENTE ({pendingCurrency})</span>
+                                {/* Consolidated calculations for the modal */}
+                                {(() => {
+                                    const discVal = parseFloat(discountValue) || 0;
+                                    const tipVal = parseFloat(tipAmount) || 0;
+                                    const rate = data.exchangeRate || 1;
+
+                                    let finalDiscount = 0;
+                                    if (discountType === 'percent') finalDiscount = total * (discVal / 100);
+                                    else if (discountType === 'USD') finalDiscount = discVal;
+                                    else if (discountType === 'BS') finalDiscount = discVal / rate;
+
+                                    let finalTip = 0;
+                                    if (tipType === 'percent') finalTip = total * (tipVal / 100);
+                                    else if (tipType === 'USD') finalTip = tipVal;
+                                    else if (tipType === 'BS') finalTip = tipVal / rate;
+
+                                    const totalNeto = total - finalDiscount + finalTip;
+                                    const yaPagado = payments.reduce((sum, p) => sum + (p.currency === 'USD' ? p.amount : p.amount / p.rate), 0);
+                                    const pendingUSD = Math.max(0, totalNeto - yaPagado);
+
+                                    return (
+                                        <>
+                                            <h2 className="text-5xl font-black text-white flex items-center justify-center gap-2">
+                                                {pendingCurrency === 'USD' ? (
+                                                    <>
+                                                        <span className="text-2xl text-orange-500/60">$</span>
+                                                        {pendingUSD.toFixed(2)}
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <span className="text-2xl text-orange-500/60 font-mono">Bs</span>
+                                                        {formatAmount(pendingUSD * rate, 'Bs', 2)}
+                                                    </>
+                                                )}
+                                            </h2>
+
+                                            {/* Detalle de Totales (Venta + Propina = Total) */}
+                                            <div className="flex flex-col items-center gap-1 mt-4 pt-3 border-t border-white/5">
+                                                <div className="text-xs flex items-center gap-2">
+                                                    <span className="text-orange-400 font-bold uppercase tracking-widest">Base:</span>
+                                                    <span className="text-white font-bold">${total.toFixed(2)} / Bs {formatAmount(total * rate, 'Bs', 2)}</span>
+                                                </div>
+                                                {finalDiscount > 0 && (
+                                                    <div className="text-xs flex items-center gap-2">
+                                                        <span className="text-red-400 font-bold uppercase tracking-widest">Descuento:</span>
+                                                        <span className="text-white font-bold">-${finalDiscount.toFixed(2)} / -Bs {formatAmount(finalDiscount * rate, 'Bs', 2)}</span>
+                                                    </div>
+                                                )}
+                                                {finalTip > 0 && (
+                                                    <div className="text-xs flex items-center gap-2">
+                                                        <span className="text-green-400 font-bold uppercase tracking-widest">Propina:</span>
+                                                        <span className="text-white font-bold">${finalTip.toFixed(2)} / Bs {formatAmount(finalTip * rate, 'Bs', 2)}</span>
+                                                    </div>
+                                                )}
+                                                <div className="text-xs flex items-center gap-2">
+                                                    <span className="text-orange-400 font-bold uppercase tracking-widest">Total Neto:</span>
+                                                    <span className="text-white font-black">${totalNeto.toFixed(2)} / Bs {formatAmount(totalNeto * rate, 'Bs', 2)}</span>
+                                                </div>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
+                            </div>
+
+                            {/* 2. MAIN GRID: 2 Columns below the banner */}
+                            <div className="flex flex-col md:flex-row gap-4 min-h-0">
+
+                                {/* LEFT COLUMN: Inputs and Adjustments */}
+                                <div className="flex-[1.2] flex flex-col gap-4">
+                                    {/* Form: Registrar Pago */}
+                                    <div className="glass-panel p-4 border-orange-500/20 bg-orange-500/5 relative overflow-hidden" style={{ borderRadius: '16px' }}>
+                                        <label className="text-[10px] font-bold text-orange-400 mb-3 block uppercase tracking-widest">Registrar Pago</label>
+                                        <div className="flex flex-col gap-3">
+                                            <div className="flex flex-col sm:flex-row gap-2">
+                                                <div className="relative flex-1">
+                                                    <input
+                                                        type="number"
+                                                        className="glass-input w-full text-3xl font-black p-4 text-center ring-inset focus:ring-1 ring-orange-500/50"
+                                                        style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px' }}
+                                                        value={currentPaymentAmount}
+                                                        onChange={e => setCurrentPaymentAmount(e.target.value)}
+                                                        placeholder="0.00"
+                                                    />
+                                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-black text-lg">
+                                                        {(() => {
+                                                            const methodObj = paymentMethods.find(m => m.name === currentPaymentMethod);
+                                                            return methodObj?.currency === 'Bs' ? 'Bs' : '$';
+                                                        })()}
+                                                    </div>
+                                                </div>
+                                                <select
+                                                    className="glass-input h-auto px-4 text-sm font-bold sm:w-44 bg-white/5"
+                                                    style={{ borderRadius: '12px' }}
+                                                    value={currentPaymentMethod}
+                                                    onChange={e => setCurrentPaymentMethod(e.target.value)}
+                                                >
+                                                    <option value="">Seleccionar Método...</option>
+                                                    {paymentMethods.map(m => (
+                                                        <option key={m.id} value={m.name}>{m.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            <div className="flex gap-2">
+                                                <button
+                                                    className="glass-button flex-1 text-[10px] font-bold py-3 border-green-500/30 text-green-400 bg-green-500/5 hover:bg-green-500/10 active:scale-95 transition-all uppercase"
+                                                    style={{ borderRadius: '10px' }}
+                                                    onClick={() => {
+                                                        const discVal = parseFloat(discountValue) || 0;
+                                                        const tipVal = parseFloat(tipAmount) || 0;
+                                                        const rate = data.exchangeRate || 1;
+
+                                                        let finalDiscount = 0;
+                                                        if (discountType === 'percent') finalDiscount = total * (discVal / 100);
+                                                        else if (discountType === 'USD') finalDiscount = discVal;
+                                                        else if (discountType === 'BS') finalDiscount = discVal / rate;
+
+                                                        let finalTip = 0;
+                                                        if (tipType === 'percent') finalTip = total * (tipVal / 100);
+                                                        else if (tipType === 'USD') finalTip = tipVal;
+                                                        else if (tipType === 'BS') finalTip = tipVal / rate;
+
+                                                        const totalNeto = total - finalDiscount + finalTip;
+                                                        const yaPagado = payments.reduce((sum, p) => sum + (p.currency === 'USD' ? p.amount : p.amount / p.rate), 0);
+                                                        const faltaUSD = Math.max(0, totalNeto - yaPagado);
+
+                                                        // --- LOGIC: Auto-fill based on VISUAL CURRENCY (User Request) ---
+                                                        // Rellenamos el monto en la moneda que el usuario ESTÁ VIENDO en el banner (pendingCurrency)
+                                                        // SIN cambiar el método de pago automáticamente.
+
+                                                        if (pendingCurrency === 'BS') {
+                                                            setCurrentPaymentAmount((faltaUSD * rate).toFixed(2));
+                                                        } else {
+                                                            setCurrentPaymentAmount(faltaUSD.toFixed(2));
+                                                        }
+                                                    }}
+                                                >
+                                                    Monto Pendiente
+                                                </button>
+                                                <button
+                                                    className="primary-button flex-[2] p-3 text-lg font-black flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
+                                                    style={{ borderRadius: '10px' }}
+                                                    onClick={() => {
+                                                        if (!currentPaymentAmount || !currentPaymentMethod) return;
+                                                        const method = currentPaymentMethod;
+                                                        const selectedMethod = paymentMethods.find(m => m.name === method);
+                                                        const isBs = selectedMethod?.currency === 'Bs';
+                                                        const amount = parseFloat(currentPaymentAmount);
+
+                                                        const discVal = parseFloat(discountValue) || 0;
+                                                        const tipVal = parseFloat(tipAmount) || 0;
+                                                        const rate = data.exchangeRate || 1;
+
+                                                        let finalDiscount = 0;
+                                                        if (discountType === 'percent') finalDiscount = total * (discVal / 100);
+                                                        else if (discountType === 'USD') finalDiscount = discVal;
+                                                        else if (discountType === 'BS') finalDiscount = discVal / rate;
+
+                                                        let finalTip = 0;
+                                                        if (tipType === 'percent') finalTip = total * (tipVal / 100);
+                                                        else if (tipType === 'USD') finalTip = tipVal;
+                                                        else if (tipType === 'BS') finalTip = tipVal / rate;
+
+                                                        const totalNeto = total - finalDiscount + finalTip;
+
+                                                        if (method.toLowerCase().includes('efectivo')) {
+                                                            const yaPagado = payments.reduce((sum, p) => sum + (p.currency === 'USD' ? p.amount : p.amount / p.rate), 0);
+                                                            const pendingDebt = Math.max(0, totalNeto - yaPagado);
+
+                                                            setPendingPaymentData({
+                                                                method,
+                                                                amount,
+                                                                debtAmount: pendingDebt,
+                                                                currency: isBs ? 'BS' : 'USD',
+                                                                rate: data.exchangeRate
+                                                            });
+                                                            setIsCashModalOpen(true);
+                                                        } else {
+                                                            setPayments([...payments, {
+                                                                id: Date.now(),
+                                                                method,
+                                                                amount,
+                                                                currency: isBs ? 'BS' : 'USD',
+                                                                rate: data.exchangeRate
+                                                            }]);
+                                                            setCurrentPaymentAmount('');
+                                                        }
+                                                    }}
+                                                >
+                                                    AGREGAR PAGO <Check size={20} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Adjustments Section - Multi-Unit Support */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div className="glass-panel p-4 border-white/10 bg-white/5 flex flex-col">
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase mb-2 block tracking-widest">Descuento</label>
+                                            <div className="flex gap-2 mt-auto">
+                                                <input
+                                                    type="number"
+                                                    className="glass-input p-2 flex-1 text-base font-black text-center bg-transparent border-b border-white/10"
+                                                    style={{ border: 'none', borderBottom: '2px solid rgba(255,255,255,0.05)', borderRadius: 0 }}
+                                                    value={discountValue}
+                                                    onChange={e => setDiscountValue(e.target.value)}
+                                                    placeholder="0"
+                                                />
+                                                <div className="flex bg-black/20 rounded-xl p-1 border border-white/5">
+                                                    {['percent', 'USD', 'BS'].map((type) => (
+                                                        <button
+                                                            key={type}
+                                                            className={`w-10 h-10 flex items-center justify-center rounded-xl font-black text-xs transition-all duration-200 active:scale-95 ${discountType === type ? 'bg-orange-600 text-white shadow-lg scale-105 border border-white/20' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'}`}
+                                                            onClick={() => setDiscountType(type)}
+                                                        >
+                                                            {type === 'percent' ? '%' : type === 'USD' ? '$' : 'Bs'}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="glass-panel p-4 border-white/10 bg-white/5 flex flex-col">
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase mb-2 block tracking-widest">Propina</label>
+                                            <div className="flex gap-2 mt-auto">
+                                                <input
+                                                    type="number"
+                                                    className="glass-input p-2 flex-1 text-base font-black text-center bg-transparent border-b border-white/10"
+                                                    style={{ border: 'none', borderBottom: '2px solid rgba(255,255,255,0.05)', borderRadius: 0 }}
+                                                    value={tipAmount}
+                                                    onChange={e => setTipAmount(e.target.value)}
+                                                    placeholder="0.00"
+                                                />
+                                                <div className="flex bg-black/20 rounded-xl p-1 border border-white/5">
+                                                    {['percent', 'USD', 'BS'].map((type) => (
+                                                        <button
+                                                            key={type}
+                                                            className={`w-10 h-10 flex items-center justify-center rounded-xl font-black text-xs transition-all duration-200 active:scale-95 ${tipType === type ? 'bg-orange-600 text-white shadow-lg scale-105 border border-white/20' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'}`}
+                                                            onClick={() => setTipType(type)}
+                                                        >
+                                                            {type === 'percent' ? '%' : type === 'USD' ? '$' : 'Bs'}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* RIGHT COLUMN: Payments List */}
+                                <div className="flex-1 flex flex-col gap-3 min-h-[300px]">
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Pagos Registrados ({payments.length})</label>
+                                    <div className="flex-1 overflow-y-auto flex flex-col gap-2 no-scrollbar p-1">
+                                        {payments.length === 0 ? (
+                                            <div className="flex-1 flex flex-col items-center justify-center text-gray-700 border-2 border-dashed border-white/5 rounded-2xl opacity-40">
+                                                <Wallet size={40} className="mb-2" />
+                                                <span className="text-[10px] font-black uppercase tracking-widest">Sin pagos registrados</span>
+                                            </div>
+                                        ) : (
+                                            payments.map(p => (
+                                                <div key={p.id} className="glass-panel p-3 flex justify-between items-center bg-white/5 border-white/5 hover:border-orange-500/20 transition-all group">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="bg-orange-500/10 p-2.5 rounded-xl text-orange-400">
+                                                            {p.method.toLowerCase().includes('efectivo') ? <Banknote size={20} /> : <CreditCard size={20} />}
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-[9px] text-gray-500 font-bold uppercase block tracking-tighter">{p.method}</span>
+                                                            <span className="text-lg font-black text-white italic">
+                                                                {p.currency === 'BS' ? 'Bs' : '$'} {formatAmount(p.amount, p.currency, 2)}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        className="w-10 h-10 flex items-center justify-center text-red-400 bg-red-400/0 hover:bg-red-400/10 rounded-full transition-colors active:scale-90"
+                                                        onClick={() => setPayments(prev => prev.filter(pay => pay.id !== p.id))}
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </Modal>
+
+                {/* Held Orders Modal */}
+                <Modal
+                    isOpen={isHeldOrdersModalOpen}
+                    onClose={() => setIsHeldOrdersModalOpen(false)}
+                    title="Órdenes en Espera"
+                    fullscreen={isMobile}
+                >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%' }}>
+                        <div className="flex gap-2">
+                            <button className={`glass-button flex-1 ${heldOrderTab === 'active' ? 'primary' : ''}`} onClick={() => setHeldOrderTab('active')}>Activas</button>
+                            <button className={`glass-button flex-1 ${heldOrderTab === 'trash' ? 'primary' : ''}`} onClick={() => setHeldOrderTab('trash')}>Papelera</button>
+                        </div>
+                        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            {heldOrderTab === 'active' ? (
+                                heldOrders.length === 0 ? <p className="text-center text-gray-500 py-10">No hay órdenes pendientes</p> :
+                                    heldOrders.map(o => (
+                                        <div key={o.id} className="glass-panel p-4 flex justify-between items-center bg-white/5">
+                                            <div>
+                                                <h4 className="font-bold text-lg">{o.note || 'Sin Nota'}</h4>
+                                                <span className="text-xs text-gray-400">{new Date(o.timestamp).toLocaleTimeString()} - {o.items.length} items</span>
+                                                <p className="text-green-400 font-bold mt-1">Total: ${o.total.toFixed(2)}</p>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button className="primary-button p-2 px-4 text-sm" onClick={() => handleRecallOrder(o)}>Recobrar</button>
+                                                <button className="glass-button p-2 text-red-500" onClick={() => cancelHeldOrder(o.id)}><X size={20} /></button>
+                                            </div>
+                                        </div>
+                                    ))
+                            ) : (
+                                cancelledOrders.length === 0 ? <p className="text-center text-gray-500 py-10">Papelera vacía</p> :
+                                    cancelledOrders.map(o => (
+                                        <div key={o.id} className="glass-panel p-4 flex justify-between items-center opacity-70">
+                                            <div>
+                                                <h4 className="font-bold">{o.note || 'Sin Nota'}</h4>
+                                                <span className="text-[10px] text-gray-400">Cancelado: {new Date(o.cancelledAt).toLocaleTimeString()}</span>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button className="glass-button text-xs py-1 px-2" onClick={() => restoreCancelledOrder(o.id)}>Restaurar</button>
+                                                <button className="glass-button text-red-600 border-red-600/30 py-1 px-2" onClick={() => permanentlyDeleteOrder(o.id)}><Trash2 size={16} /></button>
+                                            </div>
+                                        </div>
+                                    ))
+                            )}
+                        </div>
+                    </div>
+                </Modal>
+
+                {/* Sales Reports Modal */}
+                <Modal
+                    isOpen={isSalesModalOpen}
+                    onClose={() => setIsSalesModalOpen(false)}
+                    title="Historial de Ventas"
+                    fullscreen={isMobile}
+                >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%' }}>
+                        {currentUser?.role !== 'cashier' && (
+                            <div className="glass-panel p-4 bg-green-500/10 border-green-500/30 text-center">
+                                <span className="text-xs text-green-400 font-bold">VENTAS TOTALES (HOY)</span>
+                                <h2 className="text-3xl font-black text-green-500">${(data.sales || []).reduce((sum, s) => sum + s.total, 0).toFixed(2)}</h2>
+                            </div>
+                        )}
+                        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {(data.sales || []).slice().reverse().slice(0, currentUser?.role === 'cashier' ? 4 : undefined).map(sale => (
+                                <div key={sale.id} className="glass-panel p-3 text-xs bg-white/5 flex justify-between items-center">
+                                    <div>
+                                        <span className="font-bold block">{new Date(sale.date).toLocaleTimeString()} - {sale.cashier}</span>
+                                        <span className="text-gray-400">{sale.items.length} productos | {sale.paymentMethod}</span>
+                                    </div>
+                                    <span className="text-lg font-black text-orange-400">${sale.total.toFixed(2)}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </Modal>
+
+                {/* Production Configuration Modal */}
+                <Modal
+                    isOpen={isProductionModalOpen}
+                    onClose={() => setIsProductionModalOpen(false)}
+                    title="Enviar a Producción"
+                >
+                    <div className="flex flex-col gap-5 p-2">
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-400 uppercase">Prioridad de la Orden</label>
+                            <div className="grid grid-cols-3 gap-2">
+                                {['normal', 'priority', 'high'].map(p => (
+                                    <button
+                                        key={p}
+                                        className={`p-3 rounded-lg text-xs font-bold border ${orderPriority === p ? 'bg-orange-600 border-orange-400' : 'bg-white/5 border-white/10'}`}
+                                        onClick={() => setOrderPriority(p)}
+                                    >
+                                        {p.toUpperCase()}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-400 uppercase">Tipo de Entrega</label>
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    className={`p-4 rounded-xl flex flex-col items-center gap-2 border ${!isTakeaway ? 'bg-orange-600 border-orange-400' : 'bg-white/5 border-white/10'}`}
+                                    onClick={() => setIsTakeaway(false)}
+                                >
+                                    <Coffee size={24} /> <span className="font-bold">PARA AQUÍ</span>
+                                </button>
+                                <button
+                                    className={`p-4 rounded-xl flex flex-col items-center gap-2 border ${isTakeaway ? 'bg-indigo-600 border-indigo-400' : 'bg-white/5 border-white/10'}`}
+                                    onClick={() => setIsTakeaway(true)}
+                                >
+                                    <ShoppingBag size={24} /> <span className="font-bold">PARA LLEVAR</span>
+                                </button>
+                            </div>
+                        </div>
+                        <button className="primary-button p-4 text-xl font-black mt-2" onClick={confirmSendToProduction}>
+                            CONFIRMAR Y ENVIAR
+                        </button>
+                    </div>
+                </Modal>
+
+                {/* Cash Denomination Modal */}
+                <CashDenominationModal
+                    isOpen={isCashModalOpen}
+                    onClose={() => setIsCashModalOpen(false)}
+                    amount={pendingPaymentData?.amount || 0}
+                    debtAmount={pendingPaymentData?.currency === 'BS' ? (pendingPaymentData.debtAmount * pendingPaymentData.rate) : pendingPaymentData?.debtAmount}
+                    currency={pendingPaymentData?.currency}
+                    denominationsConfig={pendingPaymentData?.currency === 'BS' ? data.denominationsBS : data.denominationsUSD}
+                    onConfirm={(breakdown, totalReceived, changeAmount, changeMethod) => {
+                        const amountToPay = pendingPaymentData?.amount || 0;
+                        const effectiveAmount = Math.min(totalReceived, amountToPay);
+
+                        setPayments([...payments, {
+                            ...pendingPaymentData,
+                            id: Date.now(),
+                            amount: effectiveAmount,
+                            denominations: breakdown,
+                            received: totalReceived,
+                            change: changeAmount,
+                            changeMethod: changeMethod
+                        }]);
+                        setIsCashModalOpen(false);
+                        setPendingPaymentData(null);
+                        setCurrentPaymentAmount('');
+                    }}
+                />
+
+                {/* Client Search Modal Wrapper */}
+                <ClientSearchModal
+                    isOpen={isClientModalOpen}
+                    onClose={() => setIsClientModalOpen(false)}
+                    onSelectClient={(client) => {
+                        setSelectedCustomerId(client.id);
+                        setIsClientModalOpen(false);
+                    }}
+                />
+
+                {/* Backdrop for Sidebar on mobile */}
+                {isMobile && isCartOpen && <div className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm" onClick={() => setIsCartOpen(false)} />}
+            </div>
+        );
+    };

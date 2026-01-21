@@ -41,8 +41,14 @@ public class NodeServerService extends Service {
         android.net.wifi.WifiManager wifiManager = (android.net.wifi.WifiManager) getApplicationContext()
                 .getSystemService(android.content.Context.WIFI_SERVICE);
         if (wifiManager != null) {
-            wifiLock = wifiManager.createWifiLock(android.net.wifi.WifiManager.WIFI_MODE_FULL_HIGH_PERF,
-                    "SistemaPOS:WifiLock");
+            // Android 10+ (API 29) prefer LOW_LATENCY for background servers
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                wifiLock = wifiManager.createWifiLock(android.net.wifi.WifiManager.WIFI_MODE_FULL_LOW_LATENCY,
+                        "SistemaPOS:WifiLock");
+            } else {
+                wifiLock = wifiManager.createWifiLock(android.net.wifi.WifiManager.WIFI_MODE_FULL_HIGH_PERF,
+                        "SistemaPOS:WifiLock");
+            }
             wifiLock.setReferenceCounted(false);
             wifiLock.acquire();
         }
@@ -61,7 +67,34 @@ public class NodeServerService extends Service {
             startForeground(NOTIFICATION_ID, notification);
         }
 
+        // --- ARRANQUE NATIVO (TERMUX-STYLE) ---
+        Log.e(TAG, "🚀 Invocando arranque nativo de Node.js...");
+        try {
+            com.janeasystems.cdvnodejsmobile.NodeJS.startEngineDirectly(this, "main.js");
+            Log.d(TAG, "✅ Llamada a startEngineDirectly completada.");
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Error fatal arrancando Node nativamente: " + e.getMessage());
+        }
+
         return START_STICKY;
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        // Esto se dispara cuando el usuario desliza la app en recientes
+        Log.d(TAG, "onTaskRemoved: App swiped away. Restarting service to keep server alive.");
+
+        // Reiniciar el servicio en primer plano inmediatamente
+        Intent restartServiceIntent = new Intent(getApplicationContext(), this.getClass());
+        restartServiceIntent.setPackage(getPackageName());
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(restartServiceIntent);
+        } else {
+            startService(restartServiceIntent);
+        }
+
+        super.onTaskRemoved(rootIntent);
     }
 
     @Override
@@ -85,9 +118,10 @@ public class NodeServerService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
-                    "Servidor POS",
-                    NotificationManager.IMPORTANCE_LOW);
-            channel.setDescription("Mantiene el servidor POS activo en segundo plano");
+                    "Servidor POS (Inmortal)",
+                    NotificationManager.IMPORTANCE_HIGH); // Subir a HIGH para mayor visibilidad/prioridad
+            channel.setDescription("Mantiene el servidor POS activo permanentemente");
+            channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
 
             NotificationManager manager = getSystemService(NotificationManager.class);
             if (manager != null) {
@@ -111,12 +145,15 @@ public class NodeServerService extends Service {
         }
 
         return new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("POS Activo")
-                .setContentText("El servidor está funcionando en segundo plano")
+                .setContentTitle("Servidor POS Encendido")
+                .setContentText("El sistema está operando en segundo plano (Modo Persistente)")
                 .setSmallIcon(iconResId)
                 .setContentIntent(pendingIntent)
                 .setOngoing(true)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setPriority(NotificationCompat.PRIORITY_MAX) // Prioridad máxima
+                .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .build();
     }
 }
